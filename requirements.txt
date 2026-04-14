@@ -1,0 +1,6 @@
+pandas
+numpy
+groq
+pydantic
+python-dotenv
+streamlit

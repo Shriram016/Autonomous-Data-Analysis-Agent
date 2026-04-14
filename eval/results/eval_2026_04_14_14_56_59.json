@@ -1,0 +1,1546 @@
+{
+  "aggregate": {
+    "total_queries": 30,
+    "pipeline_success_count": 24,
+    "pipeline_success_rate": 0.8,
+    "gt_error_count": 0,
+    "value_match_count": 24,
+    "value_match_rate": 1.0,
+    "full_match_count": 24,
+    "full_match_rate": 1.0,
+    "avg_executions": 2.6,
+    "avg_retries": 0.0,
+    "avg_duration_s": 38.3,
+    "total_duration_s": 1150.4,
+    "groups": {
+      "Group 1": {
+        "name": "Simple Aggregation",
+        "count": 5,
+        "pipeline_success_rate": 1.0,
+        "value_match_rate": 1.0,
+        "full_match_rate": 1.0,
+        "avg_retries": 0.0
+      },
+      "Group 2": {
+        "name": "Filtering",
+        "count": 5,
+        "pipeline_success_rate": 1.0,
+        "value_match_rate": 1.0,
+        "full_match_rate": 1.0,
+        "avg_retries": 0.0
+      },
+      "Group 3": {
+        "name": "Grouping + Ranking",
+        "count": 5,
+        "pipeline_success_rate": 0.4,
+        "value_match_rate": 1.0,
+        "full_match_rate": 1.0,
+        "avg_retries": 0.0
+      },
+      "Group 4": {
+        "name": "Time Based",
+        "count": 5,
+        "pipeline_success_rate": 0.6,
+        "value_match_rate": 1.0,
+        "full_match_rate": 1.0,
+        "avg_retries": 0.0
+      },
+      "Group 5": {
+        "name": "Multi Condition",
+        "count": 5,
+        "pipeline_success_rate": 1.0,
+        "value_match_rate": 1.0,
+        "full_match_rate": 1.0,
+        "avg_retries": 0.0
+      },
+      "Group 6": {
+        "name": "Derived Calculations",
+        "count": 5,
+        "pipeline_success_rate": 0.8,
+        "value_match_rate": 1.0,
+        "full_match_rate": 1.0,
+        "avg_retries": 0.0
+      }
+    }
+  },
+  "records": [
+    {
+      "id": "Q01",
+      "query": "What is the total sales across all orders?",
+      "tags": [
+        "aggregation"
+      ],
+      "compare_mode": "value_only",
+      "notes": "No filter \u2192 no constant group column. Pipeline may group by a multi-valued column.",
+      "pipeline_status": "success",
+      "pipeline_success": true,
+      "pipeline_message": "Executed 1 step(s) successfully (1 total execution(s)).",
+      "gt_error": false,
+      "gt_shape": [
+        1,
+        1
+      ],
+      "pipeline_shape": [
+        1,
+        1
+      ],
+      "value_match": true,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": true,
+      "mismatches": [],
+      "plan_steps": 1,
+      "total_executions": 1,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 1.95,
+      "answer": "The total sales across all orders is $2,297,200.86. This represents the combined revenue from all orders in the system.",
+      "gt_data": [
+        {
+          "Sales_sum": 2297200.8603
+        }
+      ],
+      "pipeline_data": [
+        {
+          "Total_Sales": 2297200.8603
+        }
+      ]
+    },
+    {
+      "id": "Q02",
+      "query": "What is the average discount given across all products?",
+      "tags": [
+        "aggregation"
+      ],
+      "compare_mode": "value_only",
+      "notes": "No filter. Same scalar-wrapping risk as Q01.",
+      "pipeline_status": "success",
+      "pipeline_success": true,
+      "pipeline_message": "Executed 1 step(s) successfully (1 total execution(s)).",
+      "gt_error": false,
+      "gt_shape": [
+        1,
+        1
+      ],
+      "pipeline_shape": [
+        1,
+        1
+      ],
+      "value_match": true,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": true,
+      "mismatches": [],
+      "plan_steps": 1,
+      "total_executions": 1,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 44.45,
+      "answer": "The average discount given across all products is 15.62%.",
+      "gt_data": [
+        {
+          "Discount_mean": 0.1562027216329798
+        }
+      ],
+      "pipeline_data": [
+        {
+          "Discount_mean": 0.1562027216329798
+        }
+      ]
+    },
+    {
+      "id": "Q03",
+      "query": "How many total orders are there in the dataset?",
+      "tags": [
+        "aggregation",
+        "count"
+      ],
+      "compare_mode": "value_only",
+      "notes": "Count of rows. Pipeline column name for count is planner-dependent.",
+      "pipeline_status": "success",
+      "pipeline_success": true,
+      "pipeline_message": "Executed 1 step(s) successfully (1 total execution(s)).",
+      "gt_error": false,
+      "gt_shape": [
+        1,
+        1
+      ],
+      "pipeline_shape": [
+        1,
+        1
+      ],
+      "value_match": true,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": true,
+      "mismatches": [],
+      "plan_steps": 1,
+      "total_executions": 1,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 40.8,
+      "answer": "There are 9,994 total orders in the dataset. This represents the overall number of orders recorded.",
+      "gt_data": [
+        {
+          "Order ID_count": 9994
+        }
+      ],
+      "pipeline_data": [
+        {
+          "Total Orders": 9994
+        }
+      ]
+    },
+    {
+      "id": "Q04",
+      "query": "What is the total profit across all regions?",
+      "tags": [
+        "aggregation"
+      ],
+      "compare_mode": "value_only",
+      "notes": "No filter. Planner may or may not group by Region.",
+      "pipeline_status": "success",
+      "pipeline_success": true,
+      "pipeline_message": "Executed 1 step(s) successfully (1 total execution(s)).",
+      "gt_error": false,
+      "gt_shape": [
+        1,
+        1
+      ],
+      "pipeline_shape": [
+        1,
+        1
+      ],
+      "value_match": true,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": true,
+      "mismatches": [],
+      "plan_steps": 1,
+      "total_executions": 1,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 41.44,
+      "answer": "The total profit across all regions is $286,397.02. This represents the combined profit from all regions.",
+      "gt_data": [
+        {
+          "Profit_sum": 286397.0217
+        }
+      ],
+      "pipeline_data": [
+        {
+          "Total_Profit": 286397.0217
+        }
+      ]
+    },
+    {
+      "id": "Q05",
+      "query": "What is the average quantity ordered per transaction?",
+      "tags": [
+        "aggregation"
+      ],
+      "compare_mode": "value_only",
+      "notes": "No filter. Mean of Quantity column.",
+      "pipeline_status": "success",
+      "pipeline_success": true,
+      "pipeline_message": "Executed 1 step(s) successfully (1 total execution(s)).",
+      "gt_error": false,
+      "gt_shape": [
+        1,
+        1
+      ],
+      "pipeline_shape": [
+        1,
+        1
+      ],
+      "value_match": true,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": true,
+      "mismatches": [],
+      "plan_steps": 1,
+      "total_executions": 1,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 40.46,
+      "answer": "The average quantity ordered per transaction is approximately 3.79 items. This suggests that customers typically purchase a moderate number of items per transaction. On average, customers order almost 4 items per transaction.",
+      "gt_data": [
+        {
+          "Quantity_mean": 3.789573744246548
+        }
+      ],
+      "pipeline_data": [
+        {
+          "avg_quantity": 3.789573744246548
+        }
+      ]
+    },
+    {
+      "id": "Q06",
+      "query": "What are the total sales for the Technology category?",
+      "tags": [
+        "filter",
+        "aggregation"
+      ],
+      "compare_mode": "value_only",
+      "notes": "",
+      "pipeline_status": "success",
+      "pipeline_success": true,
+      "pipeline_message": "Executed 2 step(s) successfully (2 total execution(s)).",
+      "gt_error": false,
+      "gt_shape": [
+        1,
+        2
+      ],
+      "pipeline_shape": [
+        1,
+        1
+      ],
+      "value_match": true,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": true,
+      "mismatches": [],
+      "plan_steps": 2,
+      "total_executions": 2,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 41.74,
+      "answer": "The total sales for the Technology category are $836,154.",
+      "gt_data": [
+        {
+          "Category": "Technology",
+          "Sales_sum": 836154.033
+        }
+      ],
+      "pipeline_data": [
+        {
+          "Sales_sum": 836154.033
+        }
+      ]
+    },
+    {
+      "id": "Q07",
+      "query": "What is the total profit from the West region?",
+      "tags": [
+        "filter",
+        "aggregation"
+      ],
+      "compare_mode": "value_only",
+      "notes": "",
+      "pipeline_status": "success",
+      "pipeline_success": true,
+      "pipeline_message": "Executed 2 step(s) successfully (2 total execution(s)).",
+      "gt_error": false,
+      "gt_shape": [
+        1,
+        2
+      ],
+      "pipeline_shape": [
+        1,
+        1
+      ],
+      "value_match": true,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": true,
+      "mismatches": [],
+      "plan_steps": 2,
+      "total_executions": 2,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 42.84,
+      "answer": "The total profit from the West region is $108,418.45. This represents the combined profit from all business activities in the West region.",
+      "gt_data": [
+        {
+          "Region": "West",
+          "Profit_sum": 108418.4489
+        }
+      ],
+      "pipeline_data": [
+        {
+          "Profit_sum": 108418.4489
+        }
+      ]
+    },
+    {
+      "id": "Q08",
+      "query": "How many orders were placed in the Consumer segment?",
+      "tags": [
+        "filter",
+        "count"
+      ],
+      "compare_mode": "value_only",
+      "notes": "Count query \u2014 planner picks the count column; value_only ignores name.",
+      "pipeline_status": "success",
+      "pipeline_success": true,
+      "pipeline_message": "Executed 2 step(s) successfully (2 total execution(s)).",
+      "gt_error": false,
+      "gt_shape": [
+        1,
+        2
+      ],
+      "pipeline_shape": [
+        1,
+        1
+      ],
+      "value_match": true,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": true,
+      "mismatches": [],
+      "plan_steps": 2,
+      "total_executions": 2,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 41.8,
+      "answer": "There were 5,191 orders placed in the Consumer segment. This represents a significant number of orders in this segment. The high order count indicates a strong demand for products in the Consumer segment.",
+      "gt_data": [
+        {
+          "Segment": "Consumer",
+          "Order ID_count": 5191
+        }
+      ],
+      "pipeline_data": [
+        {
+          "Order Count": 5191
+        }
+      ]
+    },
+    {
+      "id": "Q09",
+      "query": "What is the total sales for Standard Class ship mode?",
+      "tags": [
+        "filter",
+        "aggregation"
+      ],
+      "compare_mode": "value_only",
+      "notes": "",
+      "pipeline_status": "success",
+      "pipeline_success": true,
+      "pipeline_message": "Executed 2 step(s) successfully (2 total execution(s)).",
+      "gt_error": false,
+      "gt_shape": [
+        1,
+        2
+      ],
+      "pipeline_shape": [
+        1,
+        1
+      ],
+      "value_match": true,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": true,
+      "mismatches": [],
+      "plan_steps": 2,
+      "total_executions": 2,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 38.41,
+      "answer": "The total sales for Standard Class ship mode is $1,358,215.74. This represents the overall revenue generated by Standard Class shipments.",
+      "gt_data": [
+        {
+          "Ship Mode": "Standard Class",
+          "Sales_sum": 1358215.743
+        }
+      ],
+      "pipeline_data": [
+        {
+          "Sales_sum": 1358215.743
+        }
+      ]
+    },
+    {
+      "id": "Q10",
+      "query": "What is the average sales value for orders from California?",
+      "tags": [
+        "filter",
+        "aggregation"
+      ],
+      "compare_mode": "value_only",
+      "notes": "",
+      "pipeline_status": "success",
+      "pipeline_success": true,
+      "pipeline_message": "Executed 2 step(s) successfully (2 total execution(s)).",
+      "gt_error": false,
+      "gt_shape": [
+        1,
+        2
+      ],
+      "pipeline_shape": [
+        1,
+        1
+      ],
+      "value_match": true,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": true,
+      "mismatches": [],
+      "plan_steps": 2,
+      "total_executions": 2,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 27.03,
+      "answer": "The average sales value for orders from California is $228.73. This represents the typical sales amount for orders originating from California.",
+      "gt_data": [
+        {
+          "State": "California",
+          "Sales_mean": 228.72945102448776
+        }
+      ],
+      "pipeline_data": [
+        {
+          "Sales_mean": 228.72945102448776
+        }
+      ]
+    },
+    {
+      "id": "Q11",
+      "query": "Which are the top 5 states by total sales?",
+      "tags": [
+        "groupby",
+        "rank",
+        "top_n"
+      ],
+      "compare_mode": "ordered",
+      "notes": "Expected columns: State, Sales_sum. Row order = rank.",
+      "pipeline_status": "error",
+      "pipeline_success": false,
+      "pipeline_message": "Step 2 (groupby_aggregate) failed after 2 retry attempt(s) and replan was unsuccessful. Last error: Group column(s) not found in DataFrame: ['State']. Available columns: ['Sales_sum']",
+      "gt_error": false,
+      "gt_shape": [
+        5,
+        2
+      ],
+      "pipeline_shape": null,
+      "value_match": false,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": false,
+      "mismatches": [
+        "Pipeline returned no result -- comparison skipped"
+      ],
+      "plan_steps": 4,
+      "total_executions": 4,
+      "retries": 0,
+      "had_step_error": true,
+      "duration_s": 15.62,
+      "answer": null,
+      "gt_data": [
+        {
+          "State": "California",
+          "Sales_sum": 457687.6315
+        },
+        {
+          "State": "New York",
+          "Sales_sum": 310876.271
+        },
+        {
+          "State": "Texas",
+          "Sales_sum": 170188.0458
+        },
+        {
+          "State": "Washington",
+          "Sales_sum": 138641.27
+        },
+        {
+          "State": "Pennsylvania",
+          "Sales_sum": 116511.914
+        }
+      ],
+      "pipeline_data": null
+    },
+    {
+      "id": "Q12",
+      "query": "Which are the bottom 5 sub-categories by total profit?",
+      "tags": [
+        "groupby",
+        "rank",
+        "bottom_n"
+      ],
+      "compare_mode": "ordered",
+      "notes": "Bottom 5 = sort ascending. Expected columns: Sub-Category, Profit_sum.",
+      "pipeline_status": "error",
+      "pipeline_success": false,
+      "pipeline_message": "Step 2 (select_columns) failed after 2 retry attempt(s) and replan was unsuccessful. Last error: Column(s) not found in DataFrame: ['Sub-Category']. Available columns: ['Total_Profit']",
+      "gt_error": false,
+      "gt_shape": [
+        5,
+        2
+      ],
+      "pipeline_shape": null,
+      "value_match": false,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": false,
+      "mismatches": [
+        "Pipeline returned no result -- comparison skipped"
+      ],
+      "plan_steps": 5,
+      "total_executions": 4,
+      "retries": 0,
+      "had_step_error": true,
+      "duration_s": 39.14,
+      "answer": null,
+      "gt_data": [
+        {
+          "Sub-Category": "Tables",
+          "Profit_sum": -17725.4811
+        },
+        {
+          "Sub-Category": "Bookcases",
+          "Profit_sum": -3472.556
+        },
+        {
+          "Sub-Category": "Supplies",
+          "Profit_sum": -1189.0995
+        },
+        {
+          "Sub-Category": "Fasteners",
+          "Profit_sum": 949.5182
+        },
+        {
+          "Sub-Category": "Machines",
+          "Profit_sum": 3384.7569
+        }
+      ],
+      "pipeline_data": null
+    },
+    {
+      "id": "Q13",
+      "query": "Which 3 ship modes generate the highest average sales?",
+      "tags": [
+        "groupby",
+        "rank",
+        "top_n"
+      ],
+      "compare_mode": "ordered",
+      "notes": "Expected columns: Ship Mode, Sales_mean.",
+      "pipeline_status": "success",
+      "pipeline_success": true,
+      "pipeline_message": "Executed 3 step(s) successfully (3 total execution(s)).",
+      "gt_error": false,
+      "gt_shape": [
+        3,
+        2
+      ],
+      "pipeline_shape": [
+        3,
+        2
+      ],
+      "value_match": true,
+      "shape_match": true,
+      "columns_match": true,
+      "full_match": true,
+      "mismatches": [],
+      "plan_steps": 3,
+      "total_executions": 3,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 20.4,
+      "answer": "The top 3 ship modes with the highest average sales are Same Day, Second Class, and First Class, with average sales of $236.40, $236.09, and $228.50 respectively. Same Day and Second Class have the highest average sales, with a difference of just $0.31 between them. First Class ranks third with an average sales of $228.50.",
+      "gt_data": [
+        {
+          "Ship Mode": "Same Day",
+          "Sales_mean": 236.39617863720073
+        },
+        {
+          "Ship Mode": "Second Class",
+          "Sales_mean": 236.0892387660668
+        },
+        {
+          "Ship Mode": "First Class",
+          "Sales_mean": 228.49702399219765
+        }
+      ],
+      "pipeline_data": [
+        {
+          "Ship Mode": "Same Day",
+          "Sales_mean": 236.39617863720073
+        },
+        {
+          "Ship Mode": "Second Class",
+          "Sales_mean": 236.0892387660668
+        },
+        {
+          "Ship Mode": "First Class",
+          "Sales_mean": 228.49702399219765
+        }
+      ]
+    },
+    {
+      "id": "Q14",
+      "query": "Which are the top 10 customers by total sales?",
+      "tags": [
+        "groupby",
+        "rank",
+        "top_n"
+      ],
+      "compare_mode": "ordered",
+      "notes": "Expected columns: Customer Name, Sales_sum.",
+      "pipeline_status": "error",
+      "pipeline_success": false,
+      "pipeline_message": "Step 2 (groupby_aggregate) failed after 2 retry attempt(s) and replan was unsuccessful. Last error: Group column(s) not found in DataFrame: ['Customer Name']. Available columns: ['Total_Sales']",
+      "gt_error": false,
+      "gt_shape": [
+        10,
+        2
+      ],
+      "pipeline_shape": null,
+      "value_match": false,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": false,
+      "mismatches": [
+        "Pipeline returned no result -- comparison skipped"
+      ],
+      "plan_steps": 4,
+      "total_executions": 4,
+      "retries": 0,
+      "had_step_error": true,
+      "duration_s": 40.02,
+      "answer": null,
+      "gt_data": [
+        {
+          "Customer Name": "Sean Miller",
+          "Sales_sum": 25043.05
+        },
+        {
+          "Customer Name": "Tamara Chand",
+          "Sales_sum": 19052.218
+        },
+        {
+          "Customer Name": "Raymond Buch",
+          "Sales_sum": 15117.339
+        },
+        {
+          "Customer Name": "Tom Ashbrook",
+          "Sales_sum": 14595.62
+        },
+        {
+          "Customer Name": "Adrian Barton",
+          "Sales_sum": 14473.570999999998
+        },
+        {
+          "Customer Name": "Ken Lonsdale",
+          "Sales_sum": 14175.229000000001
+        },
+        {
+          "Customer Name": "Sanjit Chand",
+          "Sales_sum": 14142.333999999999
+        },
+        {
+          "Customer Name": "Hunter Lopez",
+          "Sales_sum": 12873.297999999999
+        },
+        {
+          "Customer Name": "Sanjit Engle",
+          "Sales_sum": 12209.438000000002
+        },
+        {
+          "Customer Name": "Christopher Conant",
+          "Sales_sum": 12129.072000000002
+        }
+      ],
+      "pipeline_data": null
+    },
+    {
+      "id": "Q15",
+      "query": "Which product category has the highest average discount?",
+      "tags": [
+        "groupby",
+        "rank",
+        "top_n"
+      ],
+      "compare_mode": "ordered",
+      "notes": "Returns 1 row. Expected columns: Category, Discount_mean.",
+      "pipeline_status": "success",
+      "pipeline_success": true,
+      "pipeline_message": "Executed 3 step(s) successfully (3 total execution(s)).",
+      "gt_error": false,
+      "gt_shape": [
+        1,
+        2
+      ],
+      "pipeline_shape": [
+        1,
+        2
+      ],
+      "value_match": true,
+      "shape_match": true,
+      "columns_match": true,
+      "full_match": true,
+      "mismatches": [],
+      "plan_steps": 3,
+      "total_executions": 3,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 43.37,
+      "answer": "The Furniture product category has the highest average discount, with an average discount of 17.39%.",
+      "gt_data": [
+        {
+          "Category": "Furniture",
+          "Discount_mean": 0.1739226779820839
+        }
+      ],
+      "pipeline_data": [
+        {
+          "Category": "Furniture",
+          "Discount_mean": 0.1739226779820839
+        }
+      ]
+    },
+    {
+      "id": "Q16",
+      "query": "What is the total sales for each year?",
+      "tags": [
+        "date",
+        "groupby",
+        "aggregation"
+      ],
+      "compare_mode": "value_only",
+      "notes": "Year col name is planner-chosen. Year (int) + Sales_sum both numeric \u2192 8 values total.",
+      "pipeline_status": "success",
+      "pipeline_success": true,
+      "pipeline_message": "Executed 2 step(s) successfully (2 total execution(s)).",
+      "gt_error": false,
+      "gt_shape": [
+        4,
+        2
+      ],
+      "pipeline_shape": [
+        4,
+        2
+      ],
+      "value_match": true,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": true,
+      "mismatches": [],
+      "plan_steps": 2,
+      "total_executions": 2,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 42.05,
+      "answer": "The total sales for 2014 was $484,248, the total sales for 2015 was $470,533, the total sales for 2016 was $609,206, and the total sales for 2017 was $733,215. The highest total sales was in 2017 at $733,215, while the lowest was in 2015 at $470,533.",
+      "gt_data": [
+        {
+          "Year": 2014,
+          "Sales_sum": 484247.4981
+        },
+        {
+          "Year": 2015,
+          "Sales_sum": 470532.509
+        },
+        {
+          "Year": 2016,
+          "Sales_sum": 609205.598
+        },
+        {
+          "Year": 2017,
+          "Sales_sum": 733215.2552
+        }
+      ],
+      "pipeline_data": [
+        {
+          "Order_Year": 2014,
+          "Sales_sum": 484247.4981
+        },
+        {
+          "Order_Year": 2015,
+          "Sales_sum": 470532.509
+        },
+        {
+          "Order_Year": 2016,
+          "Sales_sum": 609205.598
+        },
+        {
+          "Order_Year": 2017,
+          "Sales_sum": 733215.2552
+        }
+      ]
+    },
+    {
+      "id": "Q17",
+      "query": "Which month has the highest number of orders across all years?",
+      "tags": [
+        "date",
+        "groupby",
+        "rank",
+        "count"
+      ],
+      "compare_mode": "value_only",
+      "notes": "Month name is a string \u2192 only count is numeric. value_only extracts 1 numeric value (the count for the top month).",
+      "pipeline_status": "success",
+      "pipeline_success": true,
+      "pipeline_message": "Executed 4 step(s) successfully (4 total execution(s)).",
+      "gt_error": false,
+      "gt_shape": [
+        1,
+        2
+      ],
+      "pipeline_shape": [
+        1,
+        2
+      ],
+      "value_match": true,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": true,
+      "mismatches": [],
+      "plan_steps": 4,
+      "total_executions": 4,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 42.8,
+      "answer": "The month with the highest number of orders across all years is November, with 1,471 orders. This is the highest recorded number of orders for any month in the data. November consistently shows a high volume of orders.",
+      "gt_data": [
+        {
+          "Month": "November",
+          "Order ID_count": 1471
+        }
+      ],
+      "pipeline_data": [
+        {
+          "Order_Month": "November",
+          "Order ID_count": 1471
+        }
+      ]
+    },
+    {
+      "id": "Q18",
+      "query": "What is the total profit per quarter?",
+      "tags": [
+        "date",
+        "groupby",
+        "aggregation"
+      ],
+      "compare_mode": "value_only",
+      "notes": "Quarter is a string \u2192 only 4 Profit_sum values are numeric.",
+      "pipeline_status": "error",
+      "pipeline_success": false,
+      "pipeline_message": "Planner failed: Plan validation failed: Step 4 reads from 'step_1_output' but step 3 wrote to 'step_3_output'. Broken state store chain.",
+      "gt_error": false,
+      "gt_shape": [
+        4,
+        2
+      ],
+      "pipeline_shape": null,
+      "value_match": false,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": false,
+      "mismatches": [
+        "Pipeline returned no result -- comparison skipped"
+      ],
+      "plan_steps": 0,
+      "total_executions": 0,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 40.65,
+      "answer": null,
+      "gt_data": [
+        {
+          "Quarter": "Q1",
+          "Profit_sum": 48023.744
+        },
+        {
+          "Quarter": "Q2",
+          "Profit_sum": 55284.5395
+        },
+        {
+          "Quarter": "Q3",
+          "Profit_sum": 72467.0785
+        },
+        {
+          "Quarter": "Q4",
+          "Profit_sum": 110621.6597
+        }
+      ],
+      "pipeline_data": null
+    },
+    {
+      "id": "Q19",
+      "query": "What are the total sales for Q1 across all years?",
+      "tags": [
+        "date",
+        "filter",
+        "aggregation"
+      ],
+      "compare_mode": "value_only",
+      "notes": "Single aggregate after filtering to Q1. Quarter string \u2192 1 numeric value.",
+      "pipeline_status": "success",
+      "pipeline_success": true,
+      "pipeline_message": "Executed 3 step(s) successfully (3 total execution(s)).",
+      "gt_error": false,
+      "gt_shape": [
+        1,
+        2
+      ],
+      "pipeline_shape": [
+        1,
+        1
+      ],
+      "value_match": true,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": true,
+      "mismatches": [],
+      "plan_steps": 3,
+      "total_executions": 3,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 42.64,
+      "answer": "The total sales for Q1 across all years is $359,682.",
+      "gt_data": [
+        {
+          "Quarter": "Q1",
+          "Sales_sum": 359681.5758
+        }
+      ],
+      "pipeline_data": [
+        {
+          "Sales_sum": 359681.5758
+        }
+      ]
+    },
+    {
+      "id": "Q20",
+      "query": "Which year had the highest total profit?",
+      "tags": [
+        "date",
+        "groupby",
+        "rank"
+      ],
+      "compare_mode": "value_only",
+      "notes": "Returns 1 row. Year (int) + Profit_sum both numeric \u2192 2 values. Year values (2014-2017) are always smaller than annual profit totals.",
+      "pipeline_status": "error",
+      "pipeline_success": false,
+      "pipeline_message": "Step 2 (extract_date_part) failed after 2 retry attempt(s) and replan was unsuccessful. Last error: Column 'Order Date' not found in DataFrame. Available columns: ['Total_Profit']",
+      "gt_error": false,
+      "gt_shape": [
+        1,
+        2
+      ],
+      "pipeline_shape": null,
+      "value_match": false,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": false,
+      "mismatches": [
+        "Pipeline returned no result -- comparison skipped"
+      ],
+      "plan_steps": 8,
+      "total_executions": 4,
+      "retries": 0,
+      "had_step_error": true,
+      "duration_s": 39.09,
+      "answer": null,
+      "gt_data": [
+        {
+          "Year": 2017,
+          "Profit_sum": 93439.2696
+        }
+      ],
+      "pipeline_data": null
+    },
+    {
+      "id": "Q21",
+      "query": "What is the total sales for Furniture in the West region?",
+      "tags": [
+        "filter",
+        "multi_condition",
+        "aggregation"
+      ],
+      "compare_mode": "value_only",
+      "notes": "Two filter steps then aggregate. Group col is Category (constant after filter).",
+      "pipeline_status": "success",
+      "pipeline_success": true,
+      "pipeline_message": "Executed 3 step(s) successfully (3 total execution(s)).",
+      "gt_error": false,
+      "gt_shape": [
+        1,
+        2
+      ],
+      "pipeline_shape": [
+        1,
+        1
+      ],
+      "value_match": true,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": true,
+      "mismatches": [],
+      "plan_steps": 3,
+      "total_executions": 3,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 36.69,
+      "answer": "The total sales for Furniture in the West region is $252,612.74. This amount represents the combined sales of all Furniture products in the West region.",
+      "gt_data": [
+        {
+          "Category": "Furniture",
+          "Sales_sum": 252612.7435
+        }
+      ],
+      "pipeline_data": [
+        {
+          "Sales_sum": 252612.7435
+        }
+      ]
+    },
+    {
+      "id": "Q22",
+      "query": "How many orders were placed in the Consumer segment in California?",
+      "tags": [
+        "filter",
+        "multi_condition",
+        "count"
+      ],
+      "compare_mode": "value_only",
+      "notes": "Two filters + count. Count column name is planner-dependent.",
+      "pipeline_status": "success",
+      "pipeline_success": true,
+      "pipeline_message": "Executed 3 step(s) successfully (3 total execution(s)).",
+      "gt_error": false,
+      "gt_shape": [
+        1,
+        2
+      ],
+      "pipeline_shape": [
+        1,
+        1
+      ],
+      "value_match": true,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": true,
+      "mismatches": [],
+      "plan_steps": 3,
+      "total_executions": 3,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 42.72,
+      "answer": "There were 1,048 orders placed in the Consumer segment in California. This represents the total number of orders in this specific segment and location.",
+      "gt_data": [
+        {
+          "Segment": "Consumer",
+          "Order ID_count": 1048
+        }
+      ],
+      "pipeline_data": [
+        {
+          "Quantity_count": 1048
+        }
+      ]
+    },
+    {
+      "id": "Q23",
+      "query": "What is the average profit for Technology products in Q1?",
+      "tags": [
+        "filter",
+        "multi_condition",
+        "date",
+        "aggregation"
+      ],
+      "compare_mode": "value_only",
+      "notes": "Requires extract_date_part + two filters + aggregate.",
+      "pipeline_status": "success",
+      "pipeline_success": true,
+      "pipeline_message": "Executed 4 step(s) successfully (4 total execution(s)).",
+      "gt_error": false,
+      "gt_shape": [
+        1,
+        2
+      ],
+      "pipeline_shape": [
+        1,
+        1
+      ],
+      "value_match": true,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": true,
+      "mismatches": [],
+      "plan_steps": 4,
+      "total_executions": 4,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 43.86,
+      "answer": "The average profit for Technology products in Q1 is $100.11. This suggests a relatively stable profit margin for Technology products during the quarter.",
+      "gt_data": [
+        {
+          "Category": "Technology",
+          "Profit_mean": 100.10536727272726
+        }
+      ],
+      "pipeline_data": [
+        {
+          "Profit_mean": 100.10536727272726
+        }
+      ]
+    },
+    {
+      "id": "Q24",
+      "query": "What are the total sales for Office Supplies in the East region?",
+      "tags": [
+        "filter",
+        "multi_condition",
+        "aggregation"
+      ],
+      "compare_mode": "value_only",
+      "notes": "",
+      "pipeline_status": "success",
+      "pipeline_success": true,
+      "pipeline_message": "Executed 3 step(s) successfully (3 total execution(s)).",
+      "gt_error": false,
+      "gt_shape": [
+        1,
+        2
+      ],
+      "pipeline_shape": [
+        1,
+        1
+      ],
+      "value_match": true,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": true,
+      "mismatches": [],
+      "plan_steps": 3,
+      "total_executions": 3,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 46.42,
+      "answer": "The total sales for Office Supplies in the East region are $205,516.",
+      "gt_data": [
+        {
+          "Category": "Office Supplies",
+          "Sales_sum": 205516.055
+        }
+      ],
+      "pipeline_data": [
+        {
+          "Sales_sum": 205516.055
+        }
+      ]
+    },
+    {
+      "id": "Q25",
+      "query": "Which are the top 5 customers by sales in the Consumer segment?",
+      "tags": [
+        "filter",
+        "multi_condition",
+        "groupby",
+        "rank",
+        "top_n"
+      ],
+      "compare_mode": "ordered",
+      "notes": "Expected columns: Customer Name, Sales_sum. Row order = rank.",
+      "pipeline_status": "success",
+      "pipeline_success": true,
+      "pipeline_message": "Executed 4 step(s) successfully (4 total execution(s)).",
+      "gt_error": false,
+      "gt_shape": [
+        5,
+        2
+      ],
+      "pipeline_shape": [
+        5,
+        2
+      ],
+      "value_match": true,
+      "shape_match": true,
+      "columns_match": true,
+      "full_match": true,
+      "mismatches": [],
+      "plan_steps": 4,
+      "total_executions": 4,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 40.16,
+      "answer": "The top 5 customers by sales in the Consumer segment are Raymond Buch, Adrian Barton, Ken Lonsdale, Sanjit Chand, and Hunter Lopez, with Raymond Buch leading the way at $15,117.34 in sales. Adrian Barton ranks second with $14,473.57, followed closely by Ken Lonsdale at $14,175.23. Sanjit Chand rounds out the top 5 with $14,142.33 in sales.",
+      "gt_data": [
+        {
+          "Customer Name": "Raymond Buch",
+          "Sales_sum": 15117.339
+        },
+        {
+          "Customer Name": "Adrian Barton",
+          "Sales_sum": 14473.570999999998
+        },
+        {
+          "Customer Name": "Ken Lonsdale",
+          "Sales_sum": 14175.229000000001
+        },
+        {
+          "Customer Name": "Sanjit Chand",
+          "Sales_sum": 14142.333999999999
+        },
+        {
+          "Customer Name": "Hunter Lopez",
+          "Sales_sum": 12873.297999999999
+        }
+      ],
+      "pipeline_data": [
+        {
+          "Customer Name": "Raymond Buch",
+          "Sales_sum": 15117.339
+        },
+        {
+          "Customer Name": "Adrian Barton",
+          "Sales_sum": 14473.570999999998
+        },
+        {
+          "Customer Name": "Ken Lonsdale",
+          "Sales_sum": 14175.229000000001
+        },
+        {
+          "Customer Name": "Sanjit Chand",
+          "Sales_sum": 14142.333999999999
+        },
+        {
+          "Customer Name": "Hunter Lopez",
+          "Sales_sum": 12873.297999999999
+        }
+      ]
+    },
+    {
+      "id": "Q26",
+      "query": "What is the average shipping time in days across all orders?",
+      "tags": [
+        "derived",
+        "aggregation"
+      ],
+      "compare_mode": "value_only",
+      "notes": "Requires column_arithmetic(Ship Date - Order Date). Planner picks new_col_name for shipping days; value_only ignores it.",
+      "pipeline_status": "success",
+      "pipeline_success": true,
+      "pipeline_message": "Executed 2 step(s) successfully (2 total execution(s)).",
+      "gt_error": false,
+      "gt_shape": [
+        1,
+        1
+      ],
+      "pipeline_shape": [
+        1,
+        1
+      ],
+      "value_match": true,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": true,
+      "mismatches": [],
+      "plan_steps": 2,
+      "total_executions": 2,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 43.71,
+      "answer": "The average shipping time across all orders is approximately 4 days. This means that, on average, it takes around 4 days for orders to be shipped out.",
+      "gt_data": [
+        {
+          "shipping_days_mean": 3.958174904942966
+        }
+      ],
+      "pipeline_data": [
+        {
+          "Average Shipping Time": 3.958174904942966
+        }
+      ]
+    },
+    {
+      "id": "Q27",
+      "query": "Which product category has the longest average shipping time?",
+      "tags": [
+        "derived",
+        "groupby",
+        "rank"
+      ],
+      "compare_mode": "value_only",
+      "notes": "Returns 1 row. shipping_days col name planner-chosen \u2192 value_only.",
+      "pipeline_status": "success",
+      "pipeline_success": true,
+      "pipeline_message": "Executed 4 step(s) successfully (4 total execution(s)).",
+      "gt_error": false,
+      "gt_shape": [
+        1,
+        2
+      ],
+      "pipeline_shape": [
+        1,
+        2
+      ],
+      "value_match": true,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": true,
+      "mismatches": [],
+      "plan_steps": 4,
+      "total_executions": 4,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 42.03,
+      "answer": "The product category with the longest average shipping time is Office Supplies, with an average shipping time of approximately 4 days. This category has the highest average shipping time among all product categories.",
+      "gt_data": [
+        {
+          "Category": "Office Supplies",
+          "shipping_days_mean": 3.983405243942914
+        }
+      ],
+      "pipeline_data": [
+        {
+          "Category": "Office Supplies",
+          "Shipping Time_mean": 3.983405243942914
+        }
+      ]
+    },
+    {
+      "id": "Q28",
+      "query": "Which ship mode has the shortest average shipping time?",
+      "tags": [
+        "derived",
+        "groupby",
+        "rank"
+      ],
+      "compare_mode": "value_only",
+      "notes": "Returns 1 row. Sort ascending (shortest first).",
+      "pipeline_status": "success",
+      "pipeline_success": true,
+      "pipeline_message": "Executed 4 step(s) successfully (4 total execution(s)).",
+      "gt_error": false,
+      "gt_shape": [
+        1,
+        2
+      ],
+      "pipeline_shape": [
+        1,
+        2
+      ],
+      "value_match": true,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": true,
+      "mismatches": [],
+      "plan_steps": 4,
+      "total_executions": 4,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 42.81,
+      "answer": "The ship mode with the shortest average shipping time is Same Day, with an average shipping time of 0.04 days. This mode is significantly faster than other shipping options.",
+      "gt_data": [
+        {
+          "Ship Mode": "Same Day",
+          "shipping_days_mean": 0.04419889502762431
+        }
+      ],
+      "pipeline_data": [
+        {
+          "Ship Mode": "Same Day",
+          "Shipping Time_mean": 0.04419889502762431
+        }
+      ]
+    },
+    {
+      "id": "Q29",
+      "query": "What is the average shipping time for orders from the West region?",
+      "tags": [
+        "derived",
+        "filter",
+        "aggregation"
+      ],
+      "compare_mode": "value_only",
+      "notes": "Filter to West then mean shipping days. Single numeric result.",
+      "pipeline_status": "success",
+      "pipeline_success": true,
+      "pipeline_message": "Executed 4 step(s) successfully (4 total execution(s)).",
+      "gt_error": false,
+      "gt_shape": [
+        1,
+        1
+      ],
+      "pipeline_shape": [
+        1,
+        1
+      ],
+      "value_match": true,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": true,
+      "mismatches": [],
+      "plan_steps": 4,
+      "total_executions": 4,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 43.97,
+      "answer": "The average shipping time for orders from the West region is approximately 4 days. This is the average time it takes for orders from this region to be shipped.",
+      "gt_data": [
+        {
+          "shipping_days_mean": 3.929753356228536
+        }
+      ],
+      "pipeline_data": [
+        {
+          "Average Shipping Time": 3.929753356228536
+        }
+      ]
+    },
+    {
+      "id": "Q30",
+      "query": "Which are the top 5 states with the longest average shipping time?",
+      "tags": [
+        "derived",
+        "groupby",
+        "rank",
+        "top_n"
+      ],
+      "compare_mode": "value_only",
+      "notes": "Returns 5 rows. shipping_days col name planner-chosen \u2192 value_only compares 5 sorted mean values (state label strings are excluded).",
+      "pipeline_status": "error",
+      "pipeline_success": false,
+      "pipeline_message": "Planner failed: Plan validation failed: Step 2 reads from 'original_df' but step 1 wrote to 'step_1_output'. Broken state store chain.",
+      "gt_error": false,
+      "gt_shape": [
+        5,
+        2
+      ],
+      "pipeline_shape": null,
+      "value_match": false,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": false,
+      "mismatches": [
+        "Pipeline returned no result -- comparison skipped"
+      ],
+      "plan_steps": 0,
+      "total_executions": 0,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 41.31,
+      "answer": null,
+      "gt_data": [
+        {
+          "State": "District of Columbia",
+          "shipping_days_mean": 5.7
+        },
+        {
+          "State": "Wyoming",
+          "shipping_days_mean": 5.0
+        },
+        {
+          "State": "Maine",
+          "shipping_days_mean": 5.0
+        },
+        {
+          "State": "Montana",
+          "shipping_days_mean": 4.6
+        },
+        {
+          "State": "New Mexico",
+          "shipping_days_mean": 4.513513513513513
+        }
+      ],
+      "pipeline_data": null
+    }
+  ]
+}
