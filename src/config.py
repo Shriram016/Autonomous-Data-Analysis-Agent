@@ -12,7 +12,9 @@ GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
 # ---------------------------------------------------------------------------
 # Planner LLM settings
 # ---------------------------------------------------------------------------
-PLANNER_MODEL: str = "llama-3.1-8b-instant"
+# PLANNER_MODEL: str = "llama-3.1-8b-instant"
+PLANNER_MODEL: str = "qwen/qwen3-32b"
+# PLANNER_MODEL: str = "llama-3.3-70b-versatile"
 PLANNER_TEMPERATURE: float = 0.0
 PLANNER_MAX_TOKENS: int = 1024
 PLANNER_TIMEOUT_SECONDS: int = 90   # Abort LLM call if no response within this time

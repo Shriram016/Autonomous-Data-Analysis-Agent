@@ -53,9 +53,13 @@ def _validate_plan(plan: List[PlanStep]) -> Tuple[bool, str]:
     tools_used = [step.tool for step in plan]
     if "aggregate_column" in tools_used and "groupby_aggregate" in tools_used:
         return False, (
-            "aggregate_column and groupby_aggregate cannot appear in the same plan. "
-            "Use groupby_aggregate for group-level breakdowns (per category, per month, etc.). "
-            "Use aggregate_column ONLY when the query needs a single scalar result with no grouping dimension."
+            "Your plan uses both aggregate_column and groupby_aggregate — these two tools can never appear together. "
+            "Choose exactly one based on what the query needs:\n"
+            "- If the result should have one row per group (per year, per category, per region, which X had the highest Y, etc.) "
+            "→ use groupby_aggregate only. Remove aggregate_column entirely.\n"
+            "- If the result is a single overall number with no grouping dimension "
+            "→ use aggregate_column only. Remove groupby_aggregate entirely.\n"
+            "Rebuild the full correct plan using only one of these tools."
         )
 
     for i, step in enumerate(plan):
@@ -261,8 +265,17 @@ def plan(
             reason = parsed.reason or "No reason provided."
             return {"status": "unsolvable", "reason": reason}
 
-        # LLM returned a plan — run business logic validation
+        # LLM returned a plan — log it before validation runs
         if parsed.status == "success":
+            if logger and run_id:
+                from src.utils.logger import log_event
+                log_event(logger, run_id, "llm_plan_received", {
+                    "attempt":      1,
+                    "step_count":   len(parsed.plan),
+                    "tools":        [s.tool for s in parsed.plan],
+                    "plan":         [{"step": s.step, "tool": s.tool, "parameters": s.parameters} for s in parsed.plan],
+                })
+
             is_valid, reason = _validate_plan(parsed.plan)
             if is_valid:
                 return {"status": "success", "plan": parsed.plan}
@@ -286,6 +299,15 @@ def plan(
                 return {"status": "unsolvable", "reason": retry_parsed.reason or "No reason provided."}
 
             if retry_parsed.status == "success":
+                if logger and run_id:
+                    from src.utils.logger import log_event
+                    log_event(logger, run_id, "llm_plan_received", {
+                        "attempt":    2,
+                        "step_count": len(retry_parsed.plan),
+                        "tools":      [s.tool for s in retry_parsed.plan],
+                        "plan":       [{"step": s.step, "tool": s.tool, "parameters": s.parameters} for s in retry_parsed.plan],
+                    })
+
                 is_valid2, reason2 = _validate_plan(retry_parsed.plan)
                 if not is_valid2:
                     if logger and run_id:

@@ -1,28 +1,3 @@
-import json
-import os
-from typing import Any, Dict
-
-
-# ---------------------------------------------------------------------------
-# System Prompt — versioned
-# Change ACTIVE_VERSION to switch between prompt versions.
-# All versions live in: src/prompts/versions/
-# ---------------------------------------------------------------------------
-
-ACTIVE_VERSION = "v2"
-
-_VERSIONS_DIR = os.path.join(os.path.dirname(__file__), "versions")
-_prompt_file = os.path.join(_VERSIONS_DIR, f"{ACTIVE_VERSION}_system_prompt.txt")
-
-with open(_prompt_file, "r", encoding="utf-8") as _f:
-    SYSTEM_PROMPT = _f.read()
-
-# ---------------------------------------------------------------------------
-# Legacy inline prompt kept below for reference only — NOT used when loading
-# from a version file. Delete this block once v2 is validated.
-# ---------------------------------------------------------------------------
-
-_LEGACY_PROMPT = """
 You are a Query Planner for a deterministic data analysis pipeline.
 
 ## YOUR ROLE
@@ -268,9 +243,9 @@ State store rules:
 - aggregate_column and groupby_aggregate must NEVER appear together in the same plan.
   Choose exactly one based on what the query needs:
   * If the result should have one row per group (per year, per category, per region, which X, etc.)
-    → use groupby_aggregate only. Never use aggregate_column.
+    -> use groupby_aggregate only. Never use aggregate_column.
   * If the result is a single overall number with no grouping dimension
-    → use aggregate_column only. Never use groupby_aggregate.
+    -> use aggregate_column only. Never use groupby_aggregate.
 
 ### Counting rows
 - To count rows per group (e.g. "count of orders per month"), use groupby_aggregate
@@ -337,89 +312,3 @@ Plan:
     }
   ]
 }
-"""
-
-
-# ---------------------------------------------------------------------------
-# Schema Condenser
-# ---------------------------------------------------------------------------
-
-_EXCLUDE_COLUMNS = {
-    "Row ID",       # sequential row number, no analytical value
-    "Order ID",     # identifier
-    "Customer ID",  # identifier
-    "Product ID",   # identifier
-    "Postal Code",  # geographic ID, not used in queries
-    "Country",      # single value ("United States") — useless for filtering
-}
-
-
-def condense_schema(full_schema: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Strips the full schema down to only what the Planner LLM needs:
-    - dtype
-    - min / max for numeric and datetime columns
-    - median for numeric columns
-    - sample_values and unique_count for categorical/object columns
-
-    Drops: identifier/non-analytical columns, null_count, null_percentage,
-    missingness_flag, warnings.
-    """
-    condensed = {}
-
-    for col_name, col_info in full_schema.items():
-        if col_name in _EXCLUDE_COLUMNS:
-            continue
-
-        dtype = col_info.get("dtype", "unknown")
-        entry: Dict[str, Any] = {"dtype": dtype}
-
-        # Numeric columns
-        if "min" in col_info and "median" in col_info:
-            entry["min"] = col_info["min"]
-            entry["max"] = col_info["max"]
-            entry["median"] = col_info["median"]
-
-        # Datetime columns (have min/max but no median)
-        elif "min" in col_info and "median" not in col_info:
-            entry["min"] = col_info["min"]
-            entry["max"] = col_info["max"]
-
-        # Categorical / object columns
-        # Only include sample values for low-cardinality columns (≤15 unique values).
-        # High-cardinality columns (Customer Name, Product Name, State, City) are
-        # noise — 10 random samples from 793 values add no useful signal.
-        if "unique_count" in col_info:
-            entry["unique_count"] = col_info["unique_count"]
-            if col_info["unique_count"] <= 15 and "sample_values" in col_info:
-                entry["sample_values"] = col_info["sample_values"]
-
-        condensed[col_name] = entry
-
-    return condensed
-
-
-# ---------------------------------------------------------------------------
-# User Prompt Builder
-# ---------------------------------------------------------------------------
-
-def build_user_prompt(query: str, full_schema: Dict[str, Any]) -> str:
-    """
-    Assembles the runtime user prompt from the query and condensed schema.
-
-    Args:
-        query       : Natural language query from the user.
-        full_schema : Full schema dict from Schema Generator's result field.
-
-    Returns:
-        Formatted user prompt string to send to the Planner LLM.
-    """
-    condensed = condense_schema(full_schema)
-    schema_str = json.dumps(condensed, indent=2)
-
-    return f"""Query: {query}
-
-Schema:
-{schema_str}
-
-Return the JSON plan now."""

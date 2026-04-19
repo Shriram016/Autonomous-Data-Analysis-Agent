@@ -12,7 +12,7 @@ from eval.test_cases import TEST_CASES
 # Set your query here
 # ---------------------------------------------------------------------------
 
-QUERY = "Which are the top 5 states by total sales?"
+QUERY = "Which ship mode has the shortest average shipping time?"
 
 # ---------------------------------------------------------------------------
 # Lookup and run

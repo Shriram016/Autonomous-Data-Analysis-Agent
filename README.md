@@ -1,49 +1,76 @@
 # Autonomous Data Analysis Agent (ADAA)
 
-## Project Overview
+A deterministic AI pipeline that takes a natural language question about a dataset and returns a **verified, computed answer with a full reasoning trace** — not a chatbot response.
 
-A system where a user gives a dataset and a natural language question, and the agent returns a correct computed answer, explanation, and full reasoning trace — not just a response, but a verifiable, traceable result.
+Every step is planned, executed through predefined tools, validated by a rule-based critic, and logged. The system never generates free-form code.
 
-This is not a chatbot. It is a **pipeline with checkpoints.** Every component has a clear input, a clear output, and a defined failure condition.
+---
+
+## Evaluation Results
+
+Tested on **30 queries** across 6 reasoning groups using the Sample Superstore dataset:
+
+| Metric | Result |
+|---|---|
+| Pipeline success | 30/30 (100%) |
+| Value match (primary) | 28/30 (93%) |
+| Full match (shape + columns + values) | 28/30 (93%) |
+| Avg executions per query | 2.5 |
+
+| Group | Reasoning Type | Accuracy |
+|---|---|---|
+| Group 1 | Simple Aggregation | 100% |
+| Group 2 | Filtering | 80% |
+| Group 3 | Grouping + Ranking | 100% |
+| Group 4 | Time Based | 100% |
+| Group 5 | Multi Condition | 80% |
+| Group 6 | Derived Calculations (shipping time) | 100% |
 
 ---
 
 ## Why This Project
 
 - **Verifiable output** — the answer is either correct or not. No hiding behind vague text
-- **Reasoning trace** — full transparency into agent decisions, not a black box
+- **Full reasoning trace** — every tool call, parameter, and critic verdict is logged
 - **Deterministic safety** — no free-form code generation; only predefined tools are called
 - **Business relevance** — solves a real analytical problem any company faces
+
+---
+
+## Getting Started
+
+**Prerequisites:** Python 3.9+, a [Groq API key](https://console.groq.com/)
+
+```bash
+# 1. Clone the repository
+git clone <repo-url>
+cd adaa
+
+# 2. Install dependencies
+pip install -r requirements.txt
+
+# 3. Set up your API key
+echo "GROQ_API_KEY=your_key_here" > .env
+
+# 4. Launch the Streamlit UI
+streamlit run app.py
+
+# 5. (Optional) Run the evaluation pipeline
+python eval/run_eval.py
+
+# Run only the first N queries
+python eval/run_eval.py --limit 5
+```
 
 ---
 
 ## Dataset
 
 **Sample Superstore Dataset**
-- Source: https://www.kaggle.com/datasets/vivek468/superstore-dataset-final
-- Rows: ~9,994
-- Columns: 21
+- Source: [Kaggle](https://www.kaggle.com/datasets/vivek468/superstore-dataset-final)
+- Rows: ~9,994 | Columns: 21
 
-```
-Row ID, Order ID, Order Date, Ship Date, Ship Mode,
-Customer ID, Customer Name, Segment, Country, City, State,
-Postal Code, Region, Product ID, Category, Sub-Category,
-Product Name, Sales, Quantity, Discount, Profit
-```
-
----
-
-## Target Queries (Test Coverage)
-
-These 5 queries cover different reasoning types and stress test different parts of the pipeline:
-
-| # | Query | Reasoning Type |
-|---|---|---|
-| 1 | Count of orders for each month sorted highest to lowest | Grouping + sorting |
-| 2 | Sales of Furniture in California in Q1? | Multi-condition filtering |
-| 3 | How much time taken to ship a product once order is placed? Are certain products shipped faster? | Derived column calculation |
-| 4 | Is there a trend/pattern with sales month-wise for certain product categories? | Trend analysis |
-| 5 | Top 10 customers that contributed to max sales in last 3 months | Date filter + groupby + rank |
+Key columns: `Order Date`, `Ship Date`, `Ship Mode`, `Category`, `Sub-Category`, `Sales`, `Quantity`, `Discount`, `Profit`, `Customer Name`, `State`, `Region`, `Segment`
 
 ---
 
@@ -52,363 +79,157 @@ These 5 queries cover different reasoning types and stress test different parts 
 ```
 User Query
     ↓
-Schema Generator
+Schema Generator          → Converts raw dataset → concise JSON schema (never the raw df)
     ↓
-Planner (LLM)
+Planner (LLM)             → Query + schema → structured JSON execution plan
     ↓
-┌─────────────────────────────────────────┐
-│  Loop Controller                        │
-│  ┌─────────────────────────────────┐    │
-│  │ Executor                        │    │
-│  │     ↓                           │    │
-│  │ Tool Layer                      │    │
-│  │     ↓                           │    │
-│  │ Rule-Based Critic               │    │
-│  │     ↓ (pass / retry / replan)   │    │
-│  └─────────────────────────────────┘    │
-└─────────────────────────────────────────┘
+┌──────────────────────────────────────────────┐
+│  Loop Controller                             │
+│  ┌────────────────────────────────────────┐  │
+│  │ Executor                               │  │
+│  │     ↓                                  │  │
+│  │ Tool Layer  (10 predefined functions)  │  │
+│  │     ↓                                  │  │
+│  │ Rule-Based Critic  (8 deterministic    │  │
+│  │                     checks per step)   │  │
+│  │     ↓  pass / retry / replan           │  │
+│  └────────────────────────────────────────┘  │
+└──────────────────────────────────────────────┘
     ↓
-Answer Generator (LLM narrates result)
+Answer Generator (LLM)    → Narrates the result DataFrame in plain English
     ↓
-Final Answer + Trace
+Final Answer + Reasoning Trace
 ```
 
 ---
 
-## Component Design
+## Components
 
-### 1. Schema Generator
+### Schema Generator
+Converts the raw 9,994-row DataFrame into a concise JSON description safe to pass to an LLM. Captures dtype, min/max, median (numeric), sample values for low-cardinality columns, and date range.
 
-**Purpose:** Converts the raw dataset into a concise JSON description that the Planner can reason over. The full dataset (9,994 rows) cannot be passed to an LLM — only the schema is passed.
-
-**Input:** Raw dataframe
-
-**Output:** Condensed schema JSON (dtype + min/max + sample values only)
-
-**Logic:**
-- For every column: capture column name and dtype
-- For numeric columns (int/float): capture min, max, median
-- For categorical columns: capture unique count; sample values only for low-cardinality columns (≤15 unique values)
-- For datetime columns: capture min date and max date
-- Identifier/non-analytical columns excluded (Row ID, Order ID, Customer ID, etc.)
-
-**Example Output:**
 ```json
 {
   "Order Date": {"dtype": "datetime64[ns]", "min": "2021-01-01", "max": "2024-12-31"},
-  "Category": {"dtype": "object", "unique_count": 3, "sample_values": ["Furniture", "Technology", "Office Supplies"]},
-  "Sales": {"dtype": "float64", "min": 0.44, "max": 22638.48, "median": 54.49}
+  "Category":   {"dtype": "object", "unique_count": 3, "sample_values": ["Furniture", "Technology", "Office Supplies"]},
+  "Sales":      {"dtype": "float64", "min": 0.44, "max": 22638.48, "median": 54.49}
 }
 ```
 
-**Failure:** Returns `{"status": "error", "message": "..."}` if dataframe is empty or unreadable.
-
 ---
 
-### 2. Planner (LLM)
+### Planner (LLM)
+Converts a natural language query into a validated, step-by-step JSON execution plan.
 
-**Purpose:** Converts a natural language query into a structured, executable step-by-step plan.
+- **Model:** `qwen/qwen3-32b` via Groq API — temperature 0.0, deterministic output
+- **Validation:** Two layers — Pydantic (structure) + business logic checks (tool names, parameters, state store chain)
+- **Retry:** Re-calls LLM once with the validation error injected if the plan fails checks
 
-**Input:**
-- User query (natural language)
-- Condensed schema JSON (from schema generator)
-
-**Output:** Validated JSON plan with explicit steps, or an unsolvable/error response.
-
-**Model:** `llama-3.1-8b-instant` via Groq API — temperature=0.0, max_tokens=1024
-
-**Validation — two layers:**
-1. Pydantic (`PlanStep`, `PlanResponse`) — validates structure and types
-2. `_validate_plan()` — checks tool names, parameter names/presence (via `inspect.signature()`), sequential step numbers, unbroken state store chain
-
-**Output format:**
-```json
-{"status": "success", "plan": [...]}
-{"status": "unsolvable", "reason": "..."}
-{"status": "error", "message": "..."}
-```
-
-**Example Plan for "Top 10 customers by sales in last 3 months":**
+**Example plan for "Top 10 customers by sales in last 3 months":**
 ```json
 {
   "status": "success",
   "plan": [
-    {
-      "step": 1,
-      "tool": "date_filter",
-      "parameters": {"col_name": "Order Date", "time_period": "3M", "end_date": "2024-12-31"},
-      "input": "original_df",
-      "output": "step_1_output"
-    },
-    {
-      "step": 2,
-      "tool": "groupby_aggregate",
-      "parameters": {"group_col": "Customer Name", "agg_col": {"Sales": "sum"}},
-      "input": "step_1_output",
-      "output": "step_2_output"
-    },
-    {
-      "step": 3,
-      "tool": "sort",
-      "parameters": {"sort_col": {"Sales_sum": "desc"}},
-      "input": "step_2_output",
-      "output": "step_3_output"
-    },
-    {
-      "step": 4,
-      "tool": "top_n",
-      "parameters": {"N": 10},
-      "input": "step_3_output",
-      "output": "step_4_output"
-    }
+    {"step": 1, "tool": "date_filter",       "parameters": {"col_name": "Order Date", "time_period": "3M", "end_date": "2024-12-31"}, "input": "original_df",    "output": "step_1_output"},
+    {"step": 2, "tool": "groupby_aggregate", "parameters": {"group_col": "Customer Name", "agg_col": {"Sales": "sum"}},               "input": "step_1_output", "output": "step_2_output"},
+    {"step": 3, "tool": "sort",              "parameters": {"sort_col": {"Sales_sum": "desc"}},                                        "input": "step_2_output", "output": "step_3_output"},
+    {"step": 4, "tool": "top_n",             "parameters": {"N": 10},                                                                  "input": "step_3_output", "output": "step_4_output"}
   ]
 }
 ```
 
-**Retry:** Once on any failure (API error or validation error).
+---
+
+### Tool Layer
+10 predefined, callable functions. The LLM selects tools and specifies parameters — it never writes pandas code.
+
+| Tool | Purpose |
+|---|---|
+| `date_filter` | Filter rows within a lookback date range ending at a given date |
+| `filter_by_condition` | Filter rows by a single column value (`==`, `!=`, `>`, `>=`, `<`, `<=`) |
+| `extract_date_part` | Extract month / year / quarter / day into a new column |
+| `column_arithmetic` | Arithmetic between two columns; supports datetime subtraction (result = days) |
+| `groupby_aggregate` | Group by one or more columns and aggregate (sum, mean, count, min, max, median, std) |
+| `aggregate_column` | Single aggregate value over the whole dataset — no grouping; returns 1-row result |
+| `sort` | Sort by one or more columns (ascending or descending) |
+| `top_n` | Return the first N rows (always preceded by sort) |
+| `select_columns` | Keep only specified columns, drop the rest |
+| `rename_column` | Rename columns via a mapping |
+
+All tools return: `{"status": "success|error", "message": "...", "result": <DataFrame or None>}`
+
+**Key design decision:** `groupby` and `aggregate` are a single combined tool — `groupby` alone returns an unusable GroupBy object, never a DataFrame.
 
 ---
 
-### 3. Tool Layer
+### Executor
+Reads each step from the plan, calls the correct tool, and manages intermediate outputs in a state store.
 
-**Purpose:** A set of 9 predefined, callable functions. The LLM never writes free pandas code — it only selects tools and specifies parameters.
-
-**Why predefined tools over free code generation:**
-- Free code generation produces a black box every time — unpredictable, unsafe, hard to validate
-- Predefined tools have known input/output schemas — making validation, debugging, and observability straightforward
-- Every tool failure is caught the same way — no surprises
-
-**Standard Response Format (all tools):**
-```json
-{"status": "success|error", "message": "...", "result": <dataframe or None>}
 ```
-
-**Tool Definitions:**
-
-| Tool | Parameters | Purpose |
-|---|---|---|
-| `date_filter` | df, col_name, time_period, end_date | Filter rows within a lookback date range ending at end_date |
-| `filter_by_condition` | df, col_name, col_type, val_to_filter, operator | Filter rows by a single column value |
-| `extract_date_part` | df, col_name, part, new_col_name | Extract month/year/quarter/day into a new column |
-| `column_arithmetic` | df, col1, col2, operation, new_col_name, is_datetime | Arithmetic between two columns; use is_datetime=true for date subtraction |
-| `groupby_aggregate` | df, group_col, agg_col (dict) | GroupBy one or more columns + aggregate |
-| `sort` | df, sort_col (dict) | Sort by one or more columns asc/desc |
-| `top_n` | df, N | Return top N rows (always sort before top_n) |
-| `select_columns` | df, col_list | Keep only specified columns, drop the rest |
-| `rename_column` | df, rename_map (dict) | Rename columns via a mapping |
-
-**Key Design Decision:** `groupby` and `aggregate` are merged into a single tool (`groupby_aggregate`) because groupby alone returns a GroupBy object, not a usable dataframe. They are always used together.
-
----
-
-### 4. Executor
-
-**Purpose:** Reads each step from the planner's JSON plan, calls the correct tool with the correct parameters, and manages the flow of intermediate outputs between steps.
-
-**Input:** Validated plan from Planner + original DataFrame
-
-**Output:** `{"status", "final_df", "message", "trace"}`
-
-**State Store:**
-```python
-state = {
-  "original_df": <full dataset>,
+state_store = {
+  "original_df":   <full dataset>,
   "step_1_output": <df after step 1>,
   "step_2_output": <df after step 2>,
   ...
 }
 ```
 
-The state store is internal to the Executor — it is not returned in the pipeline output. The trace (shape + columns per step) is sufficient for debuggability without carrying full DataFrames.
-
-**Flow per step:**
-1. Fetch input df from state store by key
-2. Call the specified tool with parameters
-3. Pass result to Rule-Based Critic
-4. If critic passes → store output in state store → move to next step
-5. If critic fails → return error + partial trace to Loop Controller
+A failed step is never skipped — downstream steps depend on its output.
 
 ---
 
-### 5. Rule-Based Critic
-
-**Purpose:** Validates tool outputs after every step. Catches silent failures — cases where the tool ran without error but produced wrong or unusable output.
-
-**When it runs:** After every single tool execution, inside the loop.
-
-**Type:** Deterministic — no LLM, fast and cheap. First failing check short-circuits the rest.
-
-**Checks performed:**
+### Rule-Based Critic
+Runs after every tool call. Deterministic, no LLM — fast and cheap. First failing check short-circuits the rest.
 
 | Check | What It Catches |
 |---|---|
-| df is not None | Tool crashed silently |
-| df is not empty | Tool filtered out all rows |
+| Result is not None | Silent tool crash |
+| Result is not empty | Over-filtering removed all rows |
 | No fully empty columns | Key columns have no data |
-| Expected columns exist in output | Wrong column names or dropped columns |
-| groupby row count = unique values of group column | Aggregation correctness |
-| Top N output rows ≤ N | top_n tool working correctly |
-| Date filtered output within specified range | date_filter correctness |
-| Numeric aggregated columns are actually numeric | Type integrity after groupby |
-
-**Output:** `{"status": "pass"}` or `{"status": "fail", "check": str, "reason": str}`
+| Expected columns present | Wrong or dropped column names |
+| groupby row count = unique group values | Aggregation correctness |
+| top_n rows ≤ N | top_n working correctly |
+| Date filter within specified range | date_filter correctness |
+| Aggregated columns are numeric | Type integrity after groupby |
 
 ---
 
-### 6. Loop Controller
+### Loop Controller
+Orchestrates retries and exit conditions. Prevents infinite loops while allowing self-correction.
 
-**Purpose:** Orchestrates retries, replanning, and exit conditions. Prevents infinite loops and manages the system's error recovery behaviour.
-
-**Boundaries:**
-- **Per-step retry limit:** 2 retries per step (3 total attempts)
-- **Total execution cap:** `len(plan) × 2` — dynamic, scales with plan size
-
-**Retry Logic:**
-
-```
-Step fails (tool error or critic fail)
-    ↓
-fix_params called → [STUB: currently returns step unchanged]
-    ↓
-Retry step (up to 2 times)
-    ↓
-If still failing after 2 retries → call replanner
-    ↓
-replan → [STUB: currently returns error]
-    ↓
-Return partial trace + explanation
-```
-
-> **Note:** `fix_params` and `replan` are currently stubs. Retries re-run the identical step parameters. LLM-based parameter correction is the planned next implementation step.
-
-**Exit Conditions:**
-- Step fails after 2 retries and replan also fails → stop, return partial result + explanation
-- Total executions exceed `len(plan) × 2` → stop with cap-exceeded message
-
-**Key Design Decision:** A failed step is never skipped. Downstream steps depend on its state store output — skipping would corrupt the entire pipeline.
+- **Per-step retry limit:** 2 retries (3 total attempts per step)
+- **Total execution cap:** `len(plan) × 2` — scales dynamically with plan size
+- **Exit:** Returns partial trace + explanation if all retries are exhausted
 
 ---
 
-### 7. Answer Generator
+### Answer Generator
+Narrates the final computed DataFrame in plain English.
 
-**Purpose:** Narrates the final computed DataFrame in plain English.
-
-**When it runs:** Once, after the loop completes successfully — outside the loop.
-
-**Model:** `llama-3.1-8b-instant` via Groq API — temperature=0.3, max_tokens=256
-
-**Input:** Original user query + final DataFrame (always small post-aggregation)
-
-**Output:** `{"status": "success", "answer": str}` or `{"status": "error", "message": str}`
-
-**Key Design Decision:** Answer Generator failure is non-critical — the pipeline returns the DataFrame regardless. The LLM narrates computed data only, so there is no hallucination risk on numbers.
+- **Model:** `qwen/qwen3-32b` via Groq API — temperature 0.3
+- Runs once, after the loop completes — outside the retry loop
+- Failure is non-critical: pipeline returns the DataFrame regardless
 
 ---
 
-### 8. Observability
+### Observability
+One log file per run (`logs/run_YYYY_MM_DD_HH_MM_SS.log`), with a unique `run_id` linking every event for that query.
 
-**Purpose:** Log every decision the system makes so the full execution can be reconstructed and debugged.
-
-**Every log entry carries:**
-- `run_id` — unique 8-char identifier linking all log entries for one query run
-- `timestamp` — when this event occurred
-
-**Logging Points:**
-
-| Point | Core Content |
+| Logged Event | What It Captures |
 |---|---|
-| Query received | query text |
-| Schema generator | column count, column names |
-| Planner | step count, plan summary (tool chain) |
-| Tool call started | tool name, input shape, parameters |
-| Tool call completed | status, message, output shape |
-| Step executed | step, tool, status, critic verdict, output shape |
-| Answer generator | answer text or error |
-| Pipeline complete / error | status, total executions, steps in plan |
-
-**Log files:** `logs/run_YYYY_MM_DD_HH_MM_SS.log` — one per pipeline run. Console shows compact one-liners; file shows expanded detail.
-
----
-
-## Build Status
-
-| Component | File | Status |
-|---|---|---|
-| Tool Layer (9 tools) | `src/tools/*.py` | Done |
-| TOOL_REGISTRY | `src/tools/tools.py` | Done |
-| Schema Generator | `src/core/schema_gen.py` | Done |
-| Planner (LLM) | `src/core/planner.py` | Done |
-| Executor + State Store | `src/core/executor.py` | Done |
-| Rule-Based Critic | `src/critics/rule_based_critic.py` | Done |
-| Loop Controller | `src/core/loop_controller.py` | Done |
-| Answer Generator | `src/core/answer_generator.py` | Done |
-| Observability / Logging | `src/utils/logger.py` | Done |
-| Pipeline | `src/core/pipeline.py` | Done |
-| Streamlit UI | `app.py` | Done |
-| Param Fixer | `src/core/param_fixer.py` | Stub only |
-| Replanner | `src/core/replanner.py` | Stub only |
-| Evaluation Pipeline | `eval/` | Done |
-
----
-
-## Tech Stack
-
-| Component | Technology |
-|---|---|
-| Language | Python |
-| Data operations | Pandas |
-| LLM | Groq API — `llama-3.1-8b-instant` |
-| Structured output | Pydantic |
-| UI | Streamlit |
-| Logging | Python logging / plain text .log files |
-
----
-
-## Streamlit UI Panels
-
-1. **Query input** — natural language question
-2. **Answer panel** — LLM-generated plain English answer (shown first)
-3. **Result table** — final DataFrame output
-4. **Execution trace** — per-step tool, status, critic verdict, output shape
-5. **Plan steps** — steps planned by the LLM (tool + parameters + input/output keys)
-6. **Schema panel** — condensed schema sent to the Planner
-
----
-
-## Key Architectural Decisions
-
-| Decision | Choice | Reason |
-|---|---|---|
-| Free code gen vs predefined tools | Predefined tools | Safer, validatable, debuggable — no black box |
-| Tool count | 9 tools | Covers all query types including date extraction, arithmetic, projection, rename |
-| groupby + aggregate | Single combined tool | groupby alone returns unusable GroupBy object |
-| Critic type | Rule-based only (deterministic) | LLM critic adds latency without reliable signal; rule-based covers all structural failures |
-| State store | Dict keyed by step output name | Enables retry from failure point, not from scratch |
-| Retry limits | 2 retries + 1 replan + dynamic cap (`len(plan) × 2`) | Prevents infinite loops while allowing self-correction |
-| Schema passed to Planner | Condensed (dtype + min/max + sample values) | Fewer tokens; 8B model handles it better |
-| Parameter validation | `inspect.signature()` against real tool functions | Catches missing/unknown params before Executor runs |
-| State store scope | Internal to Executor, not returned in output | Trace (shape + columns) is sufficient for debugging — raw dfs are heavy |
-| Quarter filtering | `extract_date_part` → `filter_by_condition` | `date_filter` uses lookback — not suited for fixed calendar quarters |
-
----
-
-## Failure Modes
-
-| Failure | How Triggered | Expected Behaviour |
-|---|---|---|
-| Wrong column name in plan | Ambiguous query | Rule-based critic catches; retry re-runs (param fixer is stub) |
-| Empty result after filter | Over-specific filter | Critic catches empty df; retry re-runs |
-| Ambiguous time reference | "recent sales" with no date | Planner uses dataset max date as end_date |
-| Max retries exceeded | Repeatedly wrong parameters | Loop controller stops, returns partial trace + explanation |
-| Unsolvable query | Query needs tools not available | Planner returns `{"status": "unsolvable", "reason": "..."}` |
+| Schema generated | Column count, column names |
+| Plan received | Tool chain, step count |
+| Tool call started | Tool name, input shape, parameters |
+| Tool call completed | Status, output shape, message |
+| Step executed | Tool, status, critic verdict, output shape |
+| Answer generated | Final narrative or error |
+| Pipeline complete | Status, total executions, plan step count |
 
 ---
 
 ## Evaluation Pipeline
 
-**Run:** `python eval/run_eval.py`
-
-30 queries with manually written ground truth, organized into 6 groups covering every reasoning type the pipeline handles:
+**30 queries** with manually written ground truth, organized into 6 groups:
 
 | Group | Reasoning Type | Queries |
 |---|---|---|
@@ -421,16 +242,49 @@ Return partial trace + explanation
 
 **Ground truth:** Pure pandas functions per query — no LLM, deterministic, manually verified.
 
-**Comparison modes (per query):**
-- `value_only` — extracts all numeric cell values, sorts and compares with 1% float tolerance. Used when pipeline output column naming is unpredictable (scalar results, derived columns).
-- `full` — shape + column set + sort-then-compare cell values. Used for multi-row unordered results.
-- `ordered` — shape + column set + positional row comparison. Used for ranked/top-N results where row order encodes rank.
-
-**Metrics reported:**
-- Pipeline success rate (did it produce a result?)
-- Value match rate (are the numbers correct?)
-- Full match rate (shape + columns + values)
-- Avg retries and avg executions per query
-- Per-group breakdown across all 6 groups
+**Comparison modes:**
+- `value_only` — extracts all numeric values, sorts, and compares within 1% float tolerance
+- `full` — shape + column set + sort-then-compare values
+- `ordered` — shape + column set + positional comparison (for ranked results where order = rank)
 
 **Output:** JSON + CSV + text report saved to `eval/results/` with timestamp.
+
+---
+
+## Tech Stack
+
+| Component | Technology |
+|---|---|
+| Language | Python |
+| Data operations | Pandas |
+| LLM | Groq API — `qwen/qwen3-32b` |
+| Structured output | Pydantic |
+| UI | Streamlit |
+| Logging | Python `logging` — console + per-run `.log` files |
+
+---
+
+## Key Design Decisions
+
+| Decision | Choice | Reason |
+|---|---|---|
+| Predefined tools vs free code generation | Predefined tools | Safe, validatable, debuggable — no black box |
+| Critic type | Rule-based only (deterministic) | LLM critic adds latency without reliable signal |
+| State store | Dict keyed by step output name | Enables retry from the failure point, not from scratch |
+| Retry limits | 2 retries + dynamic cap (`len(plan) × 2`) | Prevents infinite loops while allowing self-correction |
+| Schema passed to Planner | Condensed (dtype + min/max + sample values) | Fewer tokens; model handles narrow structured tasks better |
+| Quarter filtering | `extract_date_part` → `filter_by_condition` | `date_filter` uses lookback windows — not suitable for fixed calendar quarters |
+| groupby + aggregate | Single combined tool | `groupby` alone returns an unusable GroupBy object, never a DataFrame |
+| Answer Generator failure | Non-critical — pipeline returns DataFrame regardless | Narration is supplementary; computed data is the primary output |
+
+---
+
+## Failure Modes
+
+| Failure | How Triggered | Behaviour |
+|---|---|---|
+| Wrong column name in plan | Ambiguous query | Rule-based critic catches; step retried |
+| Empty result after filter | Over-specific filter | Critic catches empty df; step retried |
+| Ambiguous time reference | "recent sales" with no date | Planner uses dataset max date as `end_date` |
+| Max retries exceeded | Repeatedly wrong parameters | Loop controller stops, returns partial trace + explanation |
+| Unsolvable query | Query needs unavailable tools | Planner returns `{"status": "unsolvable", "reason": "..."}` — no partial plan |
