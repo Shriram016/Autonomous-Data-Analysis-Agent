@@ -20,6 +20,13 @@ PLANNER_MAX_TOKENS: int = 1024
 PLANNER_TIMEOUT_SECONDS: int = 90   # Abort LLM call if no response within this time
 
 # ---------------------------------------------------------------------------
+# Answer Generator LLM settings
+# ---------------------------------------------------------------------------
+# Small non-reasoning instruct model — avoids <think> reasoning traces
+# leaking into the user-facing answer (qwen3 emits these by default).
+ANSWER_MODEL: str = "llama-3.1-8b-instant"
+
+# ---------------------------------------------------------------------------
 # Loop Controller limits
 # ---------------------------------------------------------------------------
 MAX_RETRIES_PER_STEP: int = 2       # Max retry attempts per failed step

@@ -3,7 +3,7 @@ from typing import Any, Dict, Optional
 import pandas as pd
 from groq import Groq, APIConnectionError, APIStatusError, APITimeoutError
 
-from src.config import GROQ_API_KEY, PLANNER_MODEL, PLANNER_TIMEOUT_SECONDS
+from src.config import GROQ_API_KEY, ANSWER_MODEL, PLANNER_TIMEOUT_SECONDS
 
 
 # ---------------------------------------------------------------------------
@@ -97,7 +97,7 @@ Write a 2-3 sentence answer."""
 
     try:
         response = client.chat.completions.create(
-            model=PLANNER_MODEL,
+            model=ANSWER_MODEL,
             temperature=0.3,
             max_tokens=256,
             timeout=PLANNER_TIMEOUT_SECONDS,
