@@ -98,7 +98,7 @@ class _FileFormatter(logging.Formatter):
         if event in (
             "pipeline_error", "pipeline_crash",
             "planner_failed", "schema_gen_failed", "data_loader_failed",
-            "loop_controller_failed",
+            "loop_controller_failed", "replanner_failed",
         ):
             msg = payload.get("message", "")
             if msg:
@@ -119,6 +119,12 @@ class _FileFormatter(logging.Formatter):
 
         # Expand step error
         if event == "step_executed" and payload.get("status") == "error":
+            msg = payload.get("message", "")
+            if msg:
+                lines.append(f"             ERROR: {msg}")
+
+        # Expand execute_step_node failure
+        if event == "execute_step_failed":
             msg = payload.get("message", "")
             if msg:
                 lines.append(f"             ERROR: {msg}")
@@ -190,6 +196,36 @@ def _summarise(event: str, payload: Dict[str, Any]) -> str:
         shape   = payload.get("output_shape")
         shape_s = f"{shape[0]} rows x {shape[1]} cols" if shape else "no output"
         return f"step {step} | {tool} | {status} | output: {shape_s}"
+
+    # Execute Step Node (V2)
+    if event == "execute_step_started":
+        step   = payload.get("step", "?")
+        tool   = payload.get("tool", "?")
+        params = ", ".join(f"{k}={v}" for k, v in payload.get("parameters", {}).items())
+        return f"step {step} | {tool} | params: {params}"
+    if event == "execute_step_completed":
+        step    = payload.get("step", "?")
+        tool    = payload.get("tool", "?")
+        shape   = payload.get("output_shape")
+        shape_s = f"{shape[0]} rows x {shape[1]} cols" if shape else "no output"
+        return f"step {step} | {tool} | SUCCESS | output: {shape_s}"
+    if event == "execute_step_failed":
+        step = payload.get("step", "?")
+        tool = payload.get("tool", "?")
+        return f"step {step} | {tool} | FAIL | {payload.get('message', 'unknown error')}"
+
+    # Param Fixer / Replanner Nodes (V2)
+    if event == "param_fixer_started":
+        return f"step {payload.get('step', '?')} | {payload.get('tool', '?')} | error: {payload.get('message', '')}"
+    if event == "param_fixer_completed":
+        params = ", ".join(f"{k}={v}" for k, v in payload.get("parameters", {}).items())
+        return f"step {payload.get('step', '?')} | {payload.get('tool', '?')} | new params: {params}"
+    if event == "replanner_started":
+        return f"failed step {payload.get('failed_step', '?')} | {payload.get('tool', '?')} | error: {payload.get('message', '')}"
+    if event == "replanner_completed":
+        return f"{payload.get('step_count', '?')} steps | {payload.get('plan_summary', '')}"
+    if event == "replanner_failed":
+        return payload.get("message", "unknown error")
 
     # Step execution
     if event == "step_executed":

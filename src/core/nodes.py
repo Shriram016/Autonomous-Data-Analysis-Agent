@@ -19,6 +19,9 @@ import pandas as pd
 from src.core.state import PipelineState
 from src.core.schema_gen import generate_schema
 from src.core.planner import plan
+from src.core.executor import _run_step
+from src.core.param_fixer import fix_params
+from src.core.replanner import replan
 from src.core.answer_generator import generate_answer
 from src.utils.data_loader import DATE_COLUMNS
 from src.utils.logger import get_logger, log_event
@@ -110,6 +113,200 @@ def planner_node(state: PipelineState) -> Dict[str, Any]:
     })
 
     return {"plan": plan_steps, "max_executions": max_executions}
+
+
+# ---------------------------------------------------------------------------
+# Execute Step Node
+# ---------------------------------------------------------------------------
+
+def execute_step_node(state: PipelineState) -> Dict[str, Any]:
+    """
+    Wraps _run_step(). Runs ONE step of the plan per invocation (the step at
+    `current_step_index`), reads `plan` + `state_store` from state, and
+    writes back updated `state_store`, `trace`, `total_executions`.
+
+    The rule-based critic runs inline inside _run_step() — no separate node.
+
+    On success:
+        - Stores the step's output DataFrame in `state_store` under
+          `step.output` and as `final_df`.
+        - Advances `current_step_index` by 1 and resets `retry_count` to 0.
+        - Sets `status="running"` (clears any error left over from a
+          previous failed attempt of this same step).
+
+    On failure:
+        - `current_step_index` and `state_store` are left unchanged, so a
+          retry (after param_fixer_node, Step 5) re-runs the same step.
+        - Sets `status="error"` + `message` for the conditional edge
+          (Step 4) to inspect.
+
+    `trace` and `state_store` are returned as new objects (not mutated in
+    place), since PipelineState fields are overwritten rather than merged.
+    """
+    run_id = state["run_id"]
+    logger = get_logger(run_id)
+    plan_steps = state["plan"]
+    idx = state["current_step_index"]
+
+    if idx >= len(plan_steps):
+        msg = f"current_step_index ({idx}) out of range for plan with {len(plan_steps)} step(s)."
+        log_event(logger, run_id, "execute_step_failed", {"message": msg})
+        return {"status": "error", "message": msg}
+
+    step = plan_steps[idx]
+    state_store = state["state_store"]
+
+    log_event(logger, run_id, "execute_step_started", {
+        "step": step.step,
+        "tool": step.tool,
+        "parameters": step.parameters,
+    })
+
+    step_result = _run_step(step, state_store, logger=logger, run_id=run_id)
+    new_trace = state["trace"] + [step_result["trace_record"]]
+    new_total_executions = state["total_executions"] + 1
+
+    if step_result["status"] == "success":
+        result_df = step_result["result_df"]
+        log_event(logger, run_id, "execute_step_completed", {
+            "step": step.step,
+            "tool": step.tool,
+            "output_shape": tuple(result_df.shape),
+        })
+        return {
+            "state_store": {**state_store, step.output: result_df},
+            "trace": new_trace,
+            "total_executions": new_total_executions,
+            "final_df": result_df,
+            "current_step_index": idx + 1,
+            "retry_count": 0,
+            "status": "running",
+            "message": "",
+        }
+
+    log_event(logger, run_id, "execute_step_failed", {
+        "step": step.step,
+        "tool": step.tool,
+        "message": step_result["message"],
+    })
+    return {
+        "trace": new_trace,
+        "total_executions": new_total_executions,
+        "status": "error",
+        "message": step_result["message"],
+    }
+
+
+# ---------------------------------------------------------------------------
+# Param Fixer Node
+# ---------------------------------------------------------------------------
+
+def param_fixer_node(state: PipelineState) -> Dict[str, Any]:
+    """
+    Wraps fix_params(). Reads the failed step (`plan[current_step_index]`)
+    and the error from the last execute_step_node attempt, writes a
+    corrected `plan` and increments `retry_count`.
+
+    fix_params() is currently a stub that returns the step unchanged, so
+    the corrected plan is identical until Step 5 implements it as an LLM
+    node. Clears `status`/`message` so the retried execute_step_node starts
+    clean.
+    """
+    run_id = state["run_id"]
+    logger = get_logger(run_id)
+    idx = state["current_step_index"]
+    step = state["plan"][idx]
+
+    error_context = {
+        "message": state["message"],
+        "trace_record": state["trace"][-1] if state["trace"] else {},
+    }
+
+    log_event(logger, run_id, "param_fixer_started", {
+        "step": step.step,
+        "tool": step.tool,
+        "message": state["message"],
+    })
+
+    fixed_step = fix_params(step, error_context, state["query"], state["schema"])
+
+    new_plan = list(state["plan"])
+    new_plan[idx] = fixed_step
+
+    log_event(logger, run_id, "param_fixer_completed", {
+        "step": fixed_step.step,
+        "tool": fixed_step.tool,
+        "parameters": fixed_step.parameters,
+    })
+
+    return {
+        "plan": new_plan,
+        "retry_count": state["retry_count"] + 1,
+        "status": "running",
+        "message": "",
+    }
+
+
+# ---------------------------------------------------------------------------
+# Replanner Node
+# ---------------------------------------------------------------------------
+
+def replanner_node(state: PipelineState) -> Dict[str, Any]:
+    """
+    Wraps replan(). Reads the failed step + error context + full trace so
+    far, asks for a completely new plan.
+
+    On success: writes the new `plan`, resets `current_step_index`,
+    `retry_count`, and `state_store` (back to just `original_df`) so
+    execute_step_node restarts cleanly, and recomputes `max_executions`.
+
+    On failure: sets `status="error"` + `message` so the conditional edge
+    (Step 4) routes to END.
+
+    replan() is currently a stub that always returns an error, so the
+    success path is exercised only by hand-built states until Step 6
+    implements it as an LLM node.
+    """
+    run_id = state["run_id"]
+    logger = get_logger(run_id)
+    idx = state["current_step_index"]
+    failed_step = state["plan"][idx]
+
+    error_context = {
+        "failed_step": failed_step,
+        "message": state["message"],
+        "trace": state["trace"],
+    }
+    planner_output = {"status": "success", "plan": state["plan"]}
+
+    log_event(logger, run_id, "replanner_started", {
+        "failed_step": failed_step.step,
+        "tool": failed_step.tool,
+        "message": state["message"],
+    })
+
+    result = replan(planner_output, error_context, state["query"], state["schema"])
+
+    if result.get("status") != "success":
+        msg = f"Replanner failed: {result.get('message', 'Unknown error.')}"
+        log_event(logger, run_id, "replanner_failed", {"message": msg})
+        return {"status": "error", "message": msg}
+
+    new_plan = result["plan"]
+    log_event(logger, run_id, "replanner_completed", {
+        "step_count": len(new_plan),
+        "plan_summary": " -> ".join(s.tool for s in new_plan),
+    })
+
+    return {
+        "plan": new_plan,
+        "max_executions": len(new_plan) * 2,
+        "current_step_index": 0,
+        "retry_count": 0,
+        "state_store": {"original_df": state["original_df"]},
+        "status": "running",
+        "message": "",
+    }
 
 
 # ---------------------------------------------------------------------------
