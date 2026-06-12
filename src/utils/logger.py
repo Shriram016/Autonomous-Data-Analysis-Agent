@@ -220,6 +220,11 @@ def _summarise(event: str, payload: Dict[str, Any]) -> str:
     if event == "param_fixer_completed":
         params = ", ".join(f"{k}={v}" for k, v in payload.get("parameters", {}).items())
         return f"step {payload.get('step', '?')} | {payload.get('tool', '?')} | new params: {params}"
+    if event == "param_fixer_validation_failed":
+        retrying = "retrying" if payload.get("retrying") else "giving up"
+        return f"{payload.get('reason', 'unknown error')} | {retrying}"
+    if event == "param_fixer_llm_failed":
+        return payload.get("message", "unknown error")
     if event == "replanner_started":
         return f"failed step {payload.get('failed_step', '?')} | {payload.get('tool', '?')} | error: {payload.get('message', '')}"
     if event == "replanner_completed":

@@ -20,6 +20,14 @@ PLANNER_MAX_TOKENS: int = 1024
 PLANNER_TIMEOUT_SECONDS: int = 90   # Abort LLM call if no response within this time
 
 # ---------------------------------------------------------------------------
+# Param Fixer LLM settings
+# ---------------------------------------------------------------------------
+PARAM_FIXER_MODEL: str = "qwen/qwen3-32b"
+PARAM_FIXER_TEMPERATURE: float = 0.0
+PARAM_FIXER_MAX_TOKENS: int = 1024
+PARAM_FIXER_TIMEOUT_SECONDS: int = 90
+
+# ---------------------------------------------------------------------------
 # Answer Generator LLM settings
 # ---------------------------------------------------------------------------
 # Small non-reasoning instruct model — avoids <think> reasoning traces

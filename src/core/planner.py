@@ -28,6 +28,49 @@ class PlanResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Shared Parameter Validator
+# ---------------------------------------------------------------------------
+
+def validate_tool_parameters(tool_name: str, parameters: dict) -> Tuple[bool, str]:
+    """
+    Validates a parameters dict against a tool's actual function signature.
+
+    Checks:
+    - All required parameters are present
+    - No unknown parameters are present
+
+    Args:
+        tool_name  : Name of the tool (must exist in TOOL_REGISTRY).
+        parameters : The parameters dict to validate (excluding "df").
+
+    Returns:
+        (True, "")          if valid
+        (False, reason_str) if invalid — reason describes missing/unknown params
+    """
+    tool_fn = TOOL_REGISTRY[tool_name]
+    sig = inspect.signature(tool_fn)
+
+    required_params = {
+        name for name, param in sig.parameters.items()
+        if param.default is inspect.Parameter.empty and name != "df"
+    }
+    all_params = {name for name in sig.parameters if name != "df"}
+    provided_params = set(parameters.keys())
+
+    missing = required_params - provided_params
+    if missing:
+        return False, f"Missing required parameters: {sorted(missing)}."
+
+    extra = provided_params - all_params
+    if extra:
+        return False, (
+            f"Unknown parameters: {sorted(extra)}. Accepted parameters: {sorted(all_params)}."
+        )
+
+    return True, ""
+
+
+# ---------------------------------------------------------------------------
 # Plan Validator (business logic checks — structure handled by Pydantic)
 # ---------------------------------------------------------------------------
 
@@ -72,28 +115,9 @@ def _validate_plan(plan: List[PlanStep]) -> Tuple[bool, str]:
             )
 
         # Parameter validation — check against actual tool function signature
-        tool_fn = TOOL_REGISTRY[step.tool]
-        sig = inspect.signature(tool_fn)
-
-        required_params = {
-            name for name, param in sig.parameters.items()
-            if param.default is inspect.Parameter.empty and name != "df"
-        }
-        all_params = {name for name in sig.parameters if name != "df"}
-        provided_params = set(step.parameters.keys())
-
-        missing = required_params - provided_params
-        if missing:
-            return False, (
-                f"Step {i + 1} ({step.tool}) is missing required parameters: {sorted(missing)}."
-            )
-
-        extra = provided_params - all_params
-        if extra:
-            return False, (
-                f"Step {i + 1} ({step.tool}) has unknown parameters: {sorted(extra)}. "
-                f"Accepted parameters: {sorted(all_params)}."
-            )
+        is_valid_params, param_reason = validate_tool_parameters(step.tool, step.parameters)
+        if not is_valid_params:
+            return False, f"Step {i + 1} ({step.tool}): {param_reason}"
 
         # Sequential step number check
         expected_step_num = i + 1

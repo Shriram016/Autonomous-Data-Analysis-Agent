@@ -6,11 +6,11 @@ Three checks:
   1. Routing unit tests — call the _route_after_* functions directly with
      hand-built state dicts to confirm each branch (success/fail, more
      steps/last step, retries left/exhausted, cap hit).
-  2. Forced-failure path — a small sub-graph (execute_step / param_fixer /
-     replanner only) driven with a deliberately bad 2-step plan, to confirm
-     the real graph routes: execute_step -> param_fixer -> execute_step ->
-     param_fixer -> execute_step -> replanner -> END (replanner is still a
-     stub that always errors, per Step 6 TODO).
+  2. Param fixer recovery path — a small sub-graph (execute_step / param_fixer /
+     replanner only) driven with a deliberately bad 2-step plan (bad column
+     name), to confirm the real (Step 5) param_fixer corrects the bad column
+     on the first retry and the sub-graph routes: execute_step (fail) ->
+     param_fixer (fix) -> execute_step (success) -> execute_step (success) -> END.
   3. Happy path — the full compiled graph (build_graph()) run against a
      real query with a real LLM plan + execution + answer.
 
@@ -119,7 +119,8 @@ def check_routing():
 
 
 # ---------------------------------------------------------------------------
-# 2. Forced-failure path: execute_step -> param_fixer (x2) -> replanner -> END
+# 2. Param fixer recovery path: execute_step (fail) -> param_fixer (fix) ->
+#    execute_step (success) -> execute_step (success) -> END
 # ---------------------------------------------------------------------------
 
 def _build_execute_subgraph():
@@ -147,8 +148,8 @@ def _build_execute_subgraph():
     return graph.compile()
 
 
-def check_forced_failure(df: pd.DataFrame):
-    print("=== Forced-failure path (param_fixer x2 -> replanner -> END) ===")
+def check_param_fixer_recovery(df: pd.DataFrame):
+    print("=== Param fixer recovery path (bad column -> param_fixer fixes -> success) ===")
 
     bad_plan = [
         PlanStep(
@@ -178,14 +179,18 @@ def check_forced_failure(df: pd.DataFrame):
     print(f"retry_count: {final_state['retry_count']}")
     print(f"total_executions: {final_state['total_executions']}")
     print(f"trace length: {len(final_state['trace'])}")
+    print(f"fixed step 1 parameters: {final_state['plan'][0].parameters}")
 
-    assert final_state["status"] == "error"
-    assert "Replanner failed" in final_state["message"]
-    assert final_state["retry_count"] == MAX_RETRIES_PER_STEP
-    assert final_state["total_executions"] == MAX_RETRIES_PER_STEP + 1
-    assert len(final_state["trace"]) == MAX_RETRIES_PER_STEP + 1
-    assert all(t["status"] == "error" for t in final_state["trace"])
-    assert final_state["current_step_index"] == 0  # never advanced
+    assert final_state["status"] == "running"  # completed successfully, no error
+    assert final_state["current_step_index"] == len(bad_plan)  # both steps completed
+    assert final_state["retry_count"] == 0  # reset after the successful retry
+    assert final_state["total_executions"] == 3  # 1 failed attempt + 2 successful
+    assert len(final_state["trace"]) == 3
+    assert final_state["trace"][0]["status"] == "error"
+    assert final_state["trace"][1]["status"] == "success"
+    assert final_state["trace"][2]["status"] == "success"
+    assert final_state["plan"][0].parameters["col_name"] != "Nonexistent Column"
+    assert final_state["final_df"] is not None
 
     print("PASS\n")
 
@@ -230,7 +235,7 @@ def main():
     print(f"Loaded original_df: {df.shape}\n")
 
     check_routing()
-    check_forced_failure(df)
+    check_param_fixer_recovery(df)
     check_happy_path(df)
 
     print("ALL CHECKS PASSED")

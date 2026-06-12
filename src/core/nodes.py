@@ -207,19 +207,26 @@ def param_fixer_node(state: PipelineState) -> Dict[str, Any]:
     and the error from the last execute_step_node attempt, writes a
     corrected `plan` and increments `retry_count`.
 
-    fix_params() is currently a stub that returns the step unchanged, so
-    the corrected plan is identical until Step 5 implements it as an LLM
-    node. Clears `status`/`message` so the retried execute_step_node starts
-    clean.
+    fix_params() calls an LLM to correct the step's parameters, falling back
+    to the step unchanged if the LLM call fails or the correction is still
+    invalid after one retry. Clears `status`/`message` so the retried
+    execute_step_node starts clean.
     """
     run_id = state["run_id"]
     logger = get_logger(run_id)
     idx = state["current_step_index"]
     step = state["plan"][idx]
 
+    input_df = state["state_store"].get(step.input)
+    current_columns = (
+        {col: str(dtype) for col, dtype in input_df.dtypes.items()}
+        if input_df is not None else {}
+    )
+
     error_context = {
         "message": state["message"],
         "trace_record": state["trace"][-1] if state["trace"] else {},
+        "current_columns": current_columns,
     }
 
     log_event(logger, run_id, "param_fixer_started", {
@@ -228,7 +235,7 @@ def param_fixer_node(state: PipelineState) -> Dict[str, Any]:
         "message": state["message"],
     })
 
-    fixed_step = fix_params(step, error_context, state["query"], state["schema"])
+    fixed_step = fix_params(step, error_context, state["query"], state["schema"], logger=logger, run_id=run_id)
 
     new_plan = list(state["plan"])
     new_plan[idx] = fixed_step
