@@ -28,6 +28,14 @@ PARAM_FIXER_MAX_TOKENS: int = 1024
 PARAM_FIXER_TIMEOUT_SECONDS: int = 90
 
 # ---------------------------------------------------------------------------
+# Replanner LLM settings
+# ---------------------------------------------------------------------------
+REPLANNER_MODEL: str = "qwen/qwen3-32b"
+REPLANNER_TEMPERATURE: float = 0.0
+REPLANNER_MAX_TOKENS: int = 1024
+REPLANNER_TIMEOUT_SECONDS: int = 90
+
+# ---------------------------------------------------------------------------
 # Answer Generator LLM settings
 # ---------------------------------------------------------------------------
 # Small non-reasoning instruct model — avoids <think> reasoning traces

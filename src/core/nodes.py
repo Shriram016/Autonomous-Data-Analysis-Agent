@@ -292,7 +292,13 @@ def replanner_node(state: PipelineState) -> Dict[str, Any]:
         "message": state["message"],
     })
 
-    result = replan(planner_output, error_context, state["query"], state["schema"])
+    result = replan(planner_output, error_context, state["query"], state["schema"], logger=logger, run_id=run_id)
+
+    if result.get("status") == "unsolvable":
+        reason = result.get("message", "No reason provided.")
+        msg = f"Query cannot be answered with available tools: {reason}"
+        log_event(logger, run_id, "replanner_failed", {"message": msg})
+        return {"status": "unsolvable", "message": msg}
 
     if result.get("status") != "success":
         msg = f"Replanner failed: {result.get('message', 'Unknown error.')}"

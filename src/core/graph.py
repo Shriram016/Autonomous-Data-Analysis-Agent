@@ -64,7 +64,9 @@ def _route_after_execute_step(state: PipelineState) -> str:
 
 
 def _route_after_replanner(state: PipelineState) -> str:
-    return END if state["status"] == "error" else "execute_step"
+    if state["status"] in ("error", "unsolvable"):
+        return END
+    return "execute_step"
 
 
 # ---------------------------------------------------------------------------

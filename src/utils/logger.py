@@ -231,6 +231,11 @@ def _summarise(event: str, payload: Dict[str, Any]) -> str:
         return f"{payload.get('step_count', '?')} steps | {payload.get('plan_summary', '')}"
     if event == "replanner_failed":
         return payload.get("message", "unknown error")
+    if event == "replanner_validation_failed":
+        retrying = "retrying" if payload.get("retrying") else "giving up"
+        return f"{payload.get('reason', 'unknown error')} | {retrying}"
+    if event == "replanner_llm_failed":
+        return payload.get("message", "unknown error")
 
     # Step execution
     if event == "step_executed":
