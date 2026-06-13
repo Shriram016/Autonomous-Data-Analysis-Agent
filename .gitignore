@@ -25,6 +25,9 @@ build/
 *.log
 logs/
 
+# LangGraph checkpoints (runtime state)
+checkpoints/
+
 # OS
 .DS_Store
 Thumbs.db
