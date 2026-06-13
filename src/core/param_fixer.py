@@ -72,6 +72,7 @@ def _call_groq(
             temperature=PARAM_FIXER_TEMPERATURE,
             max_tokens=PARAM_FIXER_MAX_TOKENS,
             response_format={"type": "json_object"},
+            reasoning_effort="low",
             timeout=PARAM_FIXER_TIMEOUT_SECONDS,
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},

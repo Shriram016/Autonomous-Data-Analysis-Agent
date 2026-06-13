@@ -64,6 +64,7 @@ def _call_groq(
             temperature=REPLANNER_TEMPERATURE,
             max_tokens=REPLANNER_MAX_TOKENS,
             response_format={"type": "json_object"},
+            reasoning_effort="low",
             timeout=REPLANNER_TIMEOUT_SECONDS,
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},

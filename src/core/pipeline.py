@@ -4,12 +4,15 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
-from src.utils.data_loader import load_dataset, DATE_COLUMNS
+from src.utils.data_loader import load_dataset
 from src.utils.logger import get_logger, log_event
-from src.core.schema_gen import generate_schema
-from src.core.planner import plan, PlanStep
-from src.core.loop_controller import run
-from src.core.answer_generator import generate_answer
+from src.core.planner import PlanStep
+from src.core.graph import build_graph
+from src.config import GRAPH_RECURSION_LIMIT
+# from src.core.schema_gen import generate_schema
+# from src.core.planner import plan
+# from src.core.loop_controller import run
+# from src.core.answer_generator import generate_answer
 
 
 # ---------------------------------------------------------------------------
@@ -52,9 +55,9 @@ def run_pipeline(query: str) -> Dict[str, Any]:
 
     Stages:
         1. Load dataset from fixed path (data/Sample - Superstore.csv)
-        2. Generate schema (passed to Planner — raw df never sent to LLM)
-        3. Plan (LLM converts query + schema → structured JSON plan)
-        4. Execute (Loop Controller runs plan with retry/replan logic)
+        2. Run the V2 LangGraph (schema_gen -> planner -> execute_step loop
+           -> answer_gen), which replaces the old schema_gen/planner/
+           loop_controller calls below.
 
     Args:
         query : Natural language query from the user.
@@ -95,133 +98,77 @@ def run_pipeline(query: str) -> Dict[str, Any]:
         })
 
         # ------------------------------------------------------------------
-        # Stage 2 — Schema Generator
+        # Stage 2 — Schema Gen / Planner / Execute / Answer (LangGraph)
         # ------------------------------------------------------------------
-        log_event(logger, run_id, "schema_gen_started", {"rows": len(df), "cols": len(df.columns)})
+        # The graph (src/core/graph.py) wires together schema_gen_node,
+        # planner_node, execute_step_node (looped via conditional edges,
+        # with param_fixer/replanner on failure), and answer_gen_node.
+        # Each node logs its own start/complete/failed events (see
+        # src/core/nodes.py), so per-stage logging is no longer duplicated
+        # here.
+        initial_state = {
+            "query": query,
+            "run_id": run_id,
+            "original_df": df,
+            "schema": None,
+            "plan": [],
+            "max_executions": 0,
+            "state_store": {"original_df": df},
+            "current_step_index": 0,
+            "retry_count": 0,
+            "total_executions": 0,
+            "trace": [],
+            "final_df": None,
+            "status": "pending",
+            "message": "",
+            "answer": None,
+        }
 
-        schema_result = generate_schema(df, required_date_columns=DATE_COLUMNS)
-
-        if schema_result["status"] == "error":
-            msg = f"Schema generation failed: {schema_result['message']}"
-            log_event(logger, run_id, "schema_gen_failed", {"message": msg})
-            return _make_response(run_id, "error", query, None, None, None, msg, [], 0)
-
-        schema = schema_result["result"]
-        log_event(logger, run_id, "schema_gen_completed", {
-            "column_count": len(schema),
-            "columns": list(schema.keys()),
-        })
-
-        # ------------------------------------------------------------------
-        # Stage 3 — Planner
-        # ------------------------------------------------------------------
-        log_event(logger, run_id, "planner_started", {"query": query})
-
-        plan_result = plan(query, schema, logger=logger, run_id=run_id)
-
-        if plan_result["status"] == "error":
-            msg = f"Planner failed: {plan_result['message']}"
-            log_event(logger, run_id, "planner_failed", {"message": msg})
-            return _make_response(run_id, "error", query, schema, None, None, msg, [], 0)
-
-        if plan_result["status"] == "unsolvable":
-            reason = plan_result["reason"]
-            log_event(logger, run_id, "planner_unsolvable", {"reason": reason})
-            return _make_response(
-                run_id, "unsolvable", query, schema, None, None,
-                f"Query cannot be answered with available tools: {reason}", [], 0
-            )
-
-        plan_steps = plan_result.get("plan", [])
-        log_event(logger, run_id, "planner_completed", {
-            "step_count": len(plan_steps),
-            "plan_summary": " -> ".join(s.tool for s in plan_steps),
-            "steps": [
-                {"step": s.step, "tool": s.tool, "parameters": s.parameters}
-                for s in plan_steps
-            ],
-        })
-
-        # ------------------------------------------------------------------
-        # Stage 4 — Loop Controller
-        # ------------------------------------------------------------------
-        log_event(logger, run_id, "loop_controller_started", {
-            "step_count":    len(plan_steps),
-            "plan_summary":  " -> ".join(s.tool for s in plan_steps),
-            "max_executions": len(plan_steps) * 2,
-        })
-
-        exec_result = run(plan_result, df, query, schema, logger=logger, run_id=run_id)
-
-        # Log each step from trace individually
-        for record in exec_result.get("trace", []):
-            step_status = record.get("status", "")
-            log_event(
-                logger, run_id, "step_executed",
-                {
-                    "step":         record.get("step"),
-                    "tool":         record.get("tool"),
-                    "status":       step_status,
-                    "message":      record.get("message"),
-                    "output_shape": record.get("output_shape"),
-                    "critic":       record.get("critic"),
+        with build_graph() as graph:
+            final_state = graph.invoke(
+                initial_state,
+                config={
+                    "configurable": {"thread_id": run_id},
+                    "recursion_limit": GRAPH_RECURSION_LIMIT,
                 },
-                level=logging.WARNING if step_status == "error" else logging.INFO,
             )
 
-        if exec_result["status"] == "success":
-            log_event(logger, run_id, "loop_controller_completed", {
-                "status":           "success",
-                "total_executions": exec_result.get("total_executions", 0),
-                "steps_in_plan":    len(plan_steps),
-            })
-        else:
-            log_event(logger, run_id, "loop_controller_failed", {
-                "status":           "error",
-                "message":          exec_result.get("message", ""),
-                "total_executions": exec_result.get("total_executions", 0),
-            }, level=logging.WARNING)
+        # The graph ends with status="running" on a clean success (no node
+        # sets status="success" explicitly) — map that to "success" for
+        # callers. "error" and "unsolvable" pass through unchanged.
+        status = "success" if final_state["status"] == "running" else final_state["status"]
 
         # ------------------------------------------------------------------
         # Final outcome
         # ------------------------------------------------------------------
-        final_event = "pipeline_complete" if exec_result["status"] == "success" else "pipeline_error"
+        final_event = "pipeline_complete" if status == "success" else "pipeline_error"
         log_event(logger, run_id, final_event, {
-            "status":            exec_result["status"],
-            "message":           exec_result.get("message", ""),
-            "total_executions":  exec_result.get("total_executions", 0),
-            "steps_in_plan":     len(plan_steps),
+            "status":            status,
+            "message":           final_state.get("message", ""),
+            "total_executions":  final_state.get("total_executions", 0),
+            "steps_in_plan":     len(final_state.get("plan", [])),
         })
 
         # Log final result — shape + preview (success only)
-        final_df = exec_result.get("final_df")
-        if exec_result["status"] == "success" and final_df is not None:
+        final_df = final_state.get("final_df")
+        if status == "success" and final_df is not None:
             log_event(logger, run_id, "final_result", {
                 "shape":   tuple(final_df.shape),
                 "columns": list(final_df.columns),
                 "preview": final_df.head(10).to_dict(orient="records"),
             })
 
-        # ------------------------------------------------------------------
-        # Stage 5 — Answer Generator (success only, graceful degradation)
-        # ------------------------------------------------------------------
-        answer = None
-        if exec_result["status"] == "success" and final_df is not None:
-            answer_result = generate_answer(query, final_df, logger=logger, run_id=run_id)
-            if answer_result["status"] == "success":
-                answer = answer_result["answer"]
-
         return _make_response(
             run_id,
-            exec_result["status"],
+            status,
             query,
-            schema,
-            plan_result.get("plan"),
-            exec_result.get("final_df"),
-            exec_result.get("message", ""),
-            exec_result.get("trace", []),
-            exec_result.get("total_executions", 0),
-            answer=answer,
+            final_state.get("schema"),
+            final_state.get("plan"),
+            final_df,
+            final_state.get("message", ""),
+            final_state.get("trace", []),
+            final_state.get("total_executions", 0),
+            answer=final_state.get("answer"),
         )
 
     except Exception as e:

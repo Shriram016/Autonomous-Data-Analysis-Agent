@@ -13,26 +13,26 @@ GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
 # Planner LLM settings
 # ---------------------------------------------------------------------------
 # PLANNER_MODEL: str = "llama-3.1-8b-instant"
-PLANNER_MODEL: str = "qwen/qwen3-32b"
+PLANNER_MODEL: str = "openai/gpt-oss-20b"
 # PLANNER_MODEL: str = "llama-3.3-70b-versatile"
 PLANNER_TEMPERATURE: float = 0.0
-PLANNER_MAX_TOKENS: int = 1024
+PLANNER_MAX_TOKENS: int = 2048
 PLANNER_TIMEOUT_SECONDS: int = 90   # Abort LLM call if no response within this time
 
 # ---------------------------------------------------------------------------
 # Param Fixer LLM settings
 # ---------------------------------------------------------------------------
-PARAM_FIXER_MODEL: str = "qwen/qwen3-32b"
+PARAM_FIXER_MODEL: str = "openai/gpt-oss-20b"
 PARAM_FIXER_TEMPERATURE: float = 0.0
-PARAM_FIXER_MAX_TOKENS: int = 1024
+PARAM_FIXER_MAX_TOKENS: int = 2048
 PARAM_FIXER_TIMEOUT_SECONDS: int = 90
 
 # ---------------------------------------------------------------------------
 # Replanner LLM settings
 # ---------------------------------------------------------------------------
-REPLANNER_MODEL: str = "qwen/qwen3-32b"
+REPLANNER_MODEL: str = "openai/gpt-oss-20b"
 REPLANNER_TEMPERATURE: float = 0.0
-REPLANNER_MAX_TOKENS: int = 1024
+REPLANNER_MAX_TOKENS: int = 2048
 REPLANNER_TIMEOUT_SECONDS: int = 90
 
 # ---------------------------------------------------------------------------
@@ -48,3 +48,13 @@ ANSWER_MODEL: str = "llama-3.1-8b-instant"
 MAX_RETRIES_PER_STEP: int = 2       # Max retry attempts per failed step
 MAX_REPLAN_ATTEMPTS: int = 1        # Max number of replanning attempts
 MAX_TOTAL_STEPS: int = 10           # Hard cap on total steps across entire execution
+
+# ---------------------------------------------------------------------------
+# LangGraph checkpointing
+# ---------------------------------------------------------------------------
+CHECKPOINT_DB_PATH: str = "checkpoints/adaa.sqlite"
+
+# ---------------------------------------------------------------------------
+# LangGraph execution
+# ---------------------------------------------------------------------------
+GRAPH_RECURSION_LIMIT: int = 20    # Backstop against runaway graph loops (see max_executions for the real cap)

@@ -98,7 +98,8 @@ class _FileFormatter(logging.Formatter):
         if event in (
             "pipeline_error", "pipeline_crash",
             "planner_failed", "schema_gen_failed", "data_loader_failed",
-            "loop_controller_failed", "replanner_failed",
+            # "loop_controller_failed",  # V1 loop_controller.py superseded by graph.py (V2)
+            "replanner_failed",
         ):
             msg = payload.get("message", "")
             if msg:
@@ -173,13 +174,13 @@ def _summarise(event: str, payload: Dict[str, Any]) -> str:
     if event == "planner_unsolvable":
         return payload.get("reason", "no reason provided")
 
-    # Loop Controller
-    if event == "loop_controller_started":
-        return f'{payload.get("step_count", "?")} steps | max {payload.get("max_executions", "?")} executions'
-    if event == "loop_controller_completed":
-        return f'success | {payload.get("total_executions", "?")} executions'
-    if event == "loop_controller_failed":
-        return payload.get("message", "unknown error")
+    # Loop Controller (V1 — superseded by graph.py / nodes.py in V2)
+    # if event == "loop_controller_started":
+    #     return f'{payload.get("step_count", "?")} steps | max {payload.get("max_executions", "?")} executions'
+    # if event == "loop_controller_completed":
+    #     return f'success | {payload.get("total_executions", "?")} executions'
+    # if event == "loop_controller_failed":
+    #     return payload.get("message", "unknown error")
 
     # Tool call lifecycle
     if event == "tool_call_started":

@@ -209,8 +209,11 @@ def check_happy_path(df: pd.DataFrame):
     state["schema"] = None  # let schema_gen_node populate it
     state["max_executions"] = 0
 
-    graph = build_graph()
-    final_state = graph.invoke(state, config={"recursion_limit": 50})
+    with build_graph() as graph:
+        final_state = graph.invoke(
+            state,
+            config={"configurable": {"thread_id": run_id}, "recursion_limit": 50},
+        )
 
     print(f"final status: {final_state['status']}")
     print(f"plan: {' -> '.join(s.tool for s in final_state['plan'])}")
