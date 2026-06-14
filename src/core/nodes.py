@@ -72,6 +72,10 @@ def planner_node(state: PipelineState) -> Dict[str, Any]:
     Wraps plan(). Reads `query` + `schema` from state, writes `plan` +
     `max_executions`.
 
+    Also reads `recent_questions`, appends the current `query`, trims to the
+    last 3 (oldest first, most recent last), and writes it back so the caller
+    can thread it into the next query's session memory.
+
     On error/unsolvable, sets `status` + `message`, and `plan=[]`,
     `max_executions=0` so downstream conditional edges (Step 4) can route
     to END.
@@ -81,14 +85,17 @@ def planner_node(state: PipelineState) -> Dict[str, Any]:
     query = state["query"]
     schema = state["schema"]
 
+    previous_questions = state.get("recent_questions") or []
+    recent_questions = (previous_questions + [query])[-3:]
+
     log_event(logger, run_id, "planner_started", {"query": query})
 
-    result = plan(query, schema, logger=logger, run_id=run_id)
+    result = plan(query, schema, recent_questions=previous_questions, logger=logger, run_id=run_id)
 
     if result["status"] == "error":
         msg = f"Planner failed: {result['message']}"
         log_event(logger, run_id, "planner_failed", {"message": msg})
-        return {"status": "error", "message": msg, "plan": [], "max_executions": 0}
+        return {"status": "error", "message": msg, "plan": [], "max_executions": 0, "recent_questions": recent_questions}
 
     if result["status"] == "unsolvable":
         reason = result["reason"]
@@ -98,6 +105,7 @@ def planner_node(state: PipelineState) -> Dict[str, Any]:
             "message": f"Query cannot be answered with available tools: {reason}",
             "plan": [],
             "max_executions": 0,
+            "recent_questions": recent_questions,
         }
 
     plan_steps = result["plan"]
@@ -112,7 +120,7 @@ def planner_node(state: PipelineState) -> Dict[str, Any]:
         ],
     })
 
-    return {"plan": plan_steps, "max_executions": max_executions}
+    return {"plan": plan_steps, "max_executions": max_executions, "recent_questions": recent_questions}
 
 
 # ---------------------------------------------------------------------------

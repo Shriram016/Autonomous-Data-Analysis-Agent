@@ -20,6 +20,7 @@ class PipelineState(TypedDict):
     query: str
     run_id: str
     original_df: pd.DataFrame
+    recent_questions: list[str]
 
     # -----------------------------------------------------------------
     # Schema Gen output

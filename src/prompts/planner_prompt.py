@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
 
 
 # ---------------------------------------------------------------------------
@@ -403,13 +403,21 @@ def condense_schema(full_schema: Dict[str, Any]) -> Dict[str, Any]:
 # User Prompt Builder
 # ---------------------------------------------------------------------------
 
-def build_user_prompt(query: str, full_schema: Dict[str, Any]) -> str:
+def build_user_prompt(
+    query: str,
+    full_schema: Dict[str, Any],
+    recent_questions: Optional[List[str]] = None,
+) -> str:
     """
     Assembles the runtime user prompt from the query and condensed schema.
 
     Args:
-        query       : Natural language query from the user.
-        full_schema : Full schema dict from Schema Generator's result field.
+        query            : Natural language query from the user.
+        full_schema      : Full schema dict from Schema Generator's result field.
+        recent_questions : Previous questions from this session (oldest first,
+                            most recent last), excluding the current query.
+                            If non-empty, a "Previous questions" context block
+                            is inserted to help resolve follow-ups.
 
     Returns:
         Formatted user prompt string to send to the Planner LLM.
@@ -417,9 +425,13 @@ def build_user_prompt(query: str, full_schema: Dict[str, Any]) -> str:
     condensed = condense_schema(full_schema)
     schema_str = json.dumps(condensed, indent=2)
 
-    return f"""Query: {query}
+    parts = [f"Query: {query}"]
 
-Schema:
-{schema_str}
+    if recent_questions:
+        numbered = "\n".join(f"{i}. {q}" for i, q in enumerate(recent_questions, start=1))
+        parts.append(f"Previous questions in this session (most recent last):\n{numbered}")
 
-Return the JSON plan now."""
+    parts.append(f"Schema:\n{schema_str}")
+    parts.append("Return the JSON plan now.")
+
+    return "\n\n".join(parts)

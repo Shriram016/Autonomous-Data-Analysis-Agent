@@ -42,6 +42,7 @@ def main():
         "query": "What are total sales in the West region?",
         "run_id": "test-run-001",
         "original_df": df,
+        "recent_questions": ["What were total sales in 2023?", "What are total sales in the West region?"],
 
         "schema": None,
 
@@ -64,6 +65,7 @@ def main():
     assert state["query"] == "What are total sales in the West region?"
     assert state["run_id"] == "test-run-001"
     assert state["original_df"].shape == df.shape
+    assert state["recent_questions"] == ["What were total sales in 2023?", "What are total sales in the West region?"]
     assert state["schema"] is None
     assert isinstance(state["plan"], list) and isinstance(state["plan"][0], PlanStep)
     assert state["plan"][0].tool == "filter_rows"

@@ -254,6 +254,7 @@ def _call_groq(
 def plan(
     query: str,
     schema: Dict[str, Any],
+    recent_questions: Optional[List[str]] = None,
     logger=None,
     run_id: Optional[str] = None,
 ) -> Dict[str, Any]:
@@ -261,10 +262,12 @@ def plan(
     Converts a natural language query into a structured JSON execution plan.
 
     Args:
-        query   : Natural language query from the user.
-        schema  : Full schema dict from Schema Generator's result field.
-        logger  : Optional logger instance for prompt/response logging.
-        run_id  : Optional run identifier passed to logger.
+        query            : Natural language query from the user.
+        schema           : Full schema dict from Schema Generator's result field.
+        recent_questions : Previous questions from this session (oldest first,
+                            most recent last), excluding the current query.
+        logger           : Optional logger instance for prompt/response logging.
+        run_id           : Optional run identifier passed to logger.
 
     Returns one of:
         {"status": "success",    "plan": List[PlanStep]}
@@ -273,7 +276,7 @@ def plan(
     """
     try:
         # Build the user prompt with condensed schema
-        user_prompt = build_user_prompt(query, schema)
+        user_prompt = build_user_prompt(query, schema, recent_questions)
 
         # Call Groq API (with one retry on any failure)
         result = _call_groq(user_prompt, logger=logger, run_id=run_id)
