@@ -3,6 +3,7 @@ Autonomous Data Analysis Agent — Streamlit UI
 """
 
 import sys
+import uuid
 from pathlib import Path
 
 import pandas as pd
@@ -36,6 +37,9 @@ if "history" not in st.session_state:
 if "current_result" not in st.session_state:
     st.session_state.current_result = None
 
+if "session_id" not in st.session_state:
+    st.session_state.session_id = str(uuid.uuid4())
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -44,7 +48,7 @@ if "current_result" not in st.session_state:
 def _run_query(query: str) -> None:
     """Runs the pipeline, stores result in session state and history."""
     with st.spinner("Running pipeline..."):
-        result = run_pipeline(query)
+        result = run_pipeline(query, session_id=st.session_state.session_id)
     st.session_state.current_result = result
     st.session_state.history.insert(0, {"query": query, "result": result})
 
@@ -84,11 +88,109 @@ def _df_height(df: pd.DataFrame, row_height: int = 35, max_height: int = 400) ->
     return min(max_height, row_height * (len(df) + 1) + 10)
 
 
+def _render_turn(query: str, result: dict) -> None:
+    """Renders one user/assistant exchange as chat messages."""
+    with st.chat_message("user"):
+        st.write(query)
+
+    with st.chat_message("assistant"):
+        status   = result["status"]
+        run_id   = result["run_id"]
+        final_df = result.get("final_df")
+        answer   = result.get("answer")
+        trace    = result.get("trace", [])
+        plan     = result.get("plan", [])
+        total_ex = result.get("total_executions", 0)
+
+        # ── Status banner ────────────────────────────────────────────────
+        if status == "success":
+            st.success(f"run `{run_id}` — {total_ex} execution(s) | {len(plan)} step(s)")
+        elif status == "unsolvable":
+            st.warning(f"Query cannot be answered with available tools: {result.get('message', '')}")
+            return
+        else:
+            st.error(f"Pipeline error — {result.get('message', '')}")
+
+        # ── Answer ────────────────────────────────────────────────────────
+        if answer:
+            st.subheader("Answer")
+            st.info(answer)
+
+        # ── Result Table ──────────────────────────────────────────────────
+        if final_df is not None:
+            st.subheader("Result")
+            st.dataframe(
+                final_df,
+                use_container_width=True,
+                height=_df_height(final_df),
+                hide_index=True,
+            )
+
+        # ── Execution Trace ───────────────────────────────────────────────
+        with st.expander("Execution Trace", expanded=False):
+            if trace:
+                trace_df = _trace_table(trace)
+                st.dataframe(
+                    trace_df,
+                    use_container_width=True,
+                    height=_df_height(trace_df),
+                    hide_index=True,
+                )
+            else:
+                st.caption("No trace available.")
+
+        # ── Plan Steps ────────────────────────────────────────────────────
+        with st.expander("Plan Steps", expanded=False):
+            if plan:
+                plan_df = _plan_table(plan)
+                st.dataframe(
+                    plan_df,
+                    use_container_width=True,
+                    height=_df_height(plan_df),
+                    hide_index=True,
+                )
+            else:
+                st.caption("No plan available.")
+
+
+@st.dialog("Start a new session?")
+def _confirm_new_session() -> None:
+    st.write("This will clear the query history and current result, and start a fresh session.")
+    col_yes, col_no = st.columns(2)
+    if col_yes.button("Yes, start new session", type="primary", use_container_width=True):
+        st.session_state.session_id = str(uuid.uuid4())
+        st.session_state.history = []
+        st.session_state.current_result = None
+        st.toast("New session started")
+        st.rerun()
+    if col_no.button("Cancel", use_container_width=True):
+        st.rerun()
+
+
 # ---------------------------------------------------------------------------
 # Sidebar — Query History
 # ---------------------------------------------------------------------------
 
 with st.sidebar:
+    if st.button("New Session", use_container_width=True):
+        _confirm_new_session()
+
+    current_result = st.session_state.current_result or {}
+    if current_result.get("session_id") == st.session_state.session_id:
+        recent_questions = current_result.get("recent_questions", [])
+    else:
+        recent_questions = []
+
+    with st.expander("Session", expanded=False):
+        st.caption(f"Session ID: `{st.session_state.session_id[:8]}`")
+        if recent_questions:
+            st.caption("Recent questions (context for follow-ups):")
+            for q in recent_questions:
+                st.caption(f"- {q}")
+        else:
+            st.caption("No recent questions yet.")
+
+    st.divider()
     st.title("Query History")
 
     if not st.session_state.history:

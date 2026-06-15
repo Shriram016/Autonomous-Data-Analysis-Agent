@@ -12,6 +12,7 @@ from src.config import (
 )
 from src.core.planner import PlanStep, validate_tool_parameters
 from src.prompts.param_fixer_prompt import SYSTEM_PROMPT, build_user_prompt
+from src.utils.langfuse_helper import llm_generation
 
 
 # ---------------------------------------------------------------------------
@@ -31,6 +32,7 @@ def _call_groq(
     logger=None,
     run_id: Optional[str] = None,
     error_context: Optional[str] = None,
+    session_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Calls the Groq API with the param-fixer system prompt and user prompt.
@@ -66,36 +68,48 @@ def _call_groq(
             "validation_retry": error_context is not None,
         }, level=_logging.DEBUG)
 
+    model_params = {"temperature": PARAM_FIXER_TEMPERATURE, "max_tokens": PARAM_FIXER_MAX_TOKENS, "reasoning_effort": "low"}
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user",   "content": effective_prompt},
+    ]
+
     try:
-        response = client.chat.completions.create(
+        with llm_generation(
+            name="param_fixer",
             model=PARAM_FIXER_MODEL,
-            temperature=PARAM_FIXER_TEMPERATURE,
-            max_tokens=PARAM_FIXER_MAX_TOKENS,
-            response_format={"type": "json_object"},
-            reasoning_effort="low",
-            timeout=PARAM_FIXER_TIMEOUT_SECONDS,
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user",   "content": effective_prompt},
-            ],
-        )
-        raw = response.choices[0].message.content
+            model_params=model_params,
+            input_messages=messages,
+            run_id=run_id,
+            session_id=session_id,
+            extra_metadata={"validation_retry": error_context is not None},
+        ) as gen:
+            response = client.chat.completions.create(
+                model=PARAM_FIXER_MODEL,
+                response_format={"type": "json_object"},
+                timeout=PARAM_FIXER_TIMEOUT_SECONDS,
+                messages=messages,
+                **model_params,
+            )
+            raw = response.choices[0].message.content
+            gen.output(raw)
+            gen.usage(response.usage.prompt_tokens, response.usage.completion_tokens, response.usage.total_tokens)
 
-        if logger and run_id:
-            from src.utils.logger import log_event
-            import logging as _logging
-            log_event(logger, run_id, "llm_response_received", {
-                "raw_response": raw,
-            }, level=_logging.DEBUG)
+            if logger and run_id:
+                from src.utils.logger import log_event
+                import logging as _logging
+                log_event(logger, run_id, "llm_response_received", {
+                    "raw_response": raw,
+                }, level=_logging.DEBUG)
 
-        try:
-            parsed = ParamFixResponse.model_validate_json(raw)
-            return {"status": "success", "data": parsed}
-        except ValidationError as e:
-            return {
-                "status": "error",
-                "message": f"LLM response failed Pydantic validation: {str(e)}. Raw response: {raw[:200]}"
-            }
+            try:
+                parsed = ParamFixResponse.model_validate_json(raw)
+                return {"status": "success", "data": parsed}
+            except ValidationError as e:
+                return {
+                    "status": "error",
+                    "message": f"LLM response failed Pydantic validation: {str(e)}. Raw response: {raw[:200]}"
+                }
 
     except APITimeoutError:
         return {
@@ -124,6 +138,7 @@ def fix_params(
     schema: Dict[str, Any],
     logger=None,
     run_id: Optional[str] = None,
+    session_id: Optional[str] = None,
 ) -> PlanStep:
     """
     Uses an LLM to diagnose a failed step and return a corrected PlanStep
@@ -148,6 +163,7 @@ def fix_params(
         schema        : Full schema dict from Schema Generator's result field.
         logger        : Optional logger instance for prompt/response logging.
         run_id        : Optional run identifier passed to logger.
+        session_id    : Optional session identifier passed to Langfuse.
 
     Returns:
         A PlanStep with corrected parameters, or the original step unchanged
@@ -158,7 +174,7 @@ def fix_params(
     try:
         user_prompt = build_user_prompt(step, error_context, query, schema)
 
-        result = _call_groq(user_prompt, logger=logger, run_id=run_id)
+        result = _call_groq(user_prompt, logger=logger, run_id=run_id, session_id=session_id)
 
         if result["status"] == "error":
             if logger and run_id:
@@ -174,7 +190,7 @@ def fix_params(
             log_event(logger, run_id, "param_fixer_validation_failed", {"reason": reason, "retrying": True})
 
         # Validation failed — retry once with the error reason injected into the prompt
-        retry_result = _call_groq(user_prompt, logger=logger, run_id=run_id, error_context=reason)
+        retry_result = _call_groq(user_prompt, logger=logger, run_id=run_id, error_context=reason, session_id=session_id)
         if retry_result["status"] == "error":
             if logger and run_id:
                 log_event(logger, run_id, "param_fixer_llm_failed", {"message": retry_result["message"]})

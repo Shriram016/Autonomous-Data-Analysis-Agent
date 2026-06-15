@@ -82,6 +82,13 @@ class _FileFormatter(logging.Formatter):
                 lines.append(f"             {line}")
             lines.append(f"             --- END RESPONSE ---")
 
+        # Expand LLM reasoning — always shown when present (short, useful for debugging)
+        if event == "llm_response_received" and payload.get("reasoning"):
+            lines.append(f"             --- REASONING ---")
+            for line in payload["reasoning"].splitlines():
+                lines.append(f"             {line}")
+            lines.append(f"             --- END REASONING ---")
+
         # Expand planner completed — show full plan in file
         if event == "planner_completed":
             for s in payload.get("steps", []):
@@ -146,7 +153,7 @@ def _summarise(event: str, payload: Dict[str, Any]) -> str:
 
     # Query
     if event == "query_received":
-        return f'"{payload.get("query", "")}"'
+        return f'"{payload.get("query", "")}" | session={payload.get("session_id", "?")}'
 
     # Data Loader
     if event == "data_loader_started":

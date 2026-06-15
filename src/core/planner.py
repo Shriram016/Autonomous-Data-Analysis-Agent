@@ -7,6 +7,7 @@ from pydantic import BaseModel, ValidationError
 from src.config import GROQ_API_KEY, PLANNER_MODEL, PLANNER_TEMPERATURE, PLANNER_MAX_TOKENS, PLANNER_TIMEOUT_SECONDS
 from src.prompts.planner_prompt import SYSTEM_PROMPT, build_user_prompt
 from src.tools.tools import TOOL_REGISTRY
+from src.utils.langfuse_helper import llm_generation
 
 
 # ---------------------------------------------------------------------------
@@ -153,6 +154,7 @@ def _call_groq(
     logger=None,
     run_id: Optional[str] = None,
     error_context: Optional[str] = None,
+    session_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Calls the Groq API with the system prompt and user prompt.
@@ -191,39 +193,53 @@ def _call_groq(
             "validation_retry": error_context is not None,
         }, level=_logging.DEBUG)
 
+    model_params = {"temperature": PLANNER_TEMPERATURE, "max_tokens": PLANNER_MAX_TOKENS, "reasoning_effort": "low"}
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user",   "content": effective_prompt},
+    ]
+
     for attempt in range(2):
         try:
-            response = client.chat.completions.create(
+            with llm_generation(
+                name="planner",
                 model=PLANNER_MODEL,
-                temperature=PLANNER_TEMPERATURE,
-                max_tokens=PLANNER_MAX_TOKENS,
-                response_format={"type": "json_object"},
-                reasoning_effort="low",
-                timeout=PLANNER_TIMEOUT_SECONDS,
-                messages=[
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user",   "content": effective_prompt},
-                ],
-            )
-            raw = response.choices[0].message.content
+                model_params=model_params,
+                input_messages=messages,
+                run_id=run_id,
+                session_id=session_id,
+                extra_metadata={"validation_retry": error_context is not None},
+            ) as gen:
+                response = client.chat.completions.create(
+                    model=PLANNER_MODEL,
+                    response_format={"type": "json_object"},
+                    timeout=PLANNER_TIMEOUT_SECONDS,
+                    messages=messages,
+                    **model_params,
+                )
+                raw = response.choices[0].message.content
+                reasoning = getattr(response.choices[0].message, "reasoning", None)
+                gen.output(raw)
+                gen.usage(response.usage.prompt_tokens, response.usage.completion_tokens, response.usage.total_tokens)
 
-            # Log raw LLM response
-            if logger and run_id:
-                from src.utils.logger import log_event
-                import logging as _logging
-                log_event(logger, run_id, "llm_response_received", {
-                    "raw_response": raw,
-                }, level=_logging.DEBUG)
+                # Log raw LLM response (and reasoning, if the model returned one)
+                if logger and run_id:
+                    from src.utils.logger import log_event
+                    import logging as _logging
+                    log_event(logger, run_id, "llm_response_received", {
+                        "raw_response": raw,
+                        "reasoning":    reasoning,
+                    }, level=_logging.DEBUG)
 
-            try:
-                parsed = PlanResponse.model_validate_json(raw)
-                return {"status": "success", "data": parsed}
-            except ValidationError as e:
-                last_error = {
-                    "status": "error",
-                    "message": f"LLM response failed Pydantic validation: {str(e)}. Raw response: {raw[:200]}"
-                }
-                continue
+                try:
+                    parsed = PlanResponse.model_validate_json(raw)
+                    return {"status": "success", "data": parsed}
+                except ValidationError as e:
+                    last_error = {
+                        "status": "error",
+                        "message": f"LLM response failed Pydantic validation: {str(e)}. Raw response: {raw[:200]}"
+                    }
+                    continue
 
         except APITimeoutError:
             last_error = {
@@ -257,6 +273,7 @@ def plan(
     recent_questions: Optional[List[str]] = None,
     logger=None,
     run_id: Optional[str] = None,
+    session_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Converts a natural language query into a structured JSON execution plan.
@@ -268,6 +285,7 @@ def plan(
                             most recent last), excluding the current query.
         logger           : Optional logger instance for prompt/response logging.
         run_id           : Optional run identifier passed to logger.
+        session_id       : Optional session identifier passed to Langfuse.
 
     Returns one of:
         {"status": "success",    "plan": List[PlanStep]}
@@ -279,7 +297,7 @@ def plan(
         user_prompt = build_user_prompt(query, schema, recent_questions)
 
         # Call Groq API (with one retry on any failure)
-        result = _call_groq(user_prompt, logger=logger, run_id=run_id)
+        result = _call_groq(user_prompt, logger=logger, run_id=run_id, session_id=session_id)
 
         # If API or Pydantic validation failed, return error immediately
         if result.get("status") == "error":
@@ -317,7 +335,7 @@ def plan(
                 })
 
             # Validation failed — retry once with the error reason injected into the prompt
-            retry_result = _call_groq(user_prompt, logger=logger, run_id=run_id, error_context=reason)
+            retry_result = _call_groq(user_prompt, logger=logger, run_id=run_id, error_context=reason, session_id=session_id)
             if retry_result.get("status") == "error":
                 return retry_result
 

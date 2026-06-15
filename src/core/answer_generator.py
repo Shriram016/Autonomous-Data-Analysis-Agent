@@ -4,6 +4,7 @@ import pandas as pd
 from groq import Groq, APIConnectionError, APIStatusError, APITimeoutError
 
 from src.config import GROQ_API_KEY, ANSWER_MODEL, PLANNER_TIMEOUT_SECONDS
+from src.utils.langfuse_helper import llm_generation
 
 
 # ---------------------------------------------------------------------------
@@ -49,6 +50,7 @@ def generate_answer(
     final_df: pd.DataFrame,
     logger=None,
     run_id: Optional[str] = None,
+    session_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Generates a natural language answer from the query and result DataFrame.
@@ -61,10 +63,11 @@ def generate_answer(
     of truth.
 
     Args:
-        query    : Original natural language query from the user.
-        final_df : Final output DataFrame from the executor.
-        logger   : Optional logger instance.
-        run_id   : Run identifier for logging.
+        query      : Original natural language query from the user.
+        final_df   : Final output DataFrame from the executor.
+        logger     : Optional logger instance.
+        run_id     : Run identifier for logging.
+        session_id : Optional session identifier passed to Langfuse.
 
     Returns:
         {"status": "success", "answer": str}
@@ -95,18 +98,30 @@ Write a 2-3 sentence answer."""
 
     client = Groq(api_key=GROQ_API_KEY)
 
+    model_params = {"temperature": 0.3, "max_tokens": 256}
+    messages = [
+        {"role": "system", "content": _SYSTEM_PROMPT},
+        {"role": "user",   "content": user_prompt},
+    ]
+
     try:
-        response = client.chat.completions.create(
+        with llm_generation(
+            name="answer_gen",
             model=ANSWER_MODEL,
-            temperature=0.3,
-            max_tokens=256,
-            timeout=PLANNER_TIMEOUT_SECONDS,
-            messages=[
-                {"role": "system", "content": _SYSTEM_PROMPT},
-                {"role": "user",   "content": user_prompt},
-            ],
-        )
-        answer = response.choices[0].message.content.strip()
+            model_params=model_params,
+            input_messages=messages,
+            run_id=run_id,
+            session_id=session_id,
+        ) as gen:
+            response = client.chat.completions.create(
+                model=ANSWER_MODEL,
+                timeout=PLANNER_TIMEOUT_SECONDS,
+                messages=messages,
+                **model_params,
+            )
+            answer = response.choices[0].message.content.strip()
+            gen.output(answer)
+            gen.usage(response.usage.prompt_tokens, response.usage.completion_tokens, response.usage.total_tokens)
 
         if logger and run_id:
             from src.utils.logger import log_event

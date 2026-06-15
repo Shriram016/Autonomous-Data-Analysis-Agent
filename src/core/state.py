@@ -19,6 +19,7 @@ class PipelineState(TypedDict):
     # -----------------------------------------------------------------
     query: str
     run_id: str
+    session_id: str
     original_df: pd.DataFrame
     recent_questions: list[str]
 

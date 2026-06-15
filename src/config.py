@@ -58,3 +58,11 @@ CHECKPOINT_DB_PATH: str = "checkpoints/adaa.sqlite"
 # LangGraph execution
 # ---------------------------------------------------------------------------
 GRAPH_RECURSION_LIMIT: int = 20    # Backstop against runaway graph loops (see max_executions for the real cap)
+
+# ---------------------------------------------------------------------------
+# Langfuse Observability
+# ---------------------------------------------------------------------------
+LANGFUSE_PUBLIC_KEY: str = os.getenv("LANGFUSE_PUBLIC_KEY", "")
+LANGFUSE_SECRET_KEY: str = os.getenv("LANGFUSE_SECRET_KEY", "")
+LANGFUSE_HOST: str = os.getenv("LANGFUSE_HOST", "https://cloud.langfuse.com")
+LANGFUSE_ENABLED: bool = bool(LANGFUSE_PUBLIC_KEY and LANGFUSE_SECRET_KEY)

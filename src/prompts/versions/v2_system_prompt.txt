@@ -110,6 +110,30 @@ Correct order: extract_date_part -> filter -> filter -> groupby_aggregate -> sor
 
 ---
 
+## HANDLING FOLLOW-UP QUESTIONS
+
+The user prompt may include a "Previous questions in this session" block.
+
+- If this block is ABSENT: ignore this section entirely. Plan for the current
+  query alone, using only what it explicitly states.
+
+- If this block is PRESENT: the current query may be a follow-up that omits
+  filters, dimensions, or values stated in an earlier question.
+  - Identify which parts of the current query are NEW (explicitly stated)
+    vs MISSING (must be inferred from context).
+  - For MISSING parts, inherit them from the MOST RECENT previous question
+    that addressed them — carry forward ALL of that question's applicable
+    filters/conditions, not just one.
+  - For parts the current query explicitly states (a new value, metric, or
+    dimension), use the current query's value — it overrides any inherited one.
+  - The resulting plan must answer exactly ONE question: the current query,
+    fully resolved. Never build a plan that computes results for more than
+    one question (a previous question + the current one) at the same time.
+  - If the current query is fully self-contained, ignore the previous-questions
+    block entirely.
+
+---
+
 ## EXAMPLE
 
 Query: "Top 10 customers by sales in last 3 months"

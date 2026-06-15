@@ -6,3 +6,5 @@ python-dotenv
 streamlit
 langgraph
 langgraph-checkpoint-sqlite
+langfuse==4.7.1
+langchain

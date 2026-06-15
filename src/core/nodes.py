@@ -90,7 +90,7 @@ def planner_node(state: PipelineState) -> Dict[str, Any]:
 
     log_event(logger, run_id, "planner_started", {"query": query})
 
-    result = plan(query, schema, recent_questions=previous_questions, logger=logger, run_id=run_id)
+    result = plan(query, schema, recent_questions=previous_questions, logger=logger, run_id=run_id, session_id=state["session_id"])
 
     if result["status"] == "error":
         msg = f"Planner failed: {result['message']}"
@@ -243,7 +243,7 @@ def param_fixer_node(state: PipelineState) -> Dict[str, Any]:
         "message": state["message"],
     })
 
-    fixed_step = fix_params(step, error_context, state["query"], state["schema"], logger=logger, run_id=run_id)
+    fixed_step = fix_params(step, error_context, state["query"], state["schema"], logger=logger, run_id=run_id, session_id=state["session_id"])
 
     new_plan = list(state["plan"])
     new_plan[idx] = fixed_step
@@ -300,7 +300,7 @@ def replanner_node(state: PipelineState) -> Dict[str, Any]:
         "message": state["message"],
     })
 
-    result = replan(planner_output, error_context, state["query"], state["schema"], logger=logger, run_id=run_id)
+    result = replan(planner_output, error_context, state["query"], state["schema"], logger=logger, run_id=run_id, session_id=state["session_id"])
 
     if result.get("status") == "unsolvable":
         reason = result.get("message", "No reason provided.")
@@ -364,7 +364,7 @@ def answer_gen_node(state: PipelineState) -> Dict[str, Any]:
         return {"answer": None}
 
     logger = get_logger(run_id)
-    result = generate_answer(state["query"], final_df, logger=logger, run_id=run_id)
+    result = generate_answer(state["query"], final_df, logger=logger, run_id=run_id, session_id=state["session_id"])
 
     if result["status"] == "success":
         return {"answer": result["answer"]}
