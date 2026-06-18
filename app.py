@@ -34,9 +34,6 @@ st.set_page_config(
 if "history" not in st.session_state:
     st.session_state.history = []        # list of {"query": str, "result": dict}
 
-if "current_result" not in st.session_state:
-    st.session_state.current_result = None
-
 if "session_id" not in st.session_state:
     st.session_state.session_id = str(uuid.uuid4())
 
@@ -46,11 +43,10 @@ if "session_id" not in st.session_state:
 # ---------------------------------------------------------------------------
 
 def _run_query(query: str) -> None:
-    """Runs the pipeline, stores result in session state and history."""
+    """Runs the pipeline and appends the result to history."""
     with st.spinner("Running pipeline..."):
         result = run_pipeline(query, session_id=st.session_state.session_id)
-    st.session_state.current_result = result
-    st.session_state.history.insert(0, {"query": query, "result": result})
+    st.session_state.history.append({"query": query, "result": result})
 
 
 def _trace_table(trace: list) -> pd.DataFrame:
@@ -89,78 +85,84 @@ def _df_height(df: pd.DataFrame, row_height: int = 35, max_height: int = 400) ->
 
 
 def _render_turn(query: str, result: dict) -> None:
-    """Renders one user/assistant exchange as chat messages."""
+    """Renders one user/assistant exchange — question and answer only."""
     with st.chat_message("user"):
         st.write(query)
 
     with st.chat_message("assistant"):
-        status   = result["status"]
-        run_id   = result["run_id"]
-        final_df = result.get("final_df")
-        answer   = result.get("answer")
-        trace    = result.get("trace", [])
-        plan     = result.get("plan", [])
-        total_ex = result.get("total_executions", 0)
-
-        # ── Status banner ────────────────────────────────────────────────
+        status = result["status"]
         if status == "success":
-            st.success(f"run `{run_id}` — {total_ex} execution(s) | {len(plan)} step(s)")
+            st.write(result.get("answer"))
         elif status == "unsolvable":
-            st.warning(f"Query cannot be answered with available tools: {result.get('message', '')}")
-            return
+            st.warning(result.get("message", ""))
         else:
-            st.error(f"Pipeline error — {result.get('message', '')}")
+            st.error(result.get("message", ""))
 
-        # ── Answer ────────────────────────────────────────────────────────
-        if answer:
-            st.subheader("Answer")
-            st.info(answer)
 
-        # ── Result Table ──────────────────────────────────────────────────
-        if final_df is not None:
-            st.subheader("Result")
+def _render_details(result: dict) -> None:
+    """Renders full details (banner, result table, trace, plan) for the latest turn."""
+    status   = result["status"]
+    run_id   = result["run_id"]
+    final_df = result.get("final_df")
+    trace    = result.get("trace", [])
+    plan     = result.get("plan", [])
+    total_ex = result.get("total_executions", 0)
+
+    st.subheader("Latest Result")
+
+    # ── Status banner ──────────────────────────────────────────────────────
+    if status == "success":
+        st.success(f"run `{run_id}` — {total_ex} execution(s) | {len(plan)} step(s)")
+    elif status == "unsolvable":
+        st.warning(f"Query cannot be answered with available tools: {result.get('message', '')}")
+        return
+    else:
+        st.error(f"Pipeline error — {result.get('message', '')}")
+
+    # ── Result Table ───────────────────────────────────────────────────────
+    if final_df is not None:
+        st.subheader("Result")
+        st.dataframe(
+            final_df,
+            use_container_width=True,
+            height=_df_height(final_df),
+            hide_index=True,
+        )
+
+    # ── Execution Trace ────────────────────────────────────────────────────
+    with st.expander("Execution Trace", expanded=False):
+        if trace:
+            trace_df = _trace_table(trace)
             st.dataframe(
-                final_df,
+                trace_df,
                 use_container_width=True,
-                height=_df_height(final_df),
+                height=_df_height(trace_df),
                 hide_index=True,
             )
+        else:
+            st.caption("No trace available.")
 
-        # ── Execution Trace ───────────────────────────────────────────────
-        with st.expander("Execution Trace", expanded=False):
-            if trace:
-                trace_df = _trace_table(trace)
-                st.dataframe(
-                    trace_df,
-                    use_container_width=True,
-                    height=_df_height(trace_df),
-                    hide_index=True,
-                )
-            else:
-                st.caption("No trace available.")
-
-        # ── Plan Steps ────────────────────────────────────────────────────
-        with st.expander("Plan Steps", expanded=False):
-            if plan:
-                plan_df = _plan_table(plan)
-                st.dataframe(
-                    plan_df,
-                    use_container_width=True,
-                    height=_df_height(plan_df),
-                    hide_index=True,
-                )
-            else:
-                st.caption("No plan available.")
+    # ── Plan Steps ─────────────────────────────────────────────────────────
+    with st.expander("Plan Steps", expanded=False):
+        if plan:
+            plan_df = _plan_table(plan)
+            st.dataframe(
+                plan_df,
+                use_container_width=True,
+                height=_df_height(plan_df),
+                hide_index=True,
+            )
+        else:
+            st.caption("No plan available.")
 
 
 @st.dialog("Start a new session?")
 def _confirm_new_session() -> None:
-    st.write("This will clear the query history and current result, and start a fresh session.")
+    st.write("This will clear the conversation history and start a fresh session.")
     col_yes, col_no = st.columns(2)
     if col_yes.button("Yes, start new session", type="primary", use_container_width=True):
         st.session_state.session_id = str(uuid.uuid4())
         st.session_state.history = []
-        st.session_state.current_result = None
         st.toast("New session started")
         st.rerun()
     if col_no.button("Cancel", use_container_width=True):
@@ -168,16 +170,15 @@ def _confirm_new_session() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Sidebar — Query History
+# Sidebar — Session
 # ---------------------------------------------------------------------------
 
 with st.sidebar:
     if st.button("New Session", use_container_width=True):
         _confirm_new_session()
 
-    current_result = st.session_state.current_result or {}
-    if current_result.get("session_id") == st.session_state.session_id:
-        recent_questions = current_result.get("recent_questions", [])
+    if st.session_state.history:
+        recent_questions = st.session_state.history[-1]["result"].get("recent_questions", [])
     else:
         recent_questions = []
 
@@ -189,27 +190,6 @@ with st.sidebar:
                 st.caption(f"- {q}")
         else:
             st.caption("No recent questions yet.")
-
-    st.divider()
-    st.title("Query History")
-
-    if not st.session_state.history:
-        st.caption("No queries yet this session.")
-    else:
-        for i, item in enumerate(st.session_state.history):
-            label = item["query"]
-            short = label[:55] + "..." if len(label) > 55 else label
-            status_icon = (
-                "✅" if item["result"]["status"] == "success"
-                else "⚠️" if item["result"]["status"] == "unsolvable"
-                else "❌"
-            )
-            if st.button(
-                f"{status_icon} {short}",
-                key=f"hist_{i}",
-                use_container_width=True,
-            ):
-                st.session_state.current_result = item["result"]
 
 
 # ---------------------------------------------------------------------------
@@ -225,89 +205,20 @@ st.divider()
 
 
 # ---------------------------------------------------------------------------
-# Main — Query Input
+# Main — Conversation
 # ---------------------------------------------------------------------------
 
-with st.form("query_form", clear_on_submit=False):
-    col_input, col_btn = st.columns([5, 1])
-    with col_input:
-        query = st.text_input(
-            label="query",
-            placeholder="e.g. Who are the top 10 customers by sales in the last 3 months?",
-            label_visibility="collapsed",
-        )
-    with col_btn:
-        submitted = st.form_submit_button("Run", type="primary", use_container_width=True)
+with st.container(height=550):
+    if not st.session_state.history:
+        st.caption("Ask a question to get started...")
+    for item in st.session_state.history:
+        _render_turn(item["query"], item["result"])
 
-if submitted and query.strip():
-    _run_query(query.strip())
+if st.session_state.history:
+    _render_details(st.session_state.history[-1]["result"])
 
-
-# ---------------------------------------------------------------------------
-# Main — Results
-# ---------------------------------------------------------------------------
-
-result = st.session_state.current_result
-
-if result is None:
-    st.info("Enter a query above and press Run to get started.")
-    st.stop()
-
-status  = result["status"]
-run_id  = result["run_id"]
-final_df = result.get("final_df")
-answer   = result.get("answer")
-trace    = result.get("trace", [])
-plan     = result.get("plan", [])
-total_ex = result.get("total_executions", 0)
-
-# ── Status banner ──────────────────────────────────────────────────────────
-if status == "success":
-    st.success(f"run `{run_id}` — {total_ex} execution(s) | {len(plan)} step(s)")
-elif status == "unsolvable":
-    st.warning(f"Query cannot be answered with available tools: {result.get('message', '')}")
-    st.stop()
-else:
-    st.error(f"Pipeline error — {result.get('message', '')}")
-
-# ── Answer ─────────────────────────────────────────────────────────────────
-if answer:
-    st.subheader("Answer")
-    st.info(answer)
-
-# ── Result Table ───────────────────────────────────────────────────────────
-if final_df is not None:
-    st.subheader("Result")
-    st.dataframe(
-        final_df,
-        use_container_width=True,
-        height=_df_height(final_df),
-        hide_index=True,
-    )
-
-# ── Execution Trace ────────────────────────────────────────────────────────
-with st.expander("Execution Trace", expanded=False):
-    if trace:
-        trace_df = _trace_table(trace)
-        st.dataframe(
-            trace_df,
-            use_container_width=True,
-            height=_df_height(trace_df),
-            hide_index=True,
-        )
-    else:
-        st.caption("No trace available.")
-
-# ── Plan Steps ─────────────────────────────────────────────────────────────
-with st.expander("Plan Steps", expanded=False):
-    if plan:
-        plan_df = _plan_table(plan)
-        st.dataframe(
-            plan_df,
-            use_container_width=True,
-            height=_df_height(plan_df),
-            hide_index=True,
-        )
-    else:
-        st.caption("No plan available.")
+prompt = st.chat_input("Ask a question about the Sample Superstore dataset...")
+if prompt:
+    _run_query(prompt)
+    st.rerun()
 
