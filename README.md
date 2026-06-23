@@ -2,6 +2,8 @@
 
 A deterministic AI pipeline that converts natural language questions into verified, computed answers — no free-form code generation, every step planned, executed, and validated.
 
+**Live demo:** [autonomous-data-analysis-agent-s16.streamlit.app](https://autonomous-data-analysis-agent-s16.streamlit.app/)
+
 ---
 
 ## What It Does
