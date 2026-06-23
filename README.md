@@ -120,3 +120,21 @@ python eval/run_multiturn_eval.py
 - [Evaluation Report](docs/evaluation.md) — Full eval results across 4 categories with failure analysis
 - [Failure Modes](docs/failure-modes.md) — Handled failures, known limitations, retry flow
 - [V2 Plan](docs/v2-plan.md) — Upgrade scope and status: LangGraph, session memory, Langfuse, eval pipeline
+
+---
+
+## V1 → V2 Evolution
+
+V1 was built from scratch with raw Python orchestration — manual loop control, dict-based state, and stub implementations for error recovery. It validated the core idea: an LLM plans, predefined tools execute, a rule-based critic validates.
+
+V2 addressed the gaps that V1 exposed:
+
+| What changed | V1 | V2 |
+|---|---|---|
+| Orchestration | Manual Python loops | LangGraph with conditional edges |
+| State management | Raw dicts passed between functions | Structured `PipelineState` TypedDict |
+| Error recovery | Param Fixer and Replanner were stubs | Real LLM-powered nodes that correct parameters and generate new plans |
+| Session memory | None — each query was independent | Sliding window of last 3 questions enables multi-turn follow-ups |
+| Observability | File logging only | Langfuse tracing on every LLM call (prompt, response, tokens, latency) |
+| UI | Single-turn form with one result displayed | Conversation-style chat with history |
+| Evaluation | 30 single-turn queries | 63 queries across 4 categories (single-turn, pseudo-compound, compound, multi-turn) |

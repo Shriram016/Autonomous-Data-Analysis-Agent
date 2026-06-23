@@ -149,14 +149,3 @@ End-to-end evaluation across all query types to produce a cumulative eval report
 | MCP concepts (self-study) | ~0.5 days |
 | **Total** | **~2.5–3 weeks** |
 
----
-
-## Target Resume Bullet
-
-> "Migrated autonomous data analysis agent from raw orchestration to LangGraph with SQLite checkpointing, eliminating full-restart on failure and reducing crash recovery time to under 1 second."
-
----
-
-## Interview Story
-
-> "V1 was raw orchestration because I was learning the patterns from first principles. V2 uses LangGraph because I now understand both the patterns and the framework. LangGraph gives me checkpointing, conditional edges, and state management — and it lets me wire up real Param Fixer and Replanner nodes that V1 left as stubs."
