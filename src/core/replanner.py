@@ -84,20 +84,25 @@ def _call_groq(
                 **model_params,
             )
             raw = response.choices[0].message.content
+            reasoning = getattr(response.choices[0].message, "reasoning", None)
             gen.output(raw)
             gen.usage(response.usage.prompt_tokens, response.usage.completion_tokens, response.usage.total_tokens)
+            if reasoning:
+                gen.metadata({"reasoning": reasoning})
 
             if logger and run_id:
                 from src.utils.logger import log_event
                 import logging as _logging
                 log_event(logger, run_id, "llm_response_received", {
                     "raw_response": raw,
+                    "reasoning":    reasoning,
                 }, level=_logging.DEBUG)
 
             try:
                 parsed = PlanResponse.model_validate_json(raw)
                 return {"status": "success", "data": parsed}
             except ValidationError as e:
+                gen.error(f"Pydantic validation failed: {str(e)}")
                 return {
                     "status": "error",
                     "message": f"LLM response failed Pydantic validation: {str(e)}. Raw response: {raw[:200]}"

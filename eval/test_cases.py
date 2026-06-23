@@ -35,7 +35,7 @@ ordered     — Multi-row ranked results (top-N). Shape + column set + positiona
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Callable, List
+from typing import Callable, List, Optional
 
 import pandas as pd
 
@@ -44,8 +44,8 @@ import pandas as pd
 class EvalCase:
     id: str
     query: str
-    ground_truth_fn: Callable[[pd.DataFrame], pd.DataFrame]
-    compare_mode: str          # "value_only" | "full" | "ordered"
+    ground_truth_fn: Optional[Callable[[pd.DataFrame], pd.DataFrame]]
+    compare_mode: str   # "value_only" | "full" | "ordered"
     tags: List[str] = field(default_factory=list)
     float_tol: float = 0.01
     notes: str = ""

@@ -58,10 +58,17 @@ class _NoOpGeneration:
     def usage(self, *args, **kwargs) -> None:
         pass
 
+    def metadata(self, *args, **kwargs) -> None:
+        pass
+
+    def error(self, *args, **kwargs) -> None:
+        pass
+
 
 class _Generation:
-    def __init__(self, observation):
+    def __init__(self, observation, initial_metadata: Dict[str, Any]):
         self._observation = observation
+        self._metadata = dict(initial_metadata)
 
     def output(self, text: str) -> None:
         self._observation.update(output=text)
@@ -72,6 +79,26 @@ class _Generation:
             "output": completion_tokens,
             "total": total_tokens,
         })
+
+    def metadata(self, extra: Dict[str, Any]) -> None:
+        self._metadata.update(extra)
+        self._observation.update(metadata=self._metadata)
+
+    def error(self, message: str) -> None:
+        self._observation.update(level="ERROR", status_message=message)
+
+
+class _NoOpSpan:
+    def error(self, *args, **kwargs) -> None:
+        pass
+
+
+class _Span:
+    def __init__(self, observation):
+        self._observation = observation
+
+    def error(self, message: str) -> None:
+        self._observation.update(level="ERROR", status_message=message)
 
 
 @contextmanager
@@ -106,8 +133,12 @@ def graph_trace(run_id: Optional[str], session_id: Optional[str]):
             name="pipeline_run",
             trace_context=trace_context,
             metadata={"run_id": run_id},
-        ):
-            yield [CallbackHandler()]
+        ) as pipeline_obs:
+            try:
+                yield [CallbackHandler()]
+            except Exception as e:
+                pipeline_obs.update(level="ERROR", status_message=str(e))
+                raise
 
 
 @contextmanager
@@ -168,7 +199,58 @@ def llm_generation(
     with session_ctx:
         with client.start_as_current_observation(**obs_kwargs) as observation:
             try:
-                yield _Generation(observation)
+                yield _Generation(observation, metadata)
+            except Exception as e:
+                observation.update(level="ERROR", status_message=str(e))
+                raise
+
+
+@contextmanager
+def tool_span(
+    name: str,
+    input_data: Dict[str, Any],
+    run_id: Optional[str],
+    session_id: Optional[str],
+):
+    """
+    Wraps a single tool execution as a Langfuse "span" observation.
+
+    Usage:
+        with tool_span(name="tool:aggregate_column", input_data={...},
+                       run_id=run_id, session_id=session_id) as span:
+            result = _run_step(step, state_store, ...)
+            if result["status"] == "error":
+                span.error(result["message"])
+
+    Unhandled exceptions are marked level="ERROR" automatically before
+    re-raising. No-op when LANGFUSE_ENABLED is False.
+    """
+    client = get_langfuse_client()
+    if client is None:
+        yield _NoOpSpan()
+        return
+
+    from langfuse import propagate_attributes
+
+    metadata: Dict[str, Any] = {"run_id": run_id}
+    if session_id:
+        metadata["session_id"] = session_id
+
+    obs_kwargs: Dict[str, Any] = dict(
+        as_type="span",
+        name=name,
+        input=input_data,
+        metadata=metadata,
+    )
+    if run_id:
+        obs_kwargs["trace_context"] = {"trace_id": client.create_trace_id(seed=run_id)}
+
+    session_ctx = propagate_attributes(session_id=session_id) if session_id else nullcontext()
+
+    with session_ctx:
+        with client.start_as_current_observation(**obs_kwargs) as observation:
+            try:
+                yield _Span(observation)
             except Exception as e:
                 observation.update(level="ERROR", status_message=str(e))
                 raise

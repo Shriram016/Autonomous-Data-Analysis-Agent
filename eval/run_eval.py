@@ -40,6 +40,8 @@ if _PROJECT_ROOT not in sys.path:
 
 from src.core.pipeline import run_pipeline          # noqa: E402
 from eval.test_cases import TEST_CASES, EvalCase    # noqa: E402
+from eval.test_cases2 import TEST_CASES_2           # noqa: E402
+from eval.test_cases3 import TEST_CASES_3           # noqa: E402
 from eval.comparator import compare, CompareResult  # noqa: E402
 from eval.metrics import (                          # noqa: E402
     compute_record,
@@ -79,12 +81,13 @@ def _run_case(
     # 1. Ground truth
     gt_df: Optional[pd.DataFrame] = None
     gt_error = False
-    try:
-        gt_df = case.ground_truth_fn(df)
-    except Exception as exc:
-        gt_error = True
-        if verbose:
-            print(f"    [GT ERROR] {exc}")
+    if case.ground_truth_fn is not None:
+        try:
+            gt_df = case.ground_truth_fn(df)
+        except Exception as exc:
+            gt_error = True
+            if verbose:
+                print(f"    [GT ERROR] {exc}")
 
     # 2. Pipeline
     start = time.perf_counter()
@@ -196,9 +199,14 @@ def main() -> None:
         "--limit", type=int, default=None,
         help="Run only the first N cases (e.g. --limit 5)"
     )
+    parser.add_argument(
+        "--round", type=int, default=1, choices=[1, 2, 3],
+        help="Eval round: 1=Q01-Q30 (test_cases.py), 2=Q31-Q37 (test_cases2.py), 3=Q38-Q47 (test_cases3.py)"
+    )
     args = parser.parse_args()
 
-    cases = TEST_CASES[:args.limit] if args.limit else TEST_CASES
+    source = {1: TEST_CASES, 2: TEST_CASES_2, 3: TEST_CASES_3}[args.round]
+    cases = source[:args.limit] if args.limit else source
     records = run_eval(verbose=True, cases=cases)
 
     print("\nComputing metrics...")

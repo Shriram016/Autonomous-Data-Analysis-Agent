@@ -9,7 +9,7 @@ from src.utils.logger import get_logger, log_event
 from src.core.planner import PlanStep
 from src.core.graph import build_graph
 from src.config import GRAPH_RECURSION_LIMIT
-from src.utils.langfuse_helper import graph_trace
+from src.utils.langfuse_helper import graph_trace, trace_id_for_run
 # from src.core.schema_gen import generate_schema
 # from src.core.planner import plan
 # from src.core.loop_controller import run
@@ -93,7 +93,12 @@ def run_pipeline(query: str, session_id: Optional[str] = None) -> Dict[str, Any]
     logger = get_logger(run_id)
 
     try:
-        log_event(logger, run_id, "query_received", {"query": query, "session_id": session_id})
+        langfuse_trace_id = trace_id_for_run(run_id)
+        log_event(logger, run_id, "query_received", {
+            "query": query,
+            "session_id": session_id,
+            "langfuse_trace_id": langfuse_trace_id,
+        })
 
         # ------------------------------------------------------------------
         # Stage 1 — Load Dataset

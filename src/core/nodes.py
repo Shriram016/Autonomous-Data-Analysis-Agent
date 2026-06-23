@@ -25,6 +25,7 @@ from src.core.replanner import replan
 from src.core.answer_generator import generate_answer
 from src.utils.data_loader import DATE_COLUMNS
 from src.utils.logger import get_logger, log_event
+from src.utils.langfuse_helper import tool_span
 
 
 # ---------------------------------------------------------------------------
@@ -170,33 +171,40 @@ def execute_step_node(state: PipelineState) -> Dict[str, Any]:
         "parameters": step.parameters,
     })
 
-    step_result = _run_step(step, state_store, logger=logger, run_id=run_id)
-    new_trace = state["trace"] + [step_result["trace_record"]]
-    new_total_executions = state["total_executions"] + 1
+    with tool_span(
+        name=f"tool:{step.tool}",
+        input_data={"step": step.step, "tool": step.tool, "parameters": step.parameters},
+        run_id=run_id,
+        session_id=state.get("session_id"),
+    ) as span:
+        step_result = _run_step(step, state_store, logger=logger, run_id=run_id)
+        new_trace = state["trace"] + [step_result["trace_record"]]
+        new_total_executions = state["total_executions"] + 1
 
-    if step_result["status"] == "success":
-        result_df = step_result["result_df"]
-        log_event(logger, run_id, "execute_step_completed", {
+        if step_result["status"] == "success":
+            result_df = step_result["result_df"]
+            log_event(logger, run_id, "execute_step_completed", {
+                "step": step.step,
+                "tool": step.tool,
+                "output_shape": tuple(result_df.shape),
+            })
+            return {
+                "state_store": {**state_store, step.output: result_df},
+                "trace": new_trace,
+                "total_executions": new_total_executions,
+                "final_df": result_df,
+                "current_step_index": idx + 1,
+                "retry_count": 0,
+                "status": "running",
+                "message": "",
+            }
+
+        span.error(step_result["message"])
+        log_event(logger, run_id, "execute_step_failed", {
             "step": step.step,
             "tool": step.tool,
-            "output_shape": tuple(result_df.shape),
+            "message": step_result["message"],
         })
-        return {
-            "state_store": {**state_store, step.output: result_df},
-            "trace": new_trace,
-            "total_executions": new_total_executions,
-            "final_df": result_df,
-            "current_step_index": idx + 1,
-            "retry_count": 0,
-            "status": "running",
-            "message": "",
-        }
-
-    log_event(logger, run_id, "execute_step_failed", {
-        "step": step.step,
-        "tool": step.tool,
-        "message": step_result["message"],
-    })
     return {
         "trace": new_trace,
         "total_executions": new_total_executions,

@@ -45,6 +45,7 @@ def compute_record(
         full_match = compare_result.full_match
         mismatches = compare_result.mismatches
         pipeline_shape = compare_result.pipeline_shape
+        pipeline_success = pipeline_result.get("final_df") is not None
     else:
         # Pipeline failed or GT failed -- no comparison possible
         value_match = False
@@ -57,6 +58,7 @@ def compute_record(
             else ["Pipeline returned no result -- comparison skipped"]
         )
         pipeline_shape = None
+        pipeline_success = pipeline_result.get("final_df") is not None
 
     gt_shape = gt_df.shape if gt_df is not None else None
 
@@ -68,7 +70,7 @@ def compute_record(
         "notes": case.notes,
         # Pipeline outcome
         "pipeline_status": pipeline_result.get("status"),
-        "pipeline_success": pipeline_result.get("final_df") is not None,
+        "pipeline_success": pipeline_success,
         "pipeline_message": pipeline_result.get("message", ""),
         # GT outcome
         "gt_error": gt_error,
@@ -109,6 +111,12 @@ _GROUP_NAMES = {
     4: "Time Based",
     5: "Multi Condition",
     6: "Derived Calculations",
+    7: "Pseudo-Compound (Breakdown)",
+    8: "Pseudo-Compound (Comparison)",
+    9: "Compound (Two Scalars)",
+    10: "Compound (Scalar + Ranked)",
+    11: "Compound (Two Grouped Outputs)",
+    12: "Compound (Filter + Two Aggs)",
 }
 
 
@@ -200,8 +208,9 @@ def generate_report(records: List[Dict[str, Any]], aggregate: Dict[str, Any]) ->
         status = (r["pipeline_status"] or "none")[:11]
         val = _tick(r["value_match"], r["gt_error"], r["pipeline_success"])
         full = _tick(r["full_match"], r["gt_error"], r["pipeline_success"])
+        compare_mode = r["compare_mode"] or ""
         lines.append(
-            f"{r['id']:<6} {status:<12} {val:^5} {full:^5} {r['compare_mode']:<12} "
+            f"{r['id']:<6} {status:<12} {val:^5} {full:^5} {compare_mode:<12} "
             f"{r['total_executions']:>5} {r['retries']:>5} {r['duration_s']:>6.1f}s  "
             f"{r['query'][:40]}"
         )

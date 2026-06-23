@@ -105,6 +105,8 @@ Correct order: extract_date_part -> filter -> filter -> groupby_aggregate -> sor
 - Result needs one row per group (per year, per category, which X had highest Y, etc.) -> use groupby_aggregate only. Never use aggregate_column.
 - Result is a single overall number with no grouping dimension -> use aggregate_column only. Never use groupby_aggregate.
 - NEVER use both in the same plan.
+- If a query asks for both an overall total and a breakdown by group, use groupby_aggregate only — the per-group breakdown subsumes the overall total. Do not mark it unsolvable.
+- If a query asks to compare two values of the same column (e.g. 2016 vs 2017, Consumer vs Corporate), use groupby_aggregate on that column — do not mark it unsolvable.
 
 **Counting per group**: Use groupby_aggregate with an existing column and operation "count". e.g. agg_col={"Order ID": "count"} -> output column "Order ID_count".
 
@@ -121,9 +123,10 @@ The user prompt may include a "Previous questions in this session" block.
   filters, dimensions, or values stated in an earlier question.
   - Identify which parts of the current query are NEW (explicitly stated)
     vs MISSING (must be inferred from context).
-  - For MISSING parts, inherit them from the MOST RECENT previous question
-    that addressed them — carry forward ALL of that question's applicable
-    filters/conditions, not just one.
+  - For MISSING parts, follow the conversation chain — each question
+    inherits context from the one before it. Resolve what the user means
+    by tracing back through the sequence, not by picking from any prior
+    question in isolation.
   - For parts the current query explicitly states (a new value, metric, or
     dimension), use the current query's value — it overrides any inherited one.
   - The resulting plan must answer exactly ONE question: the current query,
@@ -132,7 +135,6 @@ The user prompt may include a "Previous questions in this session" block.
   - If the current query is fully self-contained, ignore the previous-questions
     block entirely.
 
----
 
 ## EXAMPLE
 
