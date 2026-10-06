@@ -1,6 +1,6 @@
 # V2 Polish Plan
 
-**Status (2026-10-06):** Part A ✅ done · Part B: B1a/B1b/B1c/B2 ✅ done, B3 moved to after Part M · Part M: M1 ✅, M2 ✅, M3 skipped (decision), M4 ✅, **next M5 (document the audit)**. ⚠ Suspected (unconfirmed) free-tier limits on the key — user checking billing; it limits eval run speed. Open blocker: answer-generator model returns 404 (see Findings under Part B).
+**Status (2026-10-06):** Part A ✅ done · Part B: B1a/B1b/B1c/B2 ✅ done, B3 moved to after Part M · Part M: M1 ✅, M2 ✅, M3 skipped (decision), M4 ✅, **next M5 (document the audit)**. ⚠ Suspected (unconfirmed) free-tier limits on the key — user checking billing; it limits eval run speed. Answer-generator 404 blocker ✅ resolved (M4). After M5: B3 (first counted 3× run), then C, D, E, F.
 **Branch:** `version2`
 **Outcome:** a clean, honest, measured, tagged `v2.0` release that serves as the frozen baseline for V3.
 
