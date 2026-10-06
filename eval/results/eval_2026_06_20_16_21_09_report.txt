@@ -1,0 +1,62 @@
+====================================================================================================
+ADAA EVALUATION REPORT
+Generated: 2026-06-20 16:21:09
+====================================================================================================
+
+ID     Status        Val  Full  Mode          Exec Retry    Time  Query
+----------------------------------------------------------------------------------------------------
+Q38    unsolvable    ERR   ERR  value_only       0     0    2.2s  What are the total sales and total profi
+Q39    unsolvable    ERR   ERR  value_only       0     0   13.7s  What is the average discount and average
+Q40    unsolvable    ERR   ERR  value_only       0     0   36.5s  How many orders were placed in total, an
+Q41    success        N     N   value_only       2     0    8.6s  Show me total profit and also which stat
+Q42    unsolvable    ERR   ERR  value_only       0     0   20.7s  Which states are most profitable and whi
+Q43    success        N     N   value_only       1     0   23.8s  What is the total sales by region and by
+Q44    unsolvable    ERR   ERR  value_only       0     0    1.5s  Show me the top 5 customers by sales and
+Q45    success        N     N   value_only       2     0    5.0s  For Technology orders, what are the tota
+Q46    success        N     N   value_only       2     0   25.3s  In the West region, how many orders were
+Q47    unsolvable    ERR   ERR  value_only       0     0   24.6s  For orders shipped via First Class, what
+----------------------------------------------------------------------------------------------------
+
+OVERALL  (10 queries | 162s total | 16.2s avg)
+  Pipeline success : 4/10 (40%)
+  Value match      : 0/4 (0%)  [primary correctness metric]
+  Full match       : 0/4 (0%)  [shape + columns + values]
+  Avg executions   : 0.7
+  Avg retries      : 0.00
+
+GROUP BREAKDOWN
+  Group                     Success    Value     Full  AvgRetry
+  ------------------------------------------------------------
+  Group 8 Pseudo-Compound (Comparison)      0%       0%       0%      0.00
+  Group 9 Compound (Two Scalars)     60%       0%       0%      0.00
+  Group 10 Compound (Scalar + Ranked)     50%       0%       0%      0.00
+
+PIPELINE ERRORS
+  Q38: What are the total sales and total profit across all orders?
+    status=unsolvable  msg=Query cannot be answered with available tools: The query requires two separate a
+  Q39: What is the average discount and average quantity per order?
+    status=unsolvable  msg=Query cannot be answered with available tools: The query requests two separate a
+  Q40: How many orders were placed in total, and how many unique customers pl
+    status=unsolvable  msg=Query cannot be answered with available tools: The schema does not provide an Or
+  Q42: Which states are most profitable and which product categories are most
+    status=unsolvable  msg=Query cannot be answered with available tools: The query requires two separate g
+  Q44: Show me the top 5 customers by sales and the top 5 states by sales.
+    status=unsolvable  msg=Query cannot be answered with available tools: The query requires two separate g
+  Q47: For orders shipped via First Class, what is the average shipping time 
+    status=unsolvable  msg=Query cannot be answered with available tools: The query requires computing two 
+
+VALUE MISMATCHES
+  Q41: Show me total profit and also which states are most profitable.
+    gt_shape=None  pipeline_shape=None
+    -> Pipeline returned no result -- comparison skipped
+  Q43: What is the total sales by region and by ship mode?
+    gt_shape=None  pipeline_shape=None
+    -> Pipeline returned no result -- comparison skipped
+  Q45: For Technology orders, what are the total sales and average discount?
+    gt_shape=None  pipeline_shape=None
+    -> Pipeline returned no result -- comparison skipped
+  Q46: In the West region, how many orders were placed and what was the total
+    gt_shape=None  pipeline_shape=None
+    -> Pipeline returned no result -- comparison skipped
+
+====================================================================================================

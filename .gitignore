@@ -32,8 +32,11 @@ checkpoints/
 .DS_Store
 Thumbs.db
 
-eval/
+# eval/ is tracked; ignore only junk
+eval/__pycache__/
+eval/results/*.log
 
 CLAUDE.md
 
-docs/
+# Personal interview-prep notes (not public)
+PROJECT_GUIDE.md

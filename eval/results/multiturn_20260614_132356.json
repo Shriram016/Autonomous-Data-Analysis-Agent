@@ -1,0 +1,202 @@
+{
+  "summary": {
+    "total": 12,
+    "passed": 0,
+    "failed": 12,
+    "pass_rate": 0.0
+  },
+  "records": [
+    {
+      "id": "MT01",
+      "tags": [
+        "multiturn",
+        "year_swap",
+        "2turn"
+      ],
+      "num_turns": 2,
+      "final_query": "What about 2015?",
+      "pipeline_status": "error",
+      "value_match": false,
+      "mismatches": [
+        "Pipeline returned no final_df"
+      ],
+      "duration_s": 44.51
+    },
+    {
+      "id": "MT02",
+      "tags": [
+        "multiturn",
+        "year_swap",
+        "3turn"
+      ],
+      "num_turns": 3,
+      "final_query": "And 2016?",
+      "pipeline_status": "error",
+      "value_match": false,
+      "mismatches": [
+        "Pipeline returned no final_df"
+      ],
+      "duration_s": 63.24
+    },
+    {
+      "id": "MT03",
+      "tags": [
+        "multiturn",
+        "category_swap",
+        "2turn"
+      ],
+      "num_turns": 2,
+      "final_query": "What about Technology?",
+      "pipeline_status": "error",
+      "value_match": false,
+      "mismatches": [
+        "Pipeline returned no final_df"
+      ],
+      "duration_s": 41.95
+    },
+    {
+      "id": "MT04",
+      "tags": [
+        "multiturn",
+        "category_swap",
+        "3turn"
+      ],
+      "num_turns": 3,
+      "final_query": "And Office Supplies?",
+      "pipeline_status": "error",
+      "value_match": false,
+      "mismatches": [
+        "Pipeline returned no final_df"
+      ],
+      "duration_s": 63.05
+    },
+    {
+      "id": "MT05",
+      "tags": [
+        "multiturn",
+        "region_swap",
+        "2turn"
+      ],
+      "num_turns": 2,
+      "final_query": "What about the East region?",
+      "pipeline_status": "error",
+      "value_match": false,
+      "mismatches": [
+        "Pipeline returned no final_df"
+      ],
+      "duration_s": 42.07
+    },
+    {
+      "id": "MT06",
+      "tags": [
+        "multiturn",
+        "region_swap",
+        "3turn"
+      ],
+      "num_turns": 3,
+      "final_query": "And the South region?",
+      "pipeline_status": "error",
+      "value_match": false,
+      "mismatches": [
+        "Pipeline returned no final_df"
+      ],
+      "duration_s": 124.23
+    },
+    {
+      "id": "MT07",
+      "tags": [
+        "multiturn",
+        "segment_swap",
+        "2turn"
+      ],
+      "num_turns": 2,
+      "final_query": "What about the Corporate segment?",
+      "pipeline_status": "error",
+      "value_match": false,
+      "mismatches": [
+        "Pipeline returned no final_df"
+      ],
+      "duration_s": 42.03
+    },
+    {
+      "id": "MT08",
+      "tags": [
+        "multiturn",
+        "segment_swap",
+        "3turn"
+      ],
+      "num_turns": 3,
+      "final_query": "And the Home Office segment?",
+      "pipeline_status": "error",
+      "value_match": false,
+      "mismatches": [
+        "Pipeline returned no final_df"
+      ],
+      "duration_s": 62.99
+    },
+    {
+      "id": "MT09",
+      "tags": [
+        "multiturn",
+        "metric_swap",
+        "2turn"
+      ],
+      "num_turns": 2,
+      "final_query": "What about the total profit?",
+      "pipeline_status": "error",
+      "value_match": false,
+      "mismatches": [
+        "Pipeline returned no final_df"
+      ],
+      "duration_s": 41.94
+    },
+    {
+      "id": "MT10",
+      "tags": [
+        "multiturn",
+        "metric_swap",
+        "3turn"
+      ],
+      "num_turns": 3,
+      "final_query": "And the total quantity sold?",
+      "pipeline_status": "error",
+      "value_match": false,
+      "mismatches": [
+        "Pipeline returned no final_df"
+      ],
+      "duration_s": 62.77
+    },
+    {
+      "id": "MT11",
+      "tags": [
+        "multiturn",
+        "subcategory_swap",
+        "2turn"
+      ],
+      "num_turns": 2,
+      "final_query": "What about Chairs?",
+      "pipeline_status": "error",
+      "value_match": false,
+      "mismatches": [
+        "Pipeline returned no final_df"
+      ],
+      "duration_s": 41.99
+    },
+    {
+      "id": "MT12",
+      "tags": [
+        "multiturn",
+        "subcategory_swap",
+        "3turn"
+      ],
+      "num_turns": 3,
+      "final_query": "And Tables?",
+      "pipeline_status": "error",
+      "value_match": false,
+      "mismatches": [
+        "Pipeline returned no final_df"
+      ],
+      "duration_s": 62.85
+    }
+  ]
+}

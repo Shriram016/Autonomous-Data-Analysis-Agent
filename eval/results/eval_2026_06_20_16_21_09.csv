@@ -1,0 +1,11 @@
+id,pipeline_status,pipeline_success,gt_error,value_match,full_match,shape_match,columns_match,plan_steps,total_executions,retries,had_step_error,duration_s,compare_mode,gt_shape,pipeline_shape,query
+Q38,unsolvable,False,False,False,False,,,0,0,0,False,2.22,value_only,,,What are the total sales and total profit across all orders?
+Q39,unsolvable,False,False,False,False,,,0,0,0,False,13.65,value_only,,,What is the average discount and average quantity per order?
+Q40,unsolvable,False,False,False,False,,,0,0,0,False,36.47,value_only,,,"How many orders were placed in total, and how many unique customers placed them?"
+Q41,success,True,False,False,False,,,2,2,0,False,8.57,value_only,,,Show me total profit and also which states are most profitable.
+Q42,unsolvable,False,False,False,False,,,0,0,0,False,20.7,value_only,,,Which states are most profitable and which product categories are most profitable?
+Q43,success,True,False,False,False,,,1,1,0,False,23.75,value_only,,,What is the total sales by region and by ship mode?
+Q44,unsolvable,False,False,False,False,,,0,0,0,False,1.46,value_only,,,Show me the top 5 customers by sales and the top 5 states by sales.
+Q45,success,True,False,False,False,,,2,2,0,False,5.03,value_only,,,"For Technology orders, what are the total sales and average discount?"
+Q46,success,True,False,False,False,,,2,2,0,False,25.3,value_only,,,"In the West region, how many orders were placed and what was the total profit?"
+Q47,unsolvable,False,False,False,False,,,0,0,0,False,24.64,value_only,,,"For orders shipped via First Class, what is the average shipping time and total sales?"

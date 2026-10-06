@@ -1,0 +1,8 @@
+id,pipeline_status,pipeline_success,gt_error,value_match,full_match,shape_match,columns_match,plan_steps,total_executions,retries,had_step_error,duration_s,compare_mode,gt_shape,pipeline_shape,query
+Q31,success,True,False,True,True,,,1,1,0,False,2.72,value_only,"(4, 2)","(4, 2)",What are total sales? Also break it down by region.
+Q32,unsolvable,False,False,False,False,,,0,0,0,False,9.92,value_only,"(3, 2)",,What is the average discount overall and by customer segment?
+Q33,unsolvable,False,False,False,False,,,0,0,0,False,21.39,value_only,"(3, 2)",,What is the average order value per category and overall?
+Q34,unsolvable,False,False,False,False,,,0,0,0,False,35.96,value_only,"(4, 2)",,"What were total sales in 2017, and how did each region perform that year?"
+Q35,unsolvable,False,False,False,False,,,0,0,0,False,36.72,value_only,"(4, 2)",,What is the total profit by ship mode and overall?
+Q36,unsolvable,False,False,False,False,,,0,0,0,False,11.92,value_only,"(2, 2)",,Compare total sales in 2016 versus 2017.
+Q37,success,True,False,False,False,,,1,1,0,False,27.13,value_only,"(2, 2)","(3, 2)",How do sales in the Consumer segment compare to the Corporate segment?

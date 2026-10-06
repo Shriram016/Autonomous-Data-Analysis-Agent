@@ -1,0 +1,130 @@
+{
+  "summary": {
+    "total": 7,
+    "passed": 0,
+    "failed": 1,
+    "skipped": 6,
+    "pass_rate": 0.0
+  },
+  "records": [
+    {
+      "id": "MT09",
+      "tags": [
+        "multiturn",
+        "metric_swap",
+        "2turn"
+      ],
+      "num_turns": 2,
+      "final_query": "What about the profit for the same?",
+      "outcome": "fail",
+      "pipeline_status": "error",
+      "value_match": false,
+      "mismatches": [
+        "Pipeline returned no final_df"
+      ],
+      "duration_s": 28.82
+    },
+    {
+      "id": "MT10",
+      "tags": [
+        "multiturn",
+        "metric_swap",
+        "3turn"
+      ],
+      "num_turns": 3,
+      "final_query": "And the total quantity instead?",
+      "outcome": "skipped",
+      "pipeline_status": null,
+      "value_match": null,
+      "mismatches": [
+        "Skipped: Turn 'What were total sales for Office Supplie' returned status=error: Planner failed: Groq API error 429: Error code: 429 - {'error': {'message': 'Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01kntj8vvwfbr8stf5ern5bm3m` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 196855, Requested 4741. Please try again in 11m29.472s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}"
+      ],
+      "duration_s": 1.17
+    },
+    {
+      "id": "MT12",
+      "tags": [
+        "multiturn",
+        "subcategory_swap",
+        "3turn"
+      ],
+      "num_turns": 3,
+      "final_query": "What about Tables?",
+      "outcome": "skipped",
+      "pipeline_status": null,
+      "value_match": null,
+      "mismatches": [
+        "Skipped: Turn 'What about Chairs?' returned status=error: Planner failed: Groq API error 429: Error code: 429 - {'error': {'message': 'Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01kntj8vvwfbr8stf5ern5bm3m` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 198102, Requested 4755. Please try again in 20m34.224s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}"
+      ],
+      "duration_s": 24.09
+    },
+    {
+      "id": "MT13",
+      "tags": [
+        "multiturn",
+        "year_region_swap",
+        "4turn"
+      ],
+      "num_turns": 4,
+      "final_query": "And the East region?",
+      "outcome": "skipped",
+      "pipeline_status": null,
+      "value_match": null,
+      "mismatches": [
+        "Skipped: Turn 'What were total sales in 2014?' returned status=error: Planner failed: Groq API error 429: Error code: 429 - {'error': {'message': 'Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01kntj8vvwfbr8stf5ern5bm3m` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 198098, Requested 4738. Please try again in 20m25.152s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}"
+      ],
+      "duration_s": 1.22
+    },
+    {
+      "id": "MT14",
+      "tags": [
+        "multiturn",
+        "category_metric_swap",
+        "4turn"
+      ],
+      "num_turns": 4,
+      "final_query": "And for Office Supplies?",
+      "outcome": "skipped",
+      "pipeline_status": null,
+      "value_match": null,
+      "mismatches": [
+        "Skipped: Turn 'What was the total profit for Furniture?' returned status=error: Planner failed: Groq API error 429: Error code: 429 - {'error': {'message': 'Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01kntj8vvwfbr8stf5ern5bm3m` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 198094, Requested 4737. Please try again in 20m22.992s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}"
+      ],
+      "duration_s": 1.19
+    },
+    {
+      "id": "MT15",
+      "tags": [
+        "multiturn",
+        "synthesis",
+        "4turn"
+      ],
+      "num_turns": 4,
+      "final_query": "Can you show the 3 years we discussed in a table?",
+      "outcome": "skipped",
+      "pipeline_status": null,
+      "value_match": null,
+      "mismatches": [
+        "Skipped: Turn 'Tell me sales numbers in 2017.' returned status=error: Planner failed: Groq API error 429: Error code: 429 - {'error': {'message': 'Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01kntj8vvwfbr8stf5ern5bm3m` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 198090, Requested 2940. Please try again in 7m24.96s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}"
+      ],
+      "duration_s": 1.94
+    },
+    {
+      "id": "MT16",
+      "tags": [
+        "multiturn",
+        "synthesis",
+        "4turn"
+      ],
+      "num_turns": 4,
+      "final_query": "Can you compare all 3 regions we discussed?",
+      "outcome": "skipped",
+      "pipeline_status": null,
+      "value_match": null,
+      "mismatches": [
+        "Skipped: Turn 'What is the total profit in the West reg' returned status=error: Planner failed: Groq API error 429: Error code: 429 - {'error': {'message': 'Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01kntj8vvwfbr8stf5ern5bm3m` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 198084, Requested 4739. Please try again in 20m19.536s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}"
+      ],
+      "duration_s": 2.55
+    }
+  ]
+}

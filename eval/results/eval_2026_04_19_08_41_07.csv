@@ -1,0 +1,31 @@
+id,pipeline_status,pipeline_success,gt_error,value_match,full_match,shape_match,columns_match,plan_steps,total_executions,retries,had_step_error,duration_s,compare_mode,gt_shape,pipeline_shape,query
+Q01,success,True,False,True,True,,,1,1,0,False,3.51,value_only,"(1, 1)","(1, 1)",What is the total sales across all orders?
+Q02,success,True,False,True,True,,,1,1,0,False,31.71,value_only,"(1, 1)","(1, 1)",What is the average discount given across all products?
+Q03,success,True,False,True,True,,,1,1,0,False,34.88,value_only,"(1, 1)","(1, 1)",How many total orders are there in the dataset?
+Q04,success,True,False,True,True,,,1,1,0,False,31.96,value_only,"(1, 1)","(1, 1)",What is the total profit across all regions?
+Q05,success,True,False,True,True,,,1,1,0,False,34.82,value_only,"(1, 1)","(1, 1)",What is the average quantity ordered per transaction?
+Q06,success,True,False,True,True,,,2,2,0,False,63.75,value_only,"(1, 2)","(1, 1)",What are the total sales for the Technology category?
+Q07,success,True,False,True,True,,,2,2,0,False,34.4,value_only,"(1, 2)","(1, 1)",What is the total profit from the West region?
+Q08,success,True,False,False,False,,,1,1,0,False,32.61,value_only,"(1, 2)","(5191, 21)",How many orders were placed in the Consumer segment?
+Q09,success,True,False,True,True,,,2,2,0,False,33.22,value_only,"(1, 2)","(1, 1)",What is the total sales for Standard Class ship mode?
+Q10,success,True,False,True,True,,,2,2,0,False,34.55,value_only,"(1, 2)","(1, 1)",What is the average sales value for orders from California?
+Q11,success,True,False,True,True,True,True,3,3,0,False,35.65,ordered,"(5, 2)","(5, 2)",Which are the top 5 states by total sales?
+Q12,success,True,False,True,True,True,True,3,3,0,False,34.43,ordered,"(5, 2)","(5, 2)",Which are the bottom 5 sub-categories by total profit?
+Q13,success,True,False,True,True,True,True,3,3,0,False,34.22,ordered,"(3, 2)","(3, 2)",Which 3 ship modes generate the highest average sales?
+Q14,success,True,False,True,True,True,True,3,3,0,False,35.66,ordered,"(10, 2)","(10, 2)",Which are the top 10 customers by total sales?
+Q15,success,True,False,True,True,True,True,3,3,0,False,33.97,ordered,"(1, 2)","(1, 2)",Which product category has the highest average discount?
+Q16,success,True,False,True,True,,,2,2,0,False,33.27,value_only,"(4, 2)","(4, 2)",What is the total sales for each year?
+Q17,success,True,False,True,True,,,4,4,0,False,38.2,value_only,"(1, 2)","(1, 2)",Which month has the highest number of orders across all years?
+Q18,success,True,False,True,True,,,2,2,0,False,36.19,value_only,"(4, 2)","(4, 2)",What is the total profit per quarter?
+Q19,success,True,False,True,True,,,3,3,0,False,34.76,value_only,"(1, 2)","(1, 1)",What are the total sales for Q1 across all years?
+Q20,success,True,False,True,True,,,4,4,0,False,38.0,value_only,"(1, 2)","(1, 2)",Which year had the highest total profit?
+Q21,success,True,False,True,True,,,3,3,0,False,32.77,value_only,"(1, 2)","(1, 1)",What is the total sales for Furniture in the West region?
+Q22,success,True,False,False,False,,,1,1,0,False,23.63,value_only,"(1, 2)","(5191, 21)",How many orders were placed in the Consumer segment in California?
+Q23,success,True,False,True,True,,,4,4,0,False,67.36,value_only,"(1, 2)","(1, 1)",What is the average profit for Technology products in Q1?
+Q24,success,True,False,True,True,,,3,3,0,False,68.8,value_only,"(1, 2)","(1, 1)",What are the total sales for Office Supplies in the East region?
+Q25,success,True,False,True,True,True,True,4,4,0,False,34.51,ordered,"(5, 2)","(5, 2)",Which are the top 5 customers by sales in the Consumer segment?
+Q26,success,True,False,True,True,,,2,2,0,False,32.21,value_only,"(1, 1)","(1, 1)",What is the average shipping time in days across all orders?
+Q27,success,True,False,True,True,,,4,4,0,False,34.16,value_only,"(1, 2)","(1, 2)",Which product category has the longest average shipping time?
+Q28,success,True,False,True,True,,,4,4,0,False,35.99,value_only,"(1, 2)","(1, 2)",Which ship mode has the shortest average shipping time?
+Q29,success,True,False,True,True,,,3,3,0,False,35.81,value_only,"(1, 1)","(1, 1)",What is the average shipping time for orders from the West region?
+Q30,success,True,False,True,True,,,4,4,0,False,37.83,value_only,"(5, 2)","(5, 2)",Which are the top 5 states with the longest average shipping time?

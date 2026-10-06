@@ -1,0 +1,186 @@
+{
+  "summary": {
+    "total": 12,
+    "passed": 8,
+    "failed": 4,
+    "pass_rate": 0.667
+  },
+  "records": [
+    {
+      "id": "MT01",
+      "tags": [
+        "multiturn",
+        "year_swap",
+        "2turn"
+      ],
+      "num_turns": 2,
+      "final_query": "What about 2015?",
+      "pipeline_status": "success",
+      "value_match": true,
+      "mismatches": [],
+      "duration_s": 10.79
+    },
+    {
+      "id": "MT02",
+      "tags": [
+        "multiturn",
+        "year_swap",
+        "3turn"
+      ],
+      "num_turns": 3,
+      "final_query": "And 2016?",
+      "pipeline_status": "success",
+      "value_match": true,
+      "mismatches": [],
+      "duration_s": 59.16
+    },
+    {
+      "id": "MT03",
+      "tags": [
+        "multiturn",
+        "category_swap",
+        "2turn"
+      ],
+      "num_turns": 2,
+      "final_query": "What about Technology?",
+      "pipeline_status": "success",
+      "value_match": true,
+      "mismatches": [],
+      "duration_s": 36.95
+    },
+    {
+      "id": "MT04",
+      "tags": [
+        "multiturn",
+        "category_swap",
+        "3turn"
+      ],
+      "num_turns": 3,
+      "final_query": "And Office Supplies?",
+      "pipeline_status": "success",
+      "value_match": false,
+      "mismatches": [
+        "Value[0]: GT=122490.8008, Pipeline=286397.0217, diff=133.81%"
+      ],
+      "duration_s": 57.75
+    },
+    {
+      "id": "MT05",
+      "tags": [
+        "multiturn",
+        "region_swap",
+        "2turn"
+      ],
+      "num_turns": 2,
+      "final_query": "What about the East region?",
+      "pipeline_status": "success",
+      "value_match": true,
+      "mismatches": [],
+      "duration_s": 37.15
+    },
+    {
+      "id": "MT06",
+      "tags": [
+        "multiturn",
+        "region_swap",
+        "3turn"
+      ],
+      "num_turns": 3,
+      "final_query": "And the South region?",
+      "pipeline_status": "success",
+      "value_match": true,
+      "mismatches": [],
+      "duration_s": 46.37
+    },
+    {
+      "id": "MT07",
+      "tags": [
+        "multiturn",
+        "segment_swap",
+        "2turn"
+      ],
+      "num_turns": 2,
+      "final_query": "What about the Corporate segment?",
+      "pipeline_status": "success",
+      "value_match": true,
+      "mismatches": [],
+      "duration_s": 37.64
+    },
+    {
+      "id": "MT08",
+      "tags": [
+        "multiturn",
+        "segment_swap",
+        "3turn"
+      ],
+      "num_turns": 3,
+      "final_query": "And the Home Office segment?",
+      "pipeline_status": "success",
+      "value_match": true,
+      "mismatches": [],
+      "duration_s": 44.37
+    },
+    {
+      "id": "MT09",
+      "tags": [
+        "multiturn",
+        "metric_swap",
+        "2turn"
+      ],
+      "num_turns": 2,
+      "final_query": "What about the total profit?",
+      "pipeline_status": "success",
+      "value_match": false,
+      "mismatches": [
+        "Value[0]: GT=22593.4161, Pipeline=286397.0217, diff=1167.61%"
+      ],
+      "duration_s": 15.97
+    },
+    {
+      "id": "MT10",
+      "tags": [
+        "multiturn",
+        "metric_swap",
+        "3turn"
+      ],
+      "num_turns": 3,
+      "final_query": "And the total quantity sold?",
+      "pipeline_status": "success",
+      "value_match": false,
+      "mismatches": [
+        "Value[0]: GT=4569.0000, Pipeline=37873.0000, diff=728.91%"
+      ],
+      "duration_s": 56.58
+    },
+    {
+      "id": "MT11",
+      "tags": [
+        "multiturn",
+        "subcategory_swap",
+        "2turn"
+      ],
+      "num_turns": 2,
+      "final_query": "What about Chairs?",
+      "pipeline_status": "success",
+      "value_match": true,
+      "mismatches": [],
+      "duration_s": 37.73
+    },
+    {
+      "id": "MT12",
+      "tags": [
+        "multiturn",
+        "subcategory_swap",
+        "3turn"
+      ],
+      "num_turns": 3,
+      "final_query": "And Tables?",
+      "pipeline_status": "unsolvable",
+      "value_match": false,
+      "mismatches": [
+        "Pipeline returned no final_df"
+      ],
+      "duration_s": 43.6
+    }
+  ]
+}

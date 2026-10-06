@@ -1,0 +1,47 @@
+====================================================================================================
+ADAA EVALUATION REPORT
+Generated: 2026-06-20 15:28:56
+====================================================================================================
+
+ID     Status        Val  Full  Mode          Exec Retry    Time  Query
+----------------------------------------------------------------------------------------------------
+Q31    success        Y     Y   value_only       1     0    2.7s  What are total sales? Also break it down
+Q32    unsolvable    ERR   ERR  value_only       0     0    9.9s  What is the average discount overall and
+Q33    unsolvable    ERR   ERR  value_only       0     0   21.4s  What is the average order value per cate
+Q34    unsolvable    ERR   ERR  value_only       0     0   36.0s  What were total sales in 2017, and how d
+Q35    unsolvable    ERR   ERR  value_only       0     0   36.7s  What is the total profit by ship mode an
+Q36    unsolvable    ERR   ERR  value_only       0     0   11.9s  Compare total sales in 2016 versus 2017.
+Q37    success        N     N   value_only       1     0   27.1s  How do sales in the Consumer segment com
+----------------------------------------------------------------------------------------------------
+
+OVERALL  (7 queries | 146s total | 20.8s avg)
+  Pipeline success : 2/7 (29%)
+  Value match      : 1/2 (50%)  [primary correctness metric]
+  Full match       : 1/2 (50%)  [shape + columns + values]
+  Avg executions   : 0.3
+  Avg retries      : 0.00
+
+GROUP BREAKDOWN
+  Group                     Success    Value     Full  AvgRetry
+  ------------------------------------------------------------
+  Group 7 Pseudo-Compound (Breakdown)     20%     100%     100%      0.00
+  Group 8 Pseudo-Compound (Comparison)     50%       0%       0%      0.00
+
+PIPELINE ERRORS
+  Q32: What is the average discount overall and by customer segment?
+    status=unsolvable  msg=Query cannot be answered with available tools: Cannot compute both overall and p
+  Q33: What is the average order value per category and overall?
+    status=unsolvable  msg=Query cannot be answered with available tools: The query requires both a per-cat
+  Q34: What were total sales in 2017, and how did each region perform that ye
+    status=unsolvable  msg=Query cannot be answered with available tools: The query requires both a total s
+  Q35: What is the total profit by ship mode and overall?
+    status=unsolvable  msg=Query cannot be answered with available tools: Cannot compute both per-Ship Mode
+  Q36: Compare total sales in 2016 versus 2017.
+    status=unsolvable  msg=Query cannot be answered with available tools: Cannot filter for both 2016 and 2
+
+VALUE MISMATCHES
+  Q37: How do sales in the Consumer segment compare to the Corporate segment?
+    gt_shape=(2, 2)  pipeline_shape=(3, 2)
+    -> Numeric value count mismatch: GT has 2 value(s), pipeline has 3 value(s). GT shape=(2, 2), pipeline shape=(3, 2).
+
+====================================================================================================

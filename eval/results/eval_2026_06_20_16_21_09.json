@@ -1,0 +1,658 @@
+{
+  "aggregate": {
+    "total_queries": 10,
+    "pipeline_success_count": 4,
+    "pipeline_success_rate": 0.4,
+    "gt_error_count": 0,
+    "value_match_count": 0,
+    "value_match_rate": 0.0,
+    "full_match_count": 0,
+    "full_match_rate": 0.0,
+    "avg_executions": 0.7,
+    "avg_retries": 0.0,
+    "avg_duration_s": 16.2,
+    "total_duration_s": 161.8,
+    "groups": {
+      "Group 8": {
+        "name": "Pseudo-Compound (Comparison)",
+        "count": 3,
+        "pipeline_success_rate": 0.0,
+        "value_match_rate": 0.0,
+        "full_match_rate": 0.0,
+        "avg_retries": 0.0
+      },
+      "Group 9": {
+        "name": "Compound (Two Scalars)",
+        "count": 5,
+        "pipeline_success_rate": 0.6,
+        "value_match_rate": 0.0,
+        "full_match_rate": 0.0,
+        "avg_retries": 0.0
+      },
+      "Group 10": {
+        "name": "Compound (Scalar + Ranked)",
+        "count": 2,
+        "pipeline_success_rate": 0.5,
+        "value_match_rate": 0.0,
+        "full_match_rate": 0.0,
+        "avg_retries": 0.0
+      }
+    }
+  },
+  "records": [
+    {
+      "id": "Q38",
+      "query": "What are the total sales and total profit across all orders?",
+      "tags": [
+        "compound",
+        "two_scalars",
+        "aggregation"
+      ],
+      "compare_mode": "value_only",
+      "notes": "Two different metrics (Sales sum, Profit sum), no grouping. Requires two separate aggregate_column calls \u2014 pipeline cannot chain them.",
+      "pipeline_status": "unsolvable",
+      "pipeline_success": false,
+      "pipeline_message": "Query cannot be answered with available tools: The query requires two separate aggregate values (total Sales and total Profit) without any grouping. The allowed tools do not support computing multiple aggregates in a single step, and using two aggregate_column steps would violate the rule of not using both aggregate types in the same plan. Therefore the query cannot be satisfied with the given constraints.",
+      "gt_error": false,
+      "gt_shape": null,
+      "pipeline_shape": null,
+      "value_match": false,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": false,
+      "mismatches": [
+        "Pipeline returned no result -- comparison skipped"
+      ],
+      "plan_steps": 0,
+      "total_executions": 0,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 2.22,
+      "answer": null,
+      "gt_data": null,
+      "pipeline_data": null
+    },
+    {
+      "id": "Q39",
+      "query": "What is the average discount and average quantity per order?",
+      "tags": [
+        "compound",
+        "two_scalars",
+        "aggregation"
+      ],
+      "compare_mode": "value_only",
+      "notes": "Two different mean aggregates (Discount, Quantity) over the full dataset. Same issue as Q38 \u2014 two aggregate_column calls needed.",
+      "pipeline_status": "unsolvable",
+      "pipeline_success": false,
+      "pipeline_message": "Query cannot be answered with available tools: The query requests two separate aggregate metrics (average Discount and average Quantity) without any grouping dimension. The available tools allow only a single aggregate operation per step, and there is no column to group by. Therefore, the query cannot be satisfied with the given toolset.",
+      "gt_error": false,
+      "gt_shape": null,
+      "pipeline_shape": null,
+      "value_match": false,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": false,
+      "mismatches": [
+        "Pipeline returned no result -- comparison skipped"
+      ],
+      "plan_steps": 0,
+      "total_executions": 0,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 13.65,
+      "answer": null,
+      "gt_data": null,
+      "pipeline_data": null
+    },
+    {
+      "id": "Q40",
+      "query": "How many orders were placed in total, and how many unique customers placed them?",
+      "tags": [
+        "compound",
+        "two_scalars",
+        "count"
+      ],
+      "compare_mode": "value_only",
+      "notes": "Count of rows vs count of distinct Customer Name values. Two different operations with different semantics \u2014 no single tool handles both.",
+      "pipeline_status": "unsolvable",
+      "pipeline_success": false,
+      "pipeline_message": "Query cannot be answered with available tools: The schema does not provide an Order ID or a column that uniquely identifies each order, nor does it support a distinct count operation for Customer Name. Therefore, it is not possible to compute the total number of orders or the number of unique customers with the available tools and schema.",
+      "gt_error": false,
+      "gt_shape": null,
+      "pipeline_shape": null,
+      "value_match": false,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": false,
+      "mismatches": [
+        "Pipeline returned no result -- comparison skipped"
+      ],
+      "plan_steps": 0,
+      "total_executions": 0,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 36.47,
+      "answer": null,
+      "gt_data": null,
+      "pipeline_data": null
+    },
+    {
+      "id": "Q41",
+      "query": "Show me total profit and also which states are most profitable.",
+      "tags": [
+        "compound",
+        "scalar_plus_ranked",
+        "aggregation",
+        "rank"
+      ],
+      "compare_mode": "value_only",
+      "notes": "Scalar total profit (1 number) + ranked state list (N rows). Incompatible shapes \u2014 ranked top-N does not include the overall total.",
+      "pipeline_status": "success",
+      "pipeline_success": true,
+      "pipeline_message": "",
+      "gt_error": false,
+      "gt_shape": null,
+      "pipeline_shape": null,
+      "value_match": false,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": false,
+      "mismatches": [
+        "Pipeline returned no result -- comparison skipped"
+      ],
+      "plan_steps": 2,
+      "total_executions": 2,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 8.57,
+      "answer": "The total profit across all states is $763,819. The most profitable states are California with a profit of $76,381 and New York with a profit of $74,039.",
+      "gt_data": null,
+      "pipeline_data": [
+        {
+          "State": "California",
+          "Profit_sum": 76381.38709999999
+        },
+        {
+          "State": "New York",
+          "Profit_sum": 74038.5486
+        },
+        {
+          "State": "Washington",
+          "Profit_sum": 33402.6517
+        },
+        {
+          "State": "Michigan",
+          "Profit_sum": 24463.1876
+        },
+        {
+          "State": "Virginia",
+          "Profit_sum": 18597.9504
+        },
+        {
+          "State": "Indiana",
+          "Profit_sum": 18382.9363
+        },
+        {
+          "State": "Georgia",
+          "Profit_sum": 16250.0433
+        },
+        {
+          "State": "Kentucky",
+          "Profit_sum": 11199.6966
+        },
+        {
+          "State": "Minnesota",
+          "Profit_sum": 10823.1874
+        },
+        {
+          "State": "Delaware",
+          "Profit_sum": 9977.3748
+        },
+        {
+          "State": "New Jersey",
+          "Profit_sum": 9772.9138
+        },
+        {
+          "State": "Wisconsin",
+          "Profit_sum": 8401.8004
+        },
+        {
+          "State": "Rhode Island",
+          "Profit_sum": 7285.6293000000005
+        },
+        {
+          "State": "Maryland",
+          "Profit_sum": 7031.1788
+        },
+        {
+          "State": "Massachusetts",
+          "Profit_sum": 6785.5016000000005
+        },
+        {
+          "State": "Missouri",
+          "Profit_sum": 6436.2105
+        },
+        {
+          "State": "Alabama",
+          "Profit_sum": 5786.8253
+        },
+        {
+          "State": "Oklahoma",
+          "Profit_sum": 4853.956
+        },
+        {
+          "State": "Arkansas",
+          "Profit_sum": 4008.6871
+        },
+        {
+          "State": "Connecticut",
+          "Profit_sum": 3511.4918
+        },
+        {
+          "State": "Nevada",
+          "Profit_sum": 3316.7659
+        },
+        {
+          "State": "Mississippi",
+          "Profit_sum": 3172.9762
+        },
+        {
+          "State": "Utah",
+          "Profit_sum": 2546.5335
+        },
+        {
+          "State": "Vermont",
+          "Profit_sum": 2244.9782999999998
+        },
+        {
+          "State": "Louisiana",
+          "Profit_sum": 2196.1023
+        },
+        {
+          "State": "Nebraska",
+          "Profit_sum": 2037.0942000000002
+        },
+        {
+          "State": "Montana",
+          "Profit_sum": 1833.3285
+        },
+        {
+          "State": "South Carolina",
+          "Profit_sum": 1769.0566
+        },
+        {
+          "State": "New Hampshire",
+          "Profit_sum": 1706.5028
+        },
+        {
+          "State": "Iowa",
+          "Profit_sum": 1183.8119
+        },
+        {
+          "State": "New Mexico",
+          "Profit_sum": 1157.1161
+        },
+        {
+          "State": "District of Columbia",
+          "Profit_sum": 1059.5892999999999
+        },
+        {
+          "State": "Kansas",
+          "Profit_sum": 836.4435
+        },
+        {
+          "State": "Idaho",
+          "Profit_sum": 826.7231
+        },
+        {
+          "State": "Maine",
+          "Profit_sum": 454.4862
+        },
+        {
+          "State": "South Dakota",
+          "Profit_sum": 394.8283
+        },
+        {
+          "State": "North Dakota",
+          "Profit_sum": 230.1497
+        },
+        {
+          "State": "West Virginia",
+          "Profit_sum": 185.9216
+        },
+        {
+          "State": "Wyoming",
+          "Profit_sum": 100.196
+        },
+        {
+          "State": "Oregon",
+          "Profit_sum": -1190.4705
+        },
+        {
+          "State": "Florida",
+          "Profit_sum": -3399.3017000000004
+        },
+        {
+          "State": "Arizona",
+          "Profit_sum": -3427.9246
+        },
+        {
+          "State": "Tennessee",
+          "Profit_sum": -5341.6936
+        },
+        {
+          "State": "Colorado",
+          "Profit_sum": -6527.8579
+        },
+        {
+          "State": "North Carolina",
+          "Profit_sum": -7490.9122
+        },
+        {
+          "State": "Illinois",
+          "Profit_sum": -12607.887
+        },
+        {
+          "State": "Pennsylvania",
+          "Profit_sum": -15559.9603
+        },
+        {
+          "State": "Ohio",
+          "Profit_sum": -16971.3766
+        },
+        {
+          "State": "Texas",
+          "Profit_sum": -25729.3563
+        }
+      ]
+    },
+    {
+      "id": "Q42",
+      "query": "Which states are most profitable and which product categories are most profitable?",
+      "tags": [
+        "compound",
+        "two_grouped_outputs",
+        "rank"
+      ],
+      "compare_mode": "value_only",
+      "notes": "Two separate groupby dimensions (State, Category). Cannot merge into one DataFrame without losing one dimension.",
+      "pipeline_status": "unsolvable",
+      "pipeline_success": false,
+      "pipeline_message": "Query cannot be answered with available tools: The query requires two separate group-by aggregations (by State and by Category) that cannot be combined into a single linear plan without losing one of the results. The current framework does not support branching or parallel execution steps, so it cannot produce both answers in a single execution plan.",
+      "gt_error": false,
+      "gt_shape": null,
+      "pipeline_shape": null,
+      "value_match": false,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": false,
+      "mismatches": [
+        "Pipeline returned no result -- comparison skipped"
+      ],
+      "plan_steps": 0,
+      "total_executions": 0,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 20.7,
+      "answer": null,
+      "gt_data": null,
+      "pipeline_data": null
+    },
+    {
+      "id": "Q43",
+      "query": "What is the total sales by region and by ship mode?",
+      "tags": [
+        "compound",
+        "two_grouped_outputs",
+        "aggregation"
+      ],
+      "compare_mode": "value_only",
+      "notes": "Groupby Region and groupby Ship Mode independently. A cross-tab would change the meaning.",
+      "pipeline_status": "success",
+      "pipeline_success": true,
+      "pipeline_message": "",
+      "gt_error": false,
+      "gt_shape": null,
+      "pipeline_shape": null,
+      "value_match": false,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": false,
+      "mismatches": [
+        "Pipeline returned no result -- comparison skipped"
+      ],
+      "plan_steps": 1,
+      "total_executions": 1,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 23.75,
+      "answer": "The total sales by region are as follows: Central ($318,528), East ($405,322), South ($227,614), and West ($406,753). The total sales by ship mode are: First Class ($235,826), Same Day ($84,063), Second Class ($264,394), and Standard Class ($1,058,112).",
+      "gt_data": null,
+      "pipeline_data": [
+        {
+          "Region": "Central",
+          "Ship Mode": "First Class",
+          "Sales_sum": 58746.9154
+        },
+        {
+          "Region": "Central",
+          "Ship Mode": "Same Day",
+          "Sales_sum": 20415.41
+        },
+        {
+          "Region": "Central",
+          "Ship Mode": "Second Class",
+          "Sales_sum": 103550.0054
+        },
+        {
+          "Region": "Central",
+          "Ship Mode": "Standard Class",
+          "Sales_sum": 318527.56
+        },
+        {
+          "Region": "East",
+          "Ship Mode": "First Class",
+          "Sales_sum": 113587.053
+        },
+        {
+          "Region": "East",
+          "Ship Mode": "Same Day",
+          "Sales_sum": 43326.832
+        },
+        {
+          "Region": "East",
+          "Ship Mode": "Second Class",
+          "Sales_sum": 116545.524
+        },
+        {
+          "Region": "East",
+          "Ship Mode": "Standard Class",
+          "Sales_sum": 405321.831
+        },
+        {
+          "Region": "South",
+          "Ship Mode": "First Class",
+          "Sales_sum": 49332.566
+        },
+        {
+          "Region": "South",
+          "Ship Mode": "Same Day",
+          "Sales_sum": 21017.173
+        },
+        {
+          "Region": "South",
+          "Ship Mode": "Second Class",
+          "Sales_sum": 93758.6125
+        },
+        {
+          "Region": "South",
+          "Ship Mode": "Standard Class",
+          "Sales_sum": 227613.5535
+        },
+        {
+          "Region": "West",
+          "Ship Mode": "First Class",
+          "Sales_sum": 129761.8885
+        },
+        {
+          "Region": "West",
+          "Ship Mode": "Same Day",
+          "Sales_sum": 43603.71
+        },
+        {
+          "Region": "West",
+          "Ship Mode": "Second Class",
+          "Sales_sum": 145339.4275
+        },
+        {
+          "Region": "West",
+          "Ship Mode": "Standard Class",
+          "Sales_sum": 406752.7985
+        }
+      ]
+    },
+    {
+      "id": "Q44",
+      "query": "Show me the top 5 customers by sales and the top 5 states by sales.",
+      "tags": [
+        "compound",
+        "two_grouped_outputs",
+        "rank",
+        "top_n"
+      ],
+      "compare_mode": "value_only",
+      "notes": "Two top-5 lists on different dimensions (Customer Name, State). Incompatible shapes \u2014 cannot be returned in one DataFrame.",
+      "pipeline_status": "unsolvable",
+      "pipeline_success": false,
+      "pipeline_message": "Query cannot be answered with available tools: The query requires two separate group-by aggregations (by Customer Name and by State) that cannot be combined into a single sequential plan under the given tool constraints.",
+      "gt_error": false,
+      "gt_shape": null,
+      "pipeline_shape": null,
+      "value_match": false,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": false,
+      "mismatches": [
+        "Pipeline returned no result -- comparison skipped"
+      ],
+      "plan_steps": 0,
+      "total_executions": 0,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 1.46,
+      "answer": null,
+      "gt_data": null,
+      "pipeline_data": null
+    },
+    {
+      "id": "Q45",
+      "query": "For Technology orders, what are the total sales and average discount?",
+      "tags": [
+        "compound",
+        "filter_then_two_agg",
+        "aggregation"
+      ],
+      "compare_mode": "value_only",
+      "notes": "Single filter (Category == Technology), then two different aggregates (Sales sum, Discount mean). Requires two aggregate_column calls after filter.",
+      "pipeline_status": "success",
+      "pipeline_success": true,
+      "pipeline_message": "",
+      "gt_error": false,
+      "gt_shape": null,
+      "pipeline_shape": null,
+      "value_match": false,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": false,
+      "mismatches": [
+        "Pipeline returned no result -- comparison skipped"
+      ],
+      "plan_steps": 2,
+      "total_executions": 2,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 5.03,
+      "answer": "For Technology orders, the total sales are $836,154 and the average discount is 13.23%.",
+      "gt_data": null,
+      "pipeline_data": [
+        {
+          "Category": "Technology",
+          "Sales_sum": 836154.033,
+          "Discount_mean": 0.1323226854358419
+        }
+      ]
+    },
+    {
+      "id": "Q46",
+      "query": "In the West region, how many orders were placed and what was the total profit?",
+      "tags": [
+        "compound",
+        "filter_then_two_agg",
+        "count",
+        "aggregation"
+      ],
+      "compare_mode": "value_only",
+      "notes": "Single filter (Region == West), then count + sum. Two different operations on the filtered result.",
+      "pipeline_status": "success",
+      "pipeline_success": true,
+      "pipeline_message": "",
+      "gt_error": false,
+      "gt_shape": null,
+      "pipeline_shape": null,
+      "value_match": false,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": false,
+      "mismatches": [
+        "Pipeline returned no result -- comparison skipped"
+      ],
+      "plan_steps": 2,
+      "total_executions": 2,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 25.3,
+      "answer": "In the West region, 3,203 orders were placed and the total profit was $108,418.",
+      "gt_data": null,
+      "pipeline_data": [
+        {
+          "Region": "West",
+          "Profit_sum": 108418.4489,
+          "Sales_count": 3203
+        }
+      ]
+    },
+    {
+      "id": "Q47",
+      "query": "For orders shipped via First Class, what is the average shipping time and total sales?",
+      "tags": [
+        "compound",
+        "filter_then_two_agg",
+        "derived",
+        "aggregation"
+      ],
+      "compare_mode": "value_only",
+      "notes": "Filter (Ship Mode == First Class) + column_arithmetic for shipping days + Sales sum. Two different aggregates after filter, one requiring a derived column.",
+      "pipeline_status": "unsolvable",
+      "pipeline_success": false,
+      "pipeline_message": "Query cannot be answered with available tools: The query requires computing two separate aggregates (average shipping time and total sales) on the same dataset without any grouping. The available tools do not support performing multiple independent aggregates in a single linear plan without losing data between steps. Therefore, the query cannot be satisfied with the given tool set.",
+      "gt_error": false,
+      "gt_shape": null,
+      "pipeline_shape": null,
+      "value_match": false,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": false,
+      "mismatches": [
+        "Pipeline returned no result -- comparison skipped"
+      ],
+      "plan_steps": 0,
+      "total_executions": 0,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 24.64,
+      "answer": null,
+      "gt_data": null,
+      "pipeline_data": null
+    }
+  ]
+}

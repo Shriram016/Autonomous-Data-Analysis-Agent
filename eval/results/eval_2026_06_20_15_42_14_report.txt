@@ -1,0 +1,42 @@
+====================================================================================================
+ADAA EVALUATION REPORT
+Generated: 2026-06-20 15:42:14
+====================================================================================================
+
+ID     Status        Val  Full  Mode          Exec Retry    Time  Query
+----------------------------------------------------------------------------------------------------
+Q31    success        Y     Y   value_only       1     0    2.8s  What are total sales? Also break it down
+Q32    success        Y     Y   value_only       1     0   12.2s  What is the average discount overall and
+Q33    unsolvable    ERR   ERR  value_only       0     0   36.3s  What is the average order value per cate
+Q34    success        Y     Y   value_only       3     0    4.3s  What were total sales in 2017, and how d
+Q35    success        Y     Y   value_only       1     0   19.0s  What is the total profit by ship mode an
+Q36    success        N     N   value_only       2     0   35.1s  Compare total sales in 2016 versus 2017.
+Q37    success        N     N   value_only       2     0    6.5s  How do sales in the Consumer segment com
+----------------------------------------------------------------------------------------------------
+
+OVERALL  (7 queries | 116s total | 16.6s avg)
+  Pipeline success : 6/7 (86%)
+  Value match      : 4/6 (67%)  [primary correctness metric]
+  Full match       : 4/6 (67%)  [shape + columns + values]
+  Avg executions   : 1.4
+  Avg retries      : 0.00
+
+GROUP BREAKDOWN
+  Group                     Success    Value     Full  AvgRetry
+  ------------------------------------------------------------
+  Group 7 Pseudo-Compound (Breakdown)     80%     100%     100%      0.00
+  Group 8 Pseudo-Compound (Comparison)    100%       0%       0%      0.00
+
+PIPELINE ERRORS
+  Q33: What is the average order value per category and overall?
+    status=unsolvable  msg=Query cannot be answered with available tools: The query requests both per-categ
+
+VALUE MISMATCHES
+  Q36: Compare total sales in 2016 versus 2017.
+    gt_shape=(2, 2)  pipeline_shape=(4, 2)
+    -> Numeric value count mismatch: GT has 4 value(s), pipeline has 8 value(s). GT shape=(2, 2), pipeline shape=(4, 2).
+  Q37: How do sales in the Consumer segment compare to the Corporate segment?
+    gt_shape=(2, 2)  pipeline_shape=(3, 2)
+    -> Numeric value count mismatch: GT has 2 value(s), pipeline has 3 value(s). GT shape=(2, 2), pipeline shape=(3, 2).
+
+====================================================================================================

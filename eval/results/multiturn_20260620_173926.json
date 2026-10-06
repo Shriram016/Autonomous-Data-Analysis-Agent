@@ -1,0 +1,265 @@
+{
+  "summary": {
+    "total": 16,
+    "passed": 9,
+    "failed": 7,
+    "skipped": 0,
+    "pass_rate": 0.562
+  },
+  "records": [
+    {
+      "id": "MT01",
+      "tags": [
+        "multiturn",
+        "year_swap",
+        "2turn"
+      ],
+      "num_turns": 2,
+      "final_query": "What about 2015?",
+      "outcome": "pass",
+      "pipeline_status": "success",
+      "value_match": true,
+      "mismatches": [],
+      "duration_s": 29.7
+    },
+    {
+      "id": "MT02",
+      "tags": [
+        "multiturn",
+        "year_swap",
+        "3turn"
+      ],
+      "num_turns": 3,
+      "final_query": "And 2016?",
+      "outcome": "pass",
+      "pipeline_status": "success",
+      "value_match": true,
+      "mismatches": [],
+      "duration_s": 73.31
+    },
+    {
+      "id": "MT03",
+      "tags": [
+        "multiturn",
+        "category_swap",
+        "2turn"
+      ],
+      "num_turns": 2,
+      "final_query": "What about Technology?",
+      "outcome": "pass",
+      "pipeline_status": "success",
+      "value_match": true,
+      "mismatches": [],
+      "duration_s": 39.31
+    },
+    {
+      "id": "MT04",
+      "tags": [
+        "multiturn",
+        "category_swap",
+        "3turn"
+      ],
+      "num_turns": 3,
+      "final_query": "And Office Supplies?",
+      "outcome": "pass",
+      "pipeline_status": "success",
+      "value_match": true,
+      "mismatches": [],
+      "duration_s": 54.8
+    },
+    {
+      "id": "MT05",
+      "tags": [
+        "multiturn",
+        "region_swap",
+        "2turn"
+      ],
+      "num_turns": 2,
+      "final_query": "What about the East region?",
+      "outcome": "pass",
+      "pipeline_status": "success",
+      "value_match": true,
+      "mismatches": [],
+      "duration_s": 28.16
+    },
+    {
+      "id": "MT06",
+      "tags": [
+        "multiturn",
+        "region_swap",
+        "3turn"
+      ],
+      "num_turns": 3,
+      "final_query": "And the South region?",
+      "outcome": "pass",
+      "pipeline_status": "success",
+      "value_match": true,
+      "mismatches": [],
+      "duration_s": 53.54
+    },
+    {
+      "id": "MT07",
+      "tags": [
+        "multiturn",
+        "segment_swap",
+        "2turn"
+      ],
+      "num_turns": 2,
+      "final_query": "What about the Corporate segment?",
+      "outcome": "pass",
+      "pipeline_status": "success",
+      "value_match": true,
+      "mismatches": [],
+      "duration_s": 28.72
+    },
+    {
+      "id": "MT08",
+      "tags": [
+        "multiturn",
+        "segment_swap",
+        "3turn"
+      ],
+      "num_turns": 3,
+      "final_query": "And the Home Office segment?",
+      "outcome": "pass",
+      "pipeline_status": "success",
+      "value_match": true,
+      "mismatches": [],
+      "duration_s": 65.81
+    },
+    {
+      "id": "MT09",
+      "tags": [
+        "multiturn",
+        "metric_swap",
+        "2turn"
+      ],
+      "num_turns": 2,
+      "final_query": "What about the total profit?",
+      "outcome": "fail",
+      "pipeline_status": "success",
+      "value_match": false,
+      "mismatches": [
+        "Value[0]: GT=22593.4161, Pipeline=286397.0217, diff=1167.61%"
+      ],
+      "duration_s": 30.13
+    },
+    {
+      "id": "MT10",
+      "tags": [
+        "multiturn",
+        "metric_swap",
+        "3turn"
+      ],
+      "num_turns": 3,
+      "final_query": "And the total quantity sold?",
+      "outcome": "fail",
+      "pipeline_status": "success",
+      "value_match": false,
+      "mismatches": [
+        "Value[0]: GT=4569.0000, Pipeline=37873.0000, diff=728.91%"
+      ],
+      "duration_s": 49.21
+    },
+    {
+      "id": "MT11",
+      "tags": [
+        "multiturn",
+        "subcategory_swap",
+        "2turn"
+      ],
+      "num_turns": 2,
+      "final_query": "What about Chairs?",
+      "outcome": "pass",
+      "pipeline_status": "success",
+      "value_match": true,
+      "mismatches": [],
+      "duration_s": 24.95
+    },
+    {
+      "id": "MT12",
+      "tags": [
+        "multiturn",
+        "subcategory_swap",
+        "3turn"
+      ],
+      "num_turns": 3,
+      "final_query": "And Tables?",
+      "outcome": "fail",
+      "pipeline_status": "unsolvable",
+      "value_match": false,
+      "mismatches": [
+        "Pipeline returned no final_df"
+      ],
+      "duration_s": 46.16
+    },
+    {
+      "id": "MT13",
+      "tags": [
+        "multiturn",
+        "year_region_swap",
+        "4turn"
+      ],
+      "num_turns": 4,
+      "final_query": "And the East region?",
+      "outcome": "fail",
+      "pipeline_status": "success",
+      "value_match": false,
+      "mismatches": [
+        "Value[0]: GT=156332.0570, Pipeline=128680.4570, diff=17.69%"
+      ],
+      "duration_s": 77.86
+    },
+    {
+      "id": "MT14",
+      "tags": [
+        "multiturn",
+        "category_metric_swap",
+        "4turn"
+      ],
+      "num_turns": 4,
+      "final_query": "And for Office Supplies?",
+      "outcome": "fail",
+      "pipeline_status": "success",
+      "value_match": false,
+      "mismatches": [
+        "Value[0]: GT=719047.0320, Pipeline=122490.8008, diff=82.96%"
+      ],
+      "duration_s": 71.01
+    },
+    {
+      "id": "MT15",
+      "tags": [
+        "multiturn",
+        "synthesis",
+        "4turn"
+      ],
+      "num_turns": 4,
+      "final_query": "Can you show the 3 years we discussed in a table?",
+      "outcome": "fail",
+      "pipeline_status": "unsolvable",
+      "value_match": false,
+      "mismatches": [
+        "Pipeline returned no final_df"
+      ],
+      "duration_s": 74.97
+    },
+    {
+      "id": "MT16",
+      "tags": [
+        "multiturn",
+        "synthesis",
+        "4turn"
+      ],
+      "num_turns": 4,
+      "final_query": "Can you compare all 3 regions we discussed?",
+      "outcome": "fail",
+      "pipeline_status": "success",
+      "value_match": false,
+      "mismatches": [
+        "Numeric value count mismatch: GT has 3 value(s), pipeline has 4 value(s). GT shape=(3, 2), pipeline shape=(4, 2)."
+      ],
+      "duration_s": 71.72
+    }
+  ]
+}

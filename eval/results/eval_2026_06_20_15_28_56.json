@@ -1,0 +1,414 @@
+{
+  "aggregate": {
+    "total_queries": 7,
+    "pipeline_success_count": 2,
+    "pipeline_success_rate": 0.2857,
+    "gt_error_count": 0,
+    "value_match_count": 1,
+    "value_match_rate": 0.5,
+    "full_match_count": 1,
+    "full_match_rate": 0.5,
+    "avg_executions": 0.3,
+    "avg_retries": 0.0,
+    "avg_duration_s": 20.8,
+    "total_duration_s": 145.8,
+    "groups": {
+      "Group 7": {
+        "name": "Pseudo-Compound (Breakdown)",
+        "count": 5,
+        "pipeline_success_rate": 0.2,
+        "value_match_rate": 1.0,
+        "full_match_rate": 1.0,
+        "avg_retries": 0.0
+      },
+      "Group 8": {
+        "name": "Pseudo-Compound (Comparison)",
+        "count": 2,
+        "pipeline_success_rate": 0.5,
+        "value_match_rate": 0.0,
+        "full_match_rate": 0.0,
+        "avg_retries": 0.0
+      }
+    }
+  },
+  "records": [
+    {
+      "id": "Q31",
+      "query": "What are total sales? Also break it down by region.",
+      "tags": [
+        "pseudo_compound",
+        "groupby",
+        "aggregation"
+      ],
+      "compare_mode": "value_only",
+      "notes": "Pipeline should group by Region and sum Sales. The regional breakdown subsumes the overall total.",
+      "pipeline_status": "success",
+      "pipeline_success": true,
+      "pipeline_message": "",
+      "gt_error": false,
+      "gt_shape": [
+        4,
+        2
+      ],
+      "pipeline_shape": [
+        4,
+        2
+      ],
+      "value_match": true,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": true,
+      "mismatches": [],
+      "plan_steps": 1,
+      "total_executions": 1,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 2.72,
+      "answer": "Total sales are $2,316,900.86. Sales break down by region as follows: Central region sales are $501,240, East region sales are $678,781, South region sales are $391,722, and West region sales are $725,458.",
+      "gt_data": [
+        {
+          "Region": "Central",
+          "Sales_sum": 501239.8908
+        },
+        {
+          "Region": "East",
+          "Sales_sum": 678781.24
+        },
+        {
+          "Region": "South",
+          "Sales_sum": 391721.905
+        },
+        {
+          "Region": "West",
+          "Sales_sum": 725457.8245
+        }
+      ],
+      "pipeline_data": [
+        {
+          "Region": "Central",
+          "Sales_sum": 501239.8908
+        },
+        {
+          "Region": "East",
+          "Sales_sum": 678781.24
+        },
+        {
+          "Region": "South",
+          "Sales_sum": 391721.905
+        },
+        {
+          "Region": "West",
+          "Sales_sum": 725457.8245
+        }
+      ]
+    },
+    {
+      "id": "Q32",
+      "query": "What is the average discount overall and by customer segment?",
+      "tags": [
+        "pseudo_compound",
+        "groupby",
+        "aggregation"
+      ],
+      "compare_mode": "value_only",
+      "notes": "Pipeline should group by Segment and mean Discount. The per-segment breakdown subsumes the overall average.",
+      "pipeline_status": "unsolvable",
+      "pipeline_success": false,
+      "pipeline_message": "Query cannot be answered with available tools: Cannot compute both overall and per-segment averages in a single plan without using both aggregate_column and groupby_aggregate, which is disallowed.",
+      "gt_error": false,
+      "gt_shape": [
+        3,
+        2
+      ],
+      "pipeline_shape": null,
+      "value_match": false,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": false,
+      "mismatches": [
+        "Pipeline returned no result -- comparison skipped"
+      ],
+      "plan_steps": 0,
+      "total_executions": 0,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 9.92,
+      "answer": null,
+      "gt_data": [
+        {
+          "Segment": "Consumer",
+          "Discount_mean": 0.15814101329223657
+        },
+        {
+          "Segment": "Corporate",
+          "Discount_mean": 0.15822847682119207
+        },
+        {
+          "Segment": "Home Office",
+          "Discount_mean": 0.14712843522153674
+        }
+      ],
+      "pipeline_data": null
+    },
+    {
+      "id": "Q33",
+      "query": "What is the average order value per category and overall?",
+      "tags": [
+        "pseudo_compound",
+        "groupby",
+        "aggregation"
+      ],
+      "compare_mode": "value_only",
+      "notes": "Pipeline should group by Category and mean Sales. Per-category breakdown subsumes the overall average.",
+      "pipeline_status": "unsolvable",
+      "pipeline_success": false,
+      "pipeline_message": "Query cannot be answered with available tools: The query requires both a per-category average and an overall average, which cannot be produced with a single groupby_aggregate or aggregate_column operation according to the rules.",
+      "gt_error": false,
+      "gt_shape": [
+        3,
+        2
+      ],
+      "pipeline_shape": null,
+      "value_match": false,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": false,
+      "mismatches": [
+        "Pipeline returned no result -- comparison skipped"
+      ],
+      "plan_steps": 0,
+      "total_executions": 0,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 21.39,
+      "answer": null,
+      "gt_data": [
+        {
+          "Category": "Furniture",
+          "Sales_mean": 349.8348869872702
+        },
+        {
+          "Category": "Office Supplies",
+          "Sales_mean": 119.32410089611683
+        },
+        {
+          "Category": "Technology",
+          "Sales_mean": 452.70927612344343
+        }
+      ],
+      "pipeline_data": null
+    },
+    {
+      "id": "Q34",
+      "query": "What were total sales in 2017, and how did each region perform that year?",
+      "tags": [
+        "pseudo_compound",
+        "date",
+        "filter",
+        "groupby",
+        "aggregation"
+      ],
+      "compare_mode": "value_only",
+      "notes": "Filter to 2017 then group by Region + sum Sales. Regional breakdown subsumes the 2017 total.",
+      "pipeline_status": "unsolvable",
+      "pipeline_success": false,
+      "pipeline_message": "Query cannot be answered with available tools: The query requires both a total sales figure for 2017 and a per-region breakdown for the same year. According to the rules, a plan cannot simultaneously perform a global aggregation (aggregate_column) and a grouped aggregation (groupby_aggregate) in the same execution flow. Therefore, the requested result cannot be produced with a single valid plan under the given constraints.",
+      "gt_error": false,
+      "gt_shape": [
+        4,
+        2
+      ],
+      "pipeline_shape": null,
+      "value_match": false,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": false,
+      "mismatches": [
+        "Pipeline returned no result -- comparison skipped"
+      ],
+      "plan_steps": 0,
+      "total_executions": 0,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 35.96,
+      "answer": null,
+      "gt_data": [
+        {
+          "Region": "Central",
+          "Sales_sum": 147098.1282
+        },
+        {
+          "Region": "East",
+          "Sales_sum": 213082.904
+        },
+        {
+          "Region": "South",
+          "Sales_sum": 122905.8575
+        },
+        {
+          "Region": "West",
+          "Sales_sum": 250128.3655
+        }
+      ],
+      "pipeline_data": null
+    },
+    {
+      "id": "Q35",
+      "query": "What is the total profit by ship mode and overall?",
+      "tags": [
+        "pseudo_compound",
+        "groupby",
+        "aggregation"
+      ],
+      "compare_mode": "value_only",
+      "notes": "Group by Ship Mode and sum Profit. Per-ship-mode breakdown subsumes the overall total.",
+      "pipeline_status": "unsolvable",
+      "pipeline_success": false,
+      "pipeline_message": "Query cannot be answered with available tools: Cannot compute both per-Ship Mode totals and an overall total in a single plan using the available tools without violating the rule against combining groupby_aggregate and aggregate_column.",
+      "gt_error": false,
+      "gt_shape": [
+        4,
+        2
+      ],
+      "pipeline_shape": null,
+      "value_match": false,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": false,
+      "mismatches": [
+        "Pipeline returned no result -- comparison skipped"
+      ],
+      "plan_steps": 0,
+      "total_executions": 0,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 36.72,
+      "answer": null,
+      "gt_data": [
+        {
+          "Ship Mode": "First Class",
+          "Profit_sum": 48969.8399
+        },
+        {
+          "Ship Mode": "Same Day",
+          "Profit_sum": 15891.7589
+        },
+        {
+          "Ship Mode": "Second Class",
+          "Profit_sum": 57446.6354
+        },
+        {
+          "Ship Mode": "Standard Class",
+          "Profit_sum": 164088.7875
+        }
+      ],
+      "pipeline_data": null
+    },
+    {
+      "id": "Q36",
+      "query": "Compare total sales in 2016 versus 2017.",
+      "tags": [
+        "pseudo_compound",
+        "comparison",
+        "date",
+        "aggregation"
+      ],
+      "compare_mode": "value_only",
+      "notes": "Extract year, filter to [2016, 2017], group by Year, sum Sales. Returns 2-row DataFrame. value_only compares 4 numeric values (year integers + sales totals).",
+      "pipeline_status": "unsolvable",
+      "pipeline_success": false,
+      "pipeline_message": "Query cannot be answered with available tools: Cannot filter for both 2016 and 2017 simultaneously with the available tools while respecting the required order of operations.",
+      "gt_error": false,
+      "gt_shape": [
+        2,
+        2
+      ],
+      "pipeline_shape": null,
+      "value_match": false,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": false,
+      "mismatches": [
+        "Pipeline returned no result -- comparison skipped"
+      ],
+      "plan_steps": 0,
+      "total_executions": 0,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 11.92,
+      "answer": null,
+      "gt_data": [
+        {
+          "Year": 2016,
+          "Sales_sum": 609205.598
+        },
+        {
+          "Year": 2017,
+          "Sales_sum": 733215.2552
+        }
+      ],
+      "pipeline_data": null
+    },
+    {
+      "id": "Q37",
+      "query": "How do sales in the Consumer segment compare to the Corporate segment?",
+      "tags": [
+        "pseudo_compound",
+        "comparison",
+        "filter",
+        "aggregation"
+      ],
+      "compare_mode": "value_only",
+      "notes": "Filter to [Consumer, Corporate], group by Segment, sum Sales. Returns 2-row DataFrame.",
+      "pipeline_status": "success",
+      "pipeline_success": true,
+      "pipeline_message": "",
+      "gt_error": false,
+      "gt_shape": [
+        2,
+        2
+      ],
+      "pipeline_shape": [
+        3,
+        2
+      ],
+      "value_match": false,
+      "shape_match": null,
+      "columns_match": null,
+      "full_match": false,
+      "mismatches": [
+        "Numeric value count mismatch: GT has 2 value(s), pipeline has 3 value(s). GT shape=(2, 2), pipeline shape=(3, 2)."
+      ],
+      "plan_steps": 1,
+      "total_executions": 1,
+      "retries": 0,
+      "had_step_error": false,
+      "duration_s": 27.13,
+      "answer": "Sales in the Consumer segment are significantly higher than in the Corporate segment, with a difference of $455,255. Sales in the Consumer segment total $1,161,401, while sales in the Corporate segment total $706,146.",
+      "gt_data": [
+        {
+          "Segment": "Consumer",
+          "Sales_sum": 1161401.345
+        },
+        {
+          "Segment": "Corporate",
+          "Sales_sum": 706146.3668
+        }
+      ],
+      "pipeline_data": [
+        {
+          "Segment": "Consumer",
+          "Sales_sum": 1161401.345
+        },
+        {
+          "Segment": "Corporate",
+          "Sales_sum": 706146.3668
+        },
+        {
+          "Segment": "Home Office",
+          "Sales_sum": 429653.1485
+        }
+      ]
+    }
+  ]
+}
