@@ -186,3 +186,52 @@ def test_an_answer_that_adds_extra_numbers_is_still_consistent_but_different_num
     changed = [rec("Q15", 1, answer="The average discount is 0.174."),
                rec("Q15", 2, answer="The average discount is 0.250.")]
     assert q(compute_stability(changed), "Q15")["answer_numbers_consistent"] is False
+
+
+# ---------------------------------------------------------------- invented column names (seen in the real Q17 / Q27 runs)
+def q17_plan(col):
+    return [
+        {"step": 1, "tool": "extract_date_part", "input": "original_df", "output": "a",
+         "parameters": {"col_name": "Order Date", "part": "month", "new_col_name": col}},
+        {"step": 2, "tool": "groupby_aggregate", "input": "a", "output": "b",
+         "parameters": {"group_col": col, "agg_col": {"Order Date": "count"}}},
+        {"step": 3, "tool": "sort", "input": "b", "output": "c",
+         "parameters": {"sort_col": {"Order Date_count": "desc"}}},
+    ]
+
+
+def q27_plan(col):
+    return [
+        {"step": 1, "tool": "column_arithmetic", "input": "original_df", "output": "a",
+         "parameters": {"col1": "Ship Date", "col2": "Order Date", "operation": "-", "new_col_name": col}},
+        {"step": 2, "tool": "groupby_aggregate", "input": "a", "output": "b",
+         "parameters": {"group_col": "Category", "agg_col": {col: "mean"}}},
+        {"step": 3, "tool": "sort", "input": "b", "output": "c",
+         "parameters": {"sort_col": {col + "_mean": "desc"}}},
+    ]
+
+
+def test_invented_column_names_do_not_make_plans_differ():
+    runs = [rec("Q17", 1, plan=q17_plan("Order Month")), rec("Q17", 2, plan=q17_plan("OrderMonth"))]
+    assert q(compute_stability(runs), "Q17")["plan_consistent"] is True
+
+    runs = [rec("Q27", 1, plan=q27_plan("shipping_time")), rec("Q27", 2, plan=q27_plan("shipping_days"))]
+    assert q(compute_stability(runs), "Q27")["plan_consistent"] is True  # derived `<name>_mean` handled too
+
+
+def test_a_real_logic_change_still_shows_as_a_different_plan():
+    changed = q27_plan("shipping_days")
+    changed[1]["parameters"]["agg_col"] = {"shipping_days": "max"}  # mean -> max
+    runs = [rec("Q27", 1, plan=q27_plan("shipping_time")), rec("Q27", 2, plan=changed)]
+    assert q(compute_stability(runs), "Q27")["plan_consistent"] is False
+
+
+def test_tables_with_renamed_or_reordered_columns_are_the_same_table():
+    a = rec("Q46", 1, pipeline_data=[{"Region": "West", "Profit_sum": 108418.45, "Order Date_count": 3140}])
+    b = rec("Q46", 2, pipeline_data=[{"Region": "West", "Order Date_count": 3140, "Profit_sum": 108418.45}])
+    c = rec("Q27", 1, pipeline_data=[{"Category": "X", "shipping_time_mean": 3.96}])
+    d = rec("Q27", 2, pipeline_data=[{"Category": "X", "shipping_days_mean": 3.96}])
+    assert q(compute_stability([a, b]), "Q46")["table_consistent"] is True
+    assert q(compute_stability([c, d]), "Q27")["table_consistent"] is True
+    different = rec("Q27", 2, pipeline_data=[{"Category": "X", "shipping_days_mean": 4.50}])
+    assert q(compute_stability([c, different]), "Q27")["table_consistent"] is False

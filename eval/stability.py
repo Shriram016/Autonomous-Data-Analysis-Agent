@@ -84,11 +84,34 @@ def _failure_reason(rec: Dict[str, Any]) -> str:
     return str(mism[0]) if mism else str(rec.get("pipeline_message") or "unknown")
 
 
+def _mask_new_columns(value: Any, created: Dict[str, str]) -> Any:
+    """Replace names of columns the plan itself creates (and names derived from them, like
+    `<name>_mean`) with stable placeholders, so an invented name such as `Order Month` vs
+    `OrderMonth` does not count as a different plan."""
+    if isinstance(value, str):
+        for name, token in created.items():
+            if value == name or value.startswith(name + "_"):
+                return token + value[len(name):]
+        return value
+    if isinstance(value, dict):
+        return {_mask_new_columns(k, created): _mask_new_columns(v, created) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_mask_new_columns(v, created) for v in value]
+    return value
+
+
 def _canonical_plan(rec: Dict[str, Any]) -> Optional[str]:
     plan = rec.get("plan") or []
     if not plan:
         return None
-    steps = [{"tool": s.get("tool"), "parameters": s.get("parameters")} for s in plan]
+    created: Dict[str, str] = {}
+    steps = []
+    for s in plan:
+        params = s.get("parameters") or {}
+        new_col = params.get("new_col_name")
+        if isinstance(new_col, str) and new_col not in created:
+            created[new_col] = f"<new{len(created) + 1}>"
+        steps.append({"tool": s.get("tool"), "parameters": _mask_new_columns(params, created)})
     return json.dumps(steps, sort_keys=True, default=str)
 
 
@@ -103,10 +126,13 @@ def _round(v: Any) -> Any:
 
 
 def _canonical_table(rec: Dict[str, Any]) -> Optional[str]:
+    """Same result table = same rows of values; column names and column order are ignored
+    (the planner invents names like `shipping_time` vs `shipping_days`)."""
     data = rec.get("pipeline_data")
     if not data:
         return None
-    return json.dumps(_round(data), sort_keys=True, default=str)
+    rows = [sorted(json.dumps(_round(v), default=str) for v in row.values()) for row in data]
+    return json.dumps(rows)
 
 
 _LIST_MARKER_RE = re.compile(r"^[ \t]*(?:[-*]\s+)?\d+[.)]\s+", re.MULTILINE)
@@ -276,6 +302,8 @@ def render_report(result: Dict[str, Any]) -> str:
         f"{s['avg_llm_latency_s_per_run']:.1f}s in LLM calls",
         "",
         "Notes: 'n/a' means there was nothing to compare (e.g. multi-turn records do not save the result table).",
+        "Plans are compared ignoring column names the plan invents (e.g. Order Month vs OrderMonth); tables are",
+        "compared by their cell values, ignoring column names and column order.",
         "Answer wording is ignored; only the numbers in the answer text are compared (list numbering ignored,",
         "rounded to 3 significant digits, and an answer that adds extra numbers still counts as consistent).",
         "'[correct = refuse]': no ground truth exists for this query; the right behaviour is to answer 'unsolvable'.",

@@ -106,7 +106,7 @@ tracing, a live Streamlit demo, and honest "What Is Not Caught" / per-query fail
 **Pilot cost data (4 real queries; planner only, since the answer call fails):** ~2,690 input / ~160 output tokens per query ≈ $0.00025/query.  
 **B2 audit of saved results (free, 144 answers across all `eval_*.json`):** 104 pass, 6 flagged, 33 n/a (old `<think>` traces or non-answers), 1 no numbers. Flags: Q31 twice (answer total $2,316,900.86 / $1,317,000.92 vs real $2,297,200.86), Q34 ($630,215 vs real $733,215), Q41 ($763,819 unsupported), Q43 (4 invented ship-mode totals) — all genuine answer-generator hallucinations — plus one April answer truncated mid-number. **Known limit:** numbers only; it cannot catch mislabelled-but-present values (Q43's "region totals" are really the Standard Class rows) or wrong wording, and small integers can match derived values by chance.  
 **B3 consistency findings (2026-10-06; 20 queries x 3 runs = 60 runs; `gpt-oss-20b` for all jobs; 0 runs lost to API errors; files `eval/results/eval_2026_10_06_23_12_09.*`, `multiturn_20261006_231359.json`, `stability_2026_10_06_23_14_03.*`):**
-- **Headline:** 12 queries reliable (3/3), 4 flaky, 4 broken. Accuracy per repeat 65% / 70% / 80% (mean 71.7%, spread 6 points). The sample deliberately over-represents known-hard cases, so this is NOT comparable to the 96.7% headline; it measures consistency, not overall accuracy. Planner plans were identical across runs for 67% of queries.
+- **Headline:** 12 queries reliable (3/3), 4 flaky, 4 broken. Accuracy per repeat 65% / 70% / 80% (mean 71.7%, spread 6 points). The sample deliberately over-represents known-hard cases, so this is NOT comparable to the 96.7% headline; it measures consistency, not overall accuracy. Planner plans were identical across runs for 78% of queries (67% before the report was taught to ignore invented column names).
 - **Cost / speed:** about $0.0005 and 4.3 s per run; whole 60-run test about $0.03.
 - **Flaky = the planner making different calls on the same query:**
   - Q05: refused once ("no Order ID column") and answered correctly twice (a solvability flip).
@@ -119,6 +119,45 @@ tracing, a live Streamlit demo, and honest "What Is Not Caught" / per-query fail
 - **Stable and boring:** 12 single-turn queries were reliable with identical tables. Q17 and Q27 passed 3/3 but with differing plan parameters or column names; MT10 passed 3/3 via different routes (`extract_date_part` + two filters, or `date_filter` + filter).
 - **Harness gap found (for Part C):** `compute_aggregate` counts the no-ground-truth compound cases (Q38-Q47) as failures even when refusing is the correct behaviour. The stability report treats a refusal as a pass for those; Part C must define expected behaviour per case and use it everywhere.
 - **Stability-report refinements made after seeing the real run:** (1) answer-number comparison ignores list numbering ("1. California"), rounds to 3 significant digits and accepts an answer that adds extra numbers, because the first version flagged format-only differences as inconsistency; (2) expected-refusal cases pass only when the agent refuses. Both covered by tests (144 offline tests pass).
+**B3 per-run detail (all 3 rounds, same input each time).** ✅ = pass (for cases with no ground truth, ✅ refused = correct refusal), ❌ refused = the planner said "unsolvable" when an answer was expected, ❌ answered = answered when it should have refused, ❌ wrong result = answered with a table that does not match ground truth.
+
+| Query | Run 1 | Run 2 | Run 3 | Result | What varied |
+|---|---|---|---|---|---|
+| Q01 | ✅ | ✅ | ✅ | 3/3 reliable |  |
+| Q05 | ❌ refused | ✅ | ✅ | 2/3 flaky | Refused once ("no Order ID column"); answered correctly twice |
+| Q06 | ✅ | ✅ | ✅ | 3/3 reliable |  |
+| Q08 | ✅ | ✅ | ✅ | 3/3 reliable |  |
+| Q11 | ✅ | ✅ | ✅ | 3/3 reliable |  |
+| Q15 | ✅ | ✅ | ✅ | 3/3 reliable |  |
+| Q17 | ✅ | ✅ | ✅ | 3/3 reliable | Same logic; invented column name differed (`Order Month` / `OrderMonth`) |
+| Q20 | ✅ | ✅ | ✅ | 3/3 reliable |  |
+| Q23 | ✅ | ✅ | ✅ | 3/3 reliable |  |
+| Q25 | ✅ | ✅ | ✅ | 3/3 reliable |  |
+| Q27 | ✅ | ✅ | ✅ | 3/3 reliable | Same logic; invented column name differed (`shipping_time` / `shipping_days`) |
+| Q31 | ✅ | ✅ | ✅ | 3/3 reliable |  |
+| Q36 | ❌ refused | ❌ refused | ❌ refused | 0/3 broken | Planner refused 3/3 ("cannot filter two distinct years"); June runs attempted it |
+| Q38 | ❌ answered | ✅ refused | ✅ refused | 2/3 flaky | Refused twice (correct), answered once |
+| Q41 | ❌ answered | ❌ answered | ❌ answered | 0/3 broken | Answered 3/3 instead of refusing; numbers were correct (June hallucination did not reproduce) |
+| Q43 | ❌ answered | ❌ answered | ❌ answered | 0/3 broken | Answered 3/3 instead of refusing; numbers correct; one run summarised totals, two listed every cell |
+| Q46 | ❌ answered | ❌ answered | ✅ refused | 1/3 flaky | Refused once; answered twice (one run added a `select_columns` step) |
+| MT03 | ✅ | ❌ wrong result | ✅ | 2/3 flaky | One run **dropped the Technology filter** and labelled the company total as Technology |
+| MT10 | ✅ | ✅ | ✅ | 3/3 reliable | All passed, via different routes (`extract_date_part` + 2 filters, or `date_filter` + filter) |
+| MT15 | ❌ refused | ❌ wrong result | ❌ wrong result | 0/3 broken | 3 different failures: refused; wrong year set (2017/2016/2014); 4 rows instead of 3 |
+
+**What differed between runs, by level:**
+1. *Final result (real planner inconsistency):* Q05 and MT03 flaky, Q38 and Q46 flaky on the refuse-or-answer decision. The only wrong-table-but-confident case is MT03 (dropped filter), which the B2 number check cannot see.
+2. *Plan logic:* identical for 78% of queries. Real logic changes: MT03 (filter dropped), MT10 (different but correct routes), MT15 (varies), Q46 (extra `select_columns` step in one run).
+3. *Harmless naming:* Q17 and Q27 differ only in the column names the planner invents. The stability report now ignores invented column names and compares tables by cell values, so these no longer show as differences (plan consistency went from 67% to 78%).
+4. *Answer content:* wording varies (temperature 0.3, expected). Q43 differs in what it reports (rolled-up totals vs every cell). No invented numbers in any of the 60 runs.
+
+**Fix options (decision pending; none implemented, V2 polish changes no agent behaviour).** Candidates, each measurable with the same 20 x 3 harness (before/after):
+| # | Idea | Targets | Cost / risk | When |
+|---|---|---|---|---|
+| F1 | Pass a `seed` to the planner calls (Groq supports it best-effort) | Run-to-run variance in general | Tiny code change; may not fully remove variance | `v2.1` experiment (after the `v2.0` tag) |
+| F2 | Planner self-consistency: plan twice, retry or flag when the two plans differ | Q05 / Q38 / Q46 flips, MT03 dropped filter | Doubles planner cost (about $0.0003 per query); more latency | `v2.1` experiment or V3 |
+| F3 | Carry filters from earlier turns explicitly (prompt rule or a pre-answer semantic check of the result's scope against the question) | MT03 dropped filter, MT15 context | Prompt or guardrail change; semantic checks are V3's job | V3 (semantic guardrails) |
+| F4 | Define the expected behaviour (answer vs refuse) per query and tighten the solvability rules / examples | Q05, Q36 drift, Q38, Q46 | Prompt change; needs the Part C expected-behaviour labels first | After Part C |
+Recommended: F1 as the only simple `v2.1` candidate (matches the Q7 decision: a small fix after the tag, with before/after numbers); keep F2-F4 as documented V3 inputs. Report files: `eval/results/stability_2026_10_06_23_21_49.json` and `.txt`.
 **Observed:** one transient no-plan failure on Q03 (passed on re-run) — the kind of infrastructure failure Part C should label.  
 
 *Why: you can't explain failures you didn't record.*
@@ -376,4 +415,8 @@ trade-off is a stronger signal than claiming a win.
 - *Done:* ran the 17 single-turn cases (`run_eval.py --ids ... --repeats 3`) and the 3 multi-turn cases (`run_multiturn_eval.py --ids MT03,MT10,MT15 --repeats 3 --turn-delay 0`), 60 runs, about 10 minutes, about $0.03, no API errors; produced the stability report; refined the report after inspecting real answers (list numbering, rounding, expected-refusal cases); findings recorded under Part B. Result files committed under `eval/results/`.
 - *Cost gate:* estimated about $0.025 and 10-15 minutes beforehand; actual matched.
 - *Verified by:* 144 offline tests, `dev_checks/check_stability.py`, and the saved reports. *Part B is complete (B1a, B1b, B1c, B2, B3).*
+
+**2026-10-06 — B3 follow-up ✅ per-run detail documented, stability report tweaked, fix options listed**
+- *Done:* added the per-run table for all 60 runs, a level-by-level account of what varied, and fix options F1-F4 (none implemented) under Part B. Stability report: plans are now compared ignoring column names the plan invents (and names derived from them), and tables by cell values regardless of column names/order; re-ran it on the same saved files (plan consistency 67% to 78%; Q17 and Q27 no longer flagged); replaced the earlier stability report files with the new ones.
+- *Verified by:* `tests/test_stability.py` (3 new tests built from the real Q17/Q27/Q46 patterns; 147 offline tests pass).
 
