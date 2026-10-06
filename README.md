@@ -80,11 +80,13 @@ Tested across **63 queries** in 4 categories on the Sample Superstore dataset:
 |---|---|
 | Language | Python |
 | Data operations | Pandas |
-| LLM | Groq API — `openai/gpt-oss-20b` (planner, param fixer, replanner), `llama-3.1-8b-instant` (answer generator) |
+| LLM | Groq API — `openai/gpt-oss-20b` for all four LLM jobs (planner, param fixer, replanner, answer generator) |
 | Orchestration | LangGraph |
 | Data validation | Pydantic |
 | Observability | Langfuse |
 | UI | Streamlit |
+
+**One model for every LLM step (`openai/gpt-oss-20b`).** V2 is Groq-only, and Groq's other options don't fit: `llama-3.1-8b-instant` and `llama-3.3-70b-versatile` are deprecated or enterprise-only, `qwen3.8-27b` is Preview (it can be discontinued at short notice), and `gpt-oss-120b` costs twice as much with no measured benefit. Each job still has its own model setting in `src/config.py`, so a swap is a config change.
 
 ---
 

@@ -154,11 +154,11 @@ replanner → (conditional edge)
 ---
 
 ### Answer Generator (LLM)
-- **Model:** `llama-3.1-8b-instant` via Groq API — temperature 0.3
+- **Model:** `openai/gpt-oss-20b` via Groq API — temperature 0.3, `reasoning_effort: low`, `max_tokens` 1024 (reasoning tokens count toward the cap). Replaced `llama-3.1-8b-instant`, which Groq deprecated; one model now serves every LLM job (see the README for why)
 - **Input:** User query + final computed DataFrame
 - **Output:** Plain English summary of the result (2-3 sentences)
 - Runs once after the execution loop completes — outside the retry loop
-- Failure is non-critical: pipeline returns the DataFrame regardless
+- Failure is non-critical: pipeline returns the DataFrame plus a deterministic fallback answer (an empty LLM answer counts as a failure and is flagged in the eval record as `answer_is_fallback`)
 
 **Known limitation:** The answer generator can hallucinate arithmetic when summarizing multi-row DataFrames. It should not be relied upon to sum, re-aggregate, or derive values from the data — it is only reliable when restating values already present in the result.
 

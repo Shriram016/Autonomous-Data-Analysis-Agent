@@ -98,7 +98,9 @@ Write a 2-3 sentence answer."""
 
     client = Groq(api_key=GROQ_API_KEY)
 
-    model_params = {"temperature": 0.3, "max_tokens": 256}
+    # max_tokens is only a ceiling (answers stay 2-3 sentences); reasoning tokens
+    # count toward it, so 256 could leave the answer cut off or empty.
+    model_params = {"temperature": 0.3, "max_tokens": 1024, "reasoning_effort": "low"}
     messages = [
         {"role": "system", "content": _SYSTEM_PROMPT},
         {"role": "user",   "content": user_prompt},
@@ -119,9 +121,16 @@ Write a 2-3 sentence answer."""
                 messages=messages,
                 **model_params,
             )
-            answer = response.choices[0].message.content.strip()
+            answer = (response.choices[0].message.content or "").strip()
             gen.output(answer)
             gen.usage(response.usage.prompt_tokens, response.usage.completion_tokens, response.usage.total_tokens)
+            if not answer:
+                finish = response.choices[0].finish_reason
+                gen.error(f"Empty answer (finish_reason={finish})")
+                return {
+                    "status": "error",
+                    "message": f"Answer generator returned an empty answer (finish_reason={finish}).",
+                }
 
         if logger and run_id:
             from src.utils.logger import log_event

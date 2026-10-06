@@ -38,9 +38,12 @@ REPLANNER_TIMEOUT_SECONDS: int = 90
 # ---------------------------------------------------------------------------
 # Answer Generator LLM settings
 # ---------------------------------------------------------------------------
-# Small non-reasoning instruct model — avoids <think> reasoning traces
-# leaking into the user-facing answer (qwen3 emits these by default).
-ANSWER_MODEL: str = "llama-3.1-8b-instant"
+# V2 is Groq-only and uses one model for every LLM job. The original answer model
+# (llama-3.1-8b-instant) was deprecated/enterprise-only and returns 404 on the key;
+# gpt-oss-20b is Groq's recommended replacement. Its reasoning is returned in a
+# separate field (not as <think> text in the answer), but reasoning tokens count
+# toward max_tokens, so the answer call uses a generous cap and low effort.
+ANSWER_MODEL: str = "openai/gpt-oss-20b"
 
 # ---------------------------------------------------------------------------
 # Loop Controller limits
