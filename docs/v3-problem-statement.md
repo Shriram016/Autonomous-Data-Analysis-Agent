@@ -572,6 +572,8 @@ Status: ✅ covered · ⚠️ partial · ❌ not started
 | 27 | Router comparison test | Separate router vs single implicit planner | Stretch | ❌ | D5 (low priority) |
 | 28 | Real-user contact | A few real users try the deployed system; failures logged and fed into evals (research-bar criterion 4) | Stretch | ❌ | Depends on deployment (#29) |
 | 29 | Deployment | Cloud/hosting choice, cost | Deferred | — | D8, after V3 is built |
+| 30 | Large conversation state | Long chats and big state: context budget per prompt, trimming or summarising history, keep large query results out of the LLM context and out of the checkpoint (store references, not data), state size and retention limits | Core (decide in design) | ⚠️ | Related to #9 and #19. V2 starting point: questions-only sliding window of 3 plus full state in a SQLite checkpoint |
+| 31 | Resumable / recoverable flows | Design to resume a failed or interrupted run: durable per-step state, idempotent steps, resume from the last good step instead of restarting, retry and dead-letter handling, user-visible run status | Core (decide in design) | ⚠️ | Related to #10 and NFR A1–A4. V2 starting point: LangGraph `SqliteSaver` checkpointing (crash/resume check: `dev_checks/check_checkpointer.py`) |
 
 **Deliberately excluded:** bias/ethics review (low relevance for business analytics on anonymized
 data), fine-tuning (semantic layer + evals is the stronger story), multi-agent (covered as a
