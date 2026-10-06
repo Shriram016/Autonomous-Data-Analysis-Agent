@@ -181,7 +181,8 @@ def _build_trace_record(
 
     Returns:
         A dict with step, tool, parameters, status, message,
-        output_shape, output_columns, and critic fields.
+        output_shape, output_columns, critic (pass/fail), and, when the critic
+        failed, critic_check (name of the check that fired) and critic_reason.
     """
     result_df = tool_response.get("result")
 
@@ -194,6 +195,8 @@ def _build_trace_record(
         "output_shape":    tuple(result_df.shape) if result_df is not None else None,
         "output_columns":  list(result_df.columns) if result_df is not None else None,
         "critic":          critic_result.get("status"),
+        "critic_check":    critic_result.get("check"),
+        "critic_reason":   critic_result.get("reason"),
     }
 
 

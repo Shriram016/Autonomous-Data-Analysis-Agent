@@ -62,6 +62,11 @@ def compute_record(
 
     gt_shape = gt_df.shape if gt_df is not None else None
 
+    # Plan as plain dicts (PlanStep is a pydantic model, not JSON-serialisable)
+    plan_dicts = [
+        s.model_dump() if hasattr(s, "model_dump") else s for s in plan
+    ]
+
     return {
         "id": case.id,
         "query": case.query,
@@ -88,6 +93,9 @@ def compute_record(
         "retries": retries,
         "had_step_error": had_step_error,
         "duration_s": round(duration_s, 2),
+        # Instrumentation: what the agent planned and what the critic said per step
+        "plan": plan_dicts,
+        "trace": trace,
         # Answer
         "answer": pipeline_result.get("answer"),
         # Raw DataFrames (serialized for JSON)

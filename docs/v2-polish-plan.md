@@ -78,6 +78,9 @@ tracing, a live Streamlit demo, and honest "What Is Not Caught" / per-query fail
 
 ## Part B — Make the instrumentation honest
 
+**Progress (B1 split into pieces, one approved at a time):** B1a ✅ plan + critic check/reason saved per step (`critic_check`, `critic_reason` added to the trace record in `executor.py`; `plan` and `trace` added to the eval record; verified by `tests/test_trace_record.py` and `dev_checks/check_trace_fields.py`) · B1b ⬜ param-fixer / replanner events · B1c ⬜ tokens, cost, latency per LLM call · B2 ⬜ · B3 ⬜  
+**Observed:** one transient no-plan failure on Q03 (passed on re-run) — the kind of infrastructure failure Part C should label.  
+
 *Why: you can't explain failures you didn't record.*
 
 | # | Change |
