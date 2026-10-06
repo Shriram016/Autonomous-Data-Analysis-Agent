@@ -133,7 +133,20 @@ def _run_case(
 # Main evaluation loop
 # ---------------------------------------------------------------------------
 
-def run_eval(verbose: bool = True, cases: Optional[List[EvalCase]] = None) -> List[Dict[str, Any]]:
+def select_cases(ids: List[str]) -> List[EvalCase]:
+    """Look up cases by id (e.g. ["Q01", "Q36"]) across all single-turn rounds, keeping the given order."""
+    by_id = {c.id: c for c in TEST_CASES + TEST_CASES_2 + TEST_CASES_3}
+    unknown = [i for i in ids if i not in by_id]
+    if unknown:
+        raise ValueError(f"Unknown case id(s): {unknown}. Valid ids are Q01-Q47.")
+    return [by_id[i] for i in ids]
+
+
+def run_eval(
+    verbose: bool = True,
+    cases: Optional[List[EvalCase]] = None,
+    repeats: int = 1,
+) -> List[Dict[str, Any]]:
     """
     Run eval cases and return the list of per-case records.
 
@@ -141,6 +154,8 @@ def run_eval(verbose: bool = True, cases: Optional[List[EvalCase]] = None) -> Li
     ----------
     verbose : Print one-line status per case while running.
     cases   : List of EvalCase objects to run. Defaults to all TEST_CASES.
+    repeats : Run the whole list this many times (repeat 1 for all cases, then
+              repeat 2, ...). Each record carries its `repeat` number (1-based).
     """
     if cases is None:
         cases = TEST_CASES
@@ -154,13 +169,16 @@ def run_eval(verbose: bool = True, cases: Optional[List[EvalCase]] = None) -> Li
     print(f"Dataset loaded: {len(df):,} rows × {len(df.columns)} columns\n")
 
     records: List[Dict[str, Any]] = []
-    n = len(cases)
+    plan = [(rep, case) for rep in range(1, repeats + 1) for case in cases]
+    n = len(plan)
 
-    for i, case in enumerate(cases, start=1):
+    for i, (rep, case) in enumerate(plan, start=1):
         if verbose:
-            print(f"[{i:02d}/{n}] {case.id}  {case.query[:60]}...")
+            tag = f" (repeat {rep}/{repeats})" if repeats > 1 else ""
+            print(f"[{i:02d}/{n}] {case.id}{tag}  {case.query[:60]}...")
 
         record = _run_case(case, df, verbose)
+        record["repeat"] = rep
         records.append(record)
 
         if verbose:
@@ -203,11 +221,22 @@ def main() -> None:
         "--round", type=int, default=1, choices=[1, 2, 3],
         help="Eval round: 1=Q01-Q30 (test_cases.py), 2=Q31-Q37 (test_cases2.py), 3=Q38-Q47 (test_cases3.py)"
     )
+    parser.add_argument(
+        "--ids", type=str, default=None,
+        help="Comma-separated case ids from any round (e.g. --ids Q01,Q36,Q43). Overrides --round/--limit"
+    )
+    parser.add_argument(
+        "--repeats", type=int, default=1,
+        help="Run the selected cases this many times (e.g. --repeats 3) to measure consistency"
+    )
     args = parser.parse_args()
 
-    source = {1: TEST_CASES, 2: TEST_CASES_2, 3: TEST_CASES_3}[args.round]
-    cases = source[:args.limit] if args.limit else source
-    records = run_eval(verbose=True, cases=cases)
+    if args.ids:
+        cases = select_cases([i.strip() for i in args.ids.split(",") if i.strip()])
+    else:
+        source = {1: TEST_CASES, 2: TEST_CASES_2, 3: TEST_CASES_3}[args.round]
+        cases = source[:args.limit] if args.limit else source
+    records = run_eval(verbose=True, cases=cases, repeats=args.repeats)
 
     print("\nComputing metrics...")
     aggregate = compute_aggregate(records)

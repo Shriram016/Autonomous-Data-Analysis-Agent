@@ -19,6 +19,41 @@ from eval.test_cases import EvalCase
 
 
 # ---------------------------------------------------------------------------
+# Shared helpers (used by both the single-turn and multi-turn runners)
+# ---------------------------------------------------------------------------
+
+def llm_usage_summary(llm_calls: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Totals for a list of LLM call records; also stamps cost_usd on each call."""
+    cost_usd = 0.0
+    all_verified = True
+    for c in llm_calls:
+        cost, verified = call_cost(c.get("model"), c.get("input_tokens"), c.get("output_tokens"))
+        c["cost_usd"] = cost
+        cost_usd += cost
+        all_verified &= verified
+    return {
+        "llm_call_count": len(llm_calls),
+        "input_tokens": sum(c.get("input_tokens") or 0 for c in llm_calls),
+        "output_tokens": sum(c.get("output_tokens") or 0 for c in llm_calls),
+        "llm_latency_s": round(sum(c.get("latency_s") or 0 for c in llm_calls), 2),
+        "cost_usd": round(cost_usd, 6),
+        "cost_all_prices_verified": all_verified,
+    }
+
+
+def is_answer_fallback(llm_calls: List[Dict[str, Any]]) -> bool:
+    """
+    True if a call log exists but holds no successful answer_gen call, i.e. the
+    deterministic fallback answer was shown. Without a call log (older runs) we
+    cannot tell, so assume an LLM answer.
+    """
+    return bool(llm_calls) and not any(
+        c.get("name") == "answer_gen" and c.get("error") is None and c.get("total_tokens")
+        for c in llm_calls
+    )
+
+
+# ---------------------------------------------------------------------------
 # Per-case record
 # ---------------------------------------------------------------------------
 
@@ -69,21 +104,12 @@ def compute_record(
     replans = [e for e in events if e.get("type") == "replan"]
 
     llm_calls = pipeline_result.get("llm_calls") or []
-    cost_usd = 0.0
-    cost_all_verified = True
-    for c in llm_calls:
-        cost, verified = call_cost(c.get("model"), c.get("input_tokens"), c.get("output_tokens"))
-        c["cost_usd"] = cost
-        cost_usd += cost
-        cost_all_verified &= verified
+    usage = llm_usage_summary(llm_calls)
 
     # B2: do the numbers in the answer come from the result table?
     # With a call log (B1c) we can tell if the LLM answer failed and a deterministic
     # fallback was shown instead; without one (older runs) assume an LLM answer.
-    answer_is_fallback = bool(llm_calls) and not any(
-        c.get("name") == "answer_gen" and c.get("error") is None and c.get("total_tokens")
-        for c in llm_calls
-    )
+    answer_is_fallback = is_answer_fallback(llm_calls)
     answer_check = check_answer(
         pipeline_result.get("answer"), case.query, pipeline_result.get("final_df"),
         answer_is_fallback=answer_is_fallback,
@@ -124,12 +150,7 @@ def compute_record(
         "had_step_error": had_step_error,
         "duration_s": round(duration_s, 2),
         # LLM usage (all attempts, including failed ones)
-        "llm_call_count": len(llm_calls),
-        "input_tokens": sum(c.get("input_tokens") or 0 for c in llm_calls),
-        "output_tokens": sum(c.get("output_tokens") or 0 for c in llm_calls),
-        "llm_latency_s": round(sum(c.get("latency_s") or 0 for c in llm_calls), 2),
-        "cost_usd": round(cost_usd, 6),
-        "cost_all_prices_verified": cost_all_verified,
+        **usage,
         "llm_calls": llm_calls,
         # Answer number check (B2)
         "answer_is_fallback": answer_is_fallback,
@@ -403,7 +424,7 @@ def save_results(
     # CSV -- summary table
     csv_path = f"{base}.csv"
     csv_fields = [
-        "id", "pipeline_status", "pipeline_success", "gt_error",
+        "id", "repeat", "pipeline_status", "pipeline_success", "gt_error",
         "value_match", "full_match", "shape_match", "columns_match",
         "plan_steps", "total_executions", "retries", "had_step_error",
         "duration_s", "llm_call_count", "input_tokens", "output_tokens",

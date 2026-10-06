@@ -46,6 +46,8 @@ if _PROJECT_ROOT not in sys.path:
 from src.core.pipeline import run_pipeline                                # noqa: E402
 from eval.multiturn_test_cases import MULTITURN_TEST_CASES, MultiTurnEvalCase  # noqa: E402
 from eval.comparator import compare                                       # noqa: E402
+from eval.answer_check import check_answer                                # noqa: E402
+from eval.metrics import llm_usage_summary, is_answer_fallback            # noqa: E402
 
 _RESULTS_DIR = os.path.join(_EVAL_DIR, "results")
 _DATA_PATH = os.path.join(_PROJECT_ROOT, "data", "Sample - Superstore.csv")
@@ -64,7 +66,12 @@ def _load_dataset() -> pd.DataFrame:
     return pd.read_csv(_DATA_PATH, encoding="latin-1")
 
 
-def _run_case(case: MultiTurnEvalCase, df: pd.DataFrame, verbose: bool) -> Dict[str, Any]:
+def _run_case(
+    case: MultiTurnEvalCase,
+    df: pd.DataFrame,
+    verbose: bool,
+    turn_delay: float = _TURN_DELAY_S,
+) -> Dict[str, Any]:
     """Run every turn of a case sequentially under one session_id, check the final turn."""
 
     session_id = str(uuid.uuid4())
@@ -74,6 +81,7 @@ def _run_case(case: MultiTurnEvalCase, df: pd.DataFrame, verbose: bool) -> Dict[
     start = time.perf_counter()
     pipeline_result: Dict[str, Any] = {}
     skip_reason: str | None = None
+    all_llm_calls: List[Dict[str, Any]] = []  # LLM calls across every turn of the case
 
     # Run context-setting turns; skip the whole case if any of them error.
     for turn in context_turns:
@@ -83,6 +91,7 @@ def _run_case(case: MultiTurnEvalCase, df: pd.DataFrame, verbose: bool) -> Dict[
             skip_reason = f"Turn '{turn.query[:40]}' raised: {exc}"
             break
 
+        all_llm_calls.extend(result.get("llm_calls") or [])
         if result.get("status") == "error":
             skip_reason = (
                 f"Turn '{turn.query[:40]}' returned status=error: "
@@ -90,7 +99,8 @@ def _run_case(case: MultiTurnEvalCase, df: pd.DataFrame, verbose: bool) -> Dict[
             )
             break
 
-        time.sleep(_TURN_DELAY_S)
+        if turn_delay:
+            time.sleep(turn_delay)
 
     # Run the final (evaluated) turn only if no context turn failed.
     if skip_reason is None:
@@ -98,6 +108,7 @@ def _run_case(case: MultiTurnEvalCase, df: pd.DataFrame, verbose: bool) -> Dict[
             pipeline_result = run_pipeline(final_turn.query, session_id=session_id)
         except Exception as exc:
             pipeline_result = {"status": "error", "final_df": None, "message": str(exc)}
+        all_llm_calls.extend(pipeline_result.get("llm_calls") or [])
 
     duration = time.perf_counter() - start
 
@@ -109,6 +120,7 @@ def _run_case(case: MultiTurnEvalCase, df: pd.DataFrame, verbose: bool) -> Dict[
             "num_turns": len(case.turns),
             "final_query": final_turn.query,
             "outcome": "skipped",
+            "session_id": session_id,
             "pipeline_status": None,
             "value_match": None,
             "mismatches": [f"Skipped: {skip_reason}"],
@@ -154,10 +166,22 @@ def _run_case(case: MultiTurnEvalCase, df: pd.DataFrame, verbose: bool) -> Dict[
         "num_turns": len(case.turns),
         "final_query": final_turn.query,
         "outcome": outcome,
+        "session_id": session_id,
         "pipeline_status": pipeline_result.get("status"),
         "value_match": value_match,
         "mismatches": mismatches,
         "duration_s": round(duration, 2),
+        # Instrumentation for the stability report (final turn plan and answer,
+        # LLM usage summed over every turn of the case)
+        "plan": [s.model_dump() if hasattr(s, "model_dump") else s
+                 for s in (pipeline_result.get("plan") or [])],
+        "answer": pipeline_result.get("answer"),
+        "answer_check": check_answer(
+            pipeline_result.get("answer"), final_turn.query, pipeline_result.get("final_df"),
+            answer_is_fallback=is_answer_fallback(all_llm_calls),
+        )["verdict"],
+        **llm_usage_summary(all_llm_calls),
+        "llm_calls": all_llm_calls,
     }
 
     if verbose:
@@ -176,6 +200,8 @@ def _run_case(case: MultiTurnEvalCase, df: pd.DataFrame, verbose: bool) -> Dict[
 def run_multiturn_eval(
     verbose: bool = True,
     ids: List[str] | None = None,
+    repeats: int = 1,
+    turn_delay: float = _TURN_DELAY_S,
 ) -> List[Dict[str, Any]]:
     print("=" * 70)
     print("ADAA Multi-Turn Evaluation (Session Memory)")
@@ -187,13 +213,22 @@ def run_multiturn_eval(
 
     cases = MULTITURN_TEST_CASES
     if ids:
+        known = {c.id for c in cases}
+        unknown = [i for i in ids if i not in known]
+        if unknown:
+            raise ValueError(f"Unknown case id(s): {unknown}. Valid ids are MT01-MT16.")
         id_set = set(ids)
         cases = [c for c in cases if c.id in id_set]
         print(f"Running subset: {[c.id for c in cases]}\n")
 
     records: List[Dict[str, Any]] = []
-    for case in cases:
-        records.append(_run_case(case, df, verbose))
+    for rep in range(1, repeats + 1):
+        if repeats > 1:
+            print(f"--- Repeat {rep}/{repeats} ---")
+        for case in cases:  # each _run_case starts a fresh session_id, so repeats never share memory
+            record = _run_case(case, df, verbose, turn_delay=turn_delay)
+            record["repeat"] = rep
+            records.append(record)
 
     return records
 
@@ -229,10 +264,19 @@ def main() -> None:
         "--ids", type=str, default=None,
         help="Comma-separated case IDs to run (e.g. --ids MT09,MT10,MT12)"
     )
+    parser.add_argument(
+        "--repeats", type=int, default=1,
+        help="Run the selected cases this many times (e.g. --repeats 3) to measure consistency"
+    )
+    parser.add_argument(
+        "--turn-delay", type=float, default=_TURN_DELAY_S,
+        help=f"Seconds to wait between context turns (default {_TURN_DELAY_S}, sized for low rate "
+             "limits; use 0 on the Developer plan)"
+    )
     args = parser.parse_args()
 
-    ids = args.ids.split(",") if args.ids else None
-    records = run_multiturn_eval(verbose=True, ids=ids)
+    ids = [i.strip() for i in args.ids.split(",") if i.strip()] if args.ids else None
+    records = run_multiturn_eval(verbose=True, ids=ids, repeats=args.repeats, turn_delay=args.turn_delay)
 
     summary = _summarize(records)
     print("\n" + "=" * 70)
