@@ -1,5 +1,7 @@
 # Autonomous Data Analysis Agent (ADAA)
 
+[![tests](https://github.com/Shriram016/Autonomous-Data-Analysis-Agent/actions/workflows/ci.yml/badge.svg)](https://github.com/Shriram016/Autonomous-Data-Analysis-Agent/actions/workflows/ci.yml)
+
 A deterministic AI pipeline that converts natural language questions into verified, computed answers — no free-form code generation, every step planned, executed, and validated.
 
 **Live demo:** [autonomous-data-analysis-agent-s16.streamlit.app](https://autonomous-data-analysis-agent-s16.streamlit.app/)
@@ -88,7 +90,7 @@ Tested across **63 queries** in 4 categories on the Sample Superstore dataset:
 
 ## Getting Started
 
-**Prerequisites:** Python 3.9+, a [Groq API key](https://console.groq.com/), a [Langfuse account](https://langfuse.com/) (optional, for observability)
+**Prerequisites:** Python 3.11+ (developed on 3.13), a [Groq API key](https://console.groq.com/), a [Langfuse account](https://langfuse.com/) (optional, for observability)
 
 ```bash
 # 1. Clone the repository
@@ -101,14 +103,16 @@ agent_env\Scripts\activate
 pip install -r requirements.txt
 
 # 3. Set up your API keys
-echo "GROQ_API_KEY=your_key_here" > .env
-echo "LANGFUSE_PUBLIC_KEY=your_key_here" >> .env
-echo "LANGFUSE_SECRET_KEY=your_key_here" >> .env
+cp .env.example .env   # then edit .env and add your keys (Windows: copy .env.example .env)
 
 # 4. Launch the Streamlit UI
 streamlit run app.py
 
-# 5. (Optional) Run the evaluation pipeline
+# 5. (Optional) Run the offline test suite (no API keys needed)
+pip install -r requirements-dev.txt
+python -m pytest tests
+
+# 6. (Optional) Run the evaluation pipeline
 python eval/run_eval.py --round 1
 python eval/run_multiturn_eval.py
 ```

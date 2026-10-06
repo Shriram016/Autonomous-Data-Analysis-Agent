@@ -1,6 +1,6 @@
 # V2 Polish Plan
 
-**Status:** Draft, awaiting answers to the open questions (bottom of file) and approval.
+**Status:** All 7 open questions answered. **Part A done** (A1–A6, verified by `dev_checks/check_part_a.py`). Next: Part B (plan first).
 **Branch:** `version2`
 **Outcome:** a clean, honest, measured, tagged `v2.0` release that serves as the frozen baseline for V3.
 
@@ -60,7 +60,10 @@ tracing, a live Streamlit demo, and honest "What Is Not Caught" / per-query fail
 
 ---
 
-## Part A — Repo credibility and hygiene
+## Part A — Repo credibility and hygiene  ✅ DONE
+
+**Progress:** A1 ✅ (eval tracked, `.log` files ignored) · A2 ✅ (`check_gt.py`→`dev_checks/`, report→`docs/`, notebook deleted, `PROJECT_GUIDE.md` ignored) · A3 ✅ (10 tools; planner/fixer/replanner = `gpt-oss-20b`, answer gen = `llama-3.1-8b-instant`; README clone URL; broken `docs/others/` links) · A4 ✅ (`.env.example`, pinned `requirements.txt`, `requirements-dev.txt`) · A5 ✅ (75 offline tests: 10 tools, 8 critic checks, param fixer, replanner, graph routing + full mocked graph runs; autouse guard blocks real Groq calls) · A6 ✅ (`.github/workflows/ci.yml` + README badge; badge turns green after the first push).  
+**Notes:** CLAUDE.md stays private (gitignored) but was updated. `docs/others/` kept public. Tests run with Python 3.13 (pandas 3 needs 3.11+).  
 
 *Why: today a recruiter can't check the headline numbers, and the repo has loose ends.*
 
