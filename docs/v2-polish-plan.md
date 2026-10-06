@@ -1,6 +1,6 @@
 # V2 Polish Plan
 
-**Status (2026-10-06):** Part A ✅ done · Part B: B1a/B1b/B1c/B2 ✅ done, B3 moved to after Part M · Part M ✅ done (M1, M2, M4, M5; M3 skipped by decision). Part B ✅ done. **Next: the full 63-query run once (baseline), then Part C.** ✅ Rate limits resolved: key now shows Developer-plan limits (250K tokens/min, 500K requests/day, no daily token cap; verified 2026-10-06). Answer-generator 404 blocker ✅ resolved (M4). Then the full 63-query run once, C, D, E, F.
+**Status (2026-10-06):** Part A ✅ done · Part B: B1a/B1b/B1c/B2 ✅ done, B3 moved to after Part M · Part M ✅ done (M1, M2, M4, M5; M3 skipped by decision). Part B ✅ done. Full-run harness ✅ ready. **Next: the real 63-query run (commit first so the manifest is clean), then Part C.** ✅ Rate limits resolved: key now shows Developer-plan limits (250K tokens/min, 500K requests/day, no daily token cap; verified 2026-10-06). Answer-generator 404 blocker ✅ resolved (M4). Then the full 63-query run once, C, D, E, F.
 **Branch:** `version2`
 **Outcome:** a clean, honest, measured, tagged `v2.0` release that serves as the frozen baseline for V3.
 
@@ -19,7 +19,8 @@
 | M | M4 switch answer model to `gpt-oss-20b` | ✅ | `ANSWER_MODEL` swapped, low reasoning effort, `max_tokens` 1024, empty answer = failure; 4/4 real answers LLM-written and pass B2 |
 | M | M5 document the model audit | ✅ | "Model Audit" section in `docs/architecture.md`; `docs/others/groq-model-details.md` refreshed (current catalog + config, June content kept as historical) |
 | B | B3 consistency check: 20 queries × 3 runs | ✅ | Done: 60 runs, 0 API errors; 12 reliable / 4 flaky / 4 broken; findings under Part B. The full 63-query run is separate (before Part C) |
-| C | Failure-cause breakdown | ⬜ | Needs the B3 run |
+| B | Full-run harness (`eval/run_full_eval.py`) | ✅ | One command for all 63 cases; crash-safe records, manifest, preflight, resume. Ready for the real run |
+| C | Failure-cause breakdown | ⬜ | Needs the full 63-query run |
 | D | Baseline experiment | ⬜ | Code-gen baseline + ablation, reuses the B3 runner |
 | E | Write-up (decisions, README, case study) | ⬜ | |
 | F | Tag `v2.0` | ⬜ | Then `v2.1` simple answer-hallucination fix |
@@ -158,6 +159,14 @@ tracing, a live Streamlit demo, and honest "What Is Not Caught" / per-query fail
 | F3 | Carry filters from earlier turns explicitly (prompt rule or a pre-answer semantic check of the result's scope against the question) | MT03 dropped filter, MT15 context | Prompt or guardrail change; semantic checks are V3's job | V3 (semantic guardrails) |
 | F4 | Define the expected behaviour (answer vs refuse) per query and tighten the solvability rules / examples | Q05, Q36 drift, Q38, Q46 | Prompt change; needs the Part C expected-behaviour labels first | After Part C |
 Recommended: F1 as the only simple `v2.1` candidate (matches the Q7 decision: a small fix after the tag, with before/after numbers); keep F2-F4 as documented V3 inputs. Report files: `eval/results/stability_2026_10_06_23_21_49.json` and `.txt`.
+**Full-run harness (`eval/run_full_eval.py`) — how to run the 63-query baseline.**
+1. Commit everything first (the manifest records the git commit and lists any uncommitted tracked files).
+2. `python dev_checks/check_full_eval.py --ping` (offline tests + real dry run + real preflight; a few tiny calls).
+3. `python eval/run_full_eval.py` — preflight, cost estimate (about $0.037), asks `Proceed? [y/N]` (`--yes` skips). Takes about 5 minutes.
+4. If it stops (crash, Ctrl+C, network): `python eval/run_full_eval.py --resume eval/results/full_<timestamp>` re-runs only what is missing or was lost to API errors.
+5. Everything lands in `eval/results/full_<timestamp>/`: `manifest.json` (git commit, models/settings, code and prompt hashes, dataset hash, prices, command, status), `records.jsonl` (each case written and flushed the moment it finishes), `console.log`, `results.json`, `results.csv`, `summary.txt` (pass rates by expected behaviour, failures by kind, answer-number check, repair activity, cost and time).
+6. Options: `--repeats N`, `--only single|multi`, `--ids Q01,MT03`, `--turn-delay S`, `--dry-run`.
+Records now carry `expected_behavior` (answer / refuse) and `passed`, so correct refusals on the no-ground-truth compound cases (Q38-Q47) count as passes; multi-turn records carry the final table, ground truth, trace, events and a per-turn summary. Failure kinds in the summary: `api_error`, `answered_instead_of_refusing`, `refused_but_answerable`, `wrong_result`, `pipeline_error`, `skipped_context_turn`.
 **Observed:** one transient no-plan failure on Q03 (passed on re-run) — the kind of infrastructure failure Part C should label.  
 
 *Why: you can't explain failures you didn't record.*
@@ -419,4 +428,8 @@ trade-off is a stronger signal than claiming a win.
 **2026-10-06 — B3 follow-up ✅ per-run detail documented, stability report tweaked, fix options listed**
 - *Done:* added the per-run table for all 60 runs, a level-by-level account of what varied, and fix options F1-F4 (none implemented) under Part B. Stability report: plans are now compared ignoring column names the plan invents (and names derived from them), and tables by cell values regardless of column names/order; re-ran it on the same saved files (plan consistency 67% to 78%; Q17 and Q27 no longer flagged); replaced the earlier stability report files with the new ones.
 - *Verified by:* `tests/test_stability.py` (3 new tests built from the real Q17/Q27/Q46 patterns; 147 offline tests pass).
+
+**2026-10-06 — Full-run harness ✅ ready for the 63-query baseline**
+- *Done:* `eval/run_full_eval.py` runs all 47 single-turn and 16 multi-turn cases in one command and saves everything in one folder (manifest with code/model/prompt/dataset hashes, crash-safe `records.jsonl` flushed per case, `console.log`, `results.json`/`.csv`, `summary.txt`); preflight checks (dataset, writable folder, git state, a real tiny call to every configured model) before any spend; cost estimate and confirmation; `--dry-run`; `--resume` that re-runs only missing cases and cases lost to API errors. Records gained `expected_behavior` and `passed` (correct refusals now score as passes; `compute_aggregate` also reports `pass_rate`), multi-turn records gained the final table, ground truth, trace, events and per-turn summaries; both runners gained `on_record` and `skip` hooks; the stability report prefers the recorded `passed` verdict.
+- *Verified by:* `tests/test_full_eval.py` (13 tests: normal run and artifacts, scoring of refusals, crash at call 10 then resume with exactly one record per case, API-error cases re-run alone, half-written last line, dry run makes no pipeline calls, failed preflight writes nothing, confirmation prompt, repeats, failure kinds); `dev_checks/check_full_eval.py --ping` (real dry run and a real preflight that reached `gpt-oss-20b`; answering "n" saved nothing); 160 offline tests pass. Bug caught on the way: the uncommitted-files list lost the first character of its first path. No pipeline code under `src/` changed.
 

@@ -66,6 +66,18 @@ def _load_dataset() -> pd.DataFrame:
     return pd.read_csv(_DATA_PATH, encoding="latin-1")
 
 
+def _turn_summary(query: str, result: Dict[str, Any]) -> Dict[str, Any]:
+    """Short record of one pipeline turn (what it did), kept with the case record."""
+    return {
+        "query": query,
+        "status": result.get("status"),
+        "plan_tools": [getattr(s, "tool", None) or (s.get("tool") if isinstance(s, dict) else None)
+                       for s in (result.get("plan") or [])],
+        "answer": result.get("answer"),
+        "message": result.get("message", ""),
+    }
+
+
 def _run_case(
     case: MultiTurnEvalCase,
     df: pd.DataFrame,
@@ -82,6 +94,7 @@ def _run_case(
     pipeline_result: Dict[str, Any] = {}
     skip_reason: str | None = None
     all_llm_calls: List[Dict[str, Any]] = []  # LLM calls across every turn of the case
+    turn_log: List[Dict[str, Any]] = []       # one short summary per turn that was run
 
     # Run context-setting turns; skip the whole case if any of them error.
     for turn in context_turns:
@@ -89,8 +102,10 @@ def _run_case(
             result = run_pipeline(turn.query, session_id=session_id)
         except Exception as exc:
             skip_reason = f"Turn '{turn.query[:40]}' raised: {exc}"
+            turn_log.append({"query": turn.query, "status": "exception", "message": str(exc)})
             break
 
+        turn_log.append(_turn_summary(turn.query, result))
         all_llm_calls.extend(result.get("llm_calls") or [])
         if result.get("status") == "error":
             skip_reason = (
@@ -109,6 +124,7 @@ def _run_case(
         except Exception as exc:
             pipeline_result = {"status": "error", "final_df": None, "message": str(exc)}
         all_llm_calls.extend(pipeline_result.get("llm_calls") or [])
+        turn_log.append(_turn_summary(final_turn.query, pipeline_result))
 
     duration = time.perf_counter() - start
 
@@ -120,7 +136,11 @@ def _run_case(
             "num_turns": len(case.turns),
             "final_query": final_turn.query,
             "outcome": "skipped",
+            "expected_behavior": "answer",
+            "passed": False,
             "session_id": session_id,
+            "turns": turn_log,
+            "llm_calls": all_llm_calls,
             "pipeline_status": None,
             "value_match": None,
             "mismatches": [f"Skipped: {skip_reason}"],
@@ -166,7 +186,10 @@ def _run_case(
         "num_turns": len(case.turns),
         "final_query": final_turn.query,
         "outcome": outcome,
+        "expected_behavior": "answer",
+        "passed": bool(value_match),
         "session_id": session_id,
+        "turns": turn_log,  # what each turn did (status, plan tools, answer), for diagnosing context failures
         "pipeline_status": pipeline_result.get("status"),
         "value_match": value_match,
         "mismatches": mismatches,
@@ -176,6 +199,13 @@ def _run_case(
         "plan": [s.model_dump() if hasattr(s, "model_dump") else s
                  for s in (pipeline_result.get("plan") or [])],
         "answer": pipeline_result.get("answer"),
+        # Final-turn evidence, so failures can be labelled without re-running
+        "gt_data": gt_df.to_dict(orient="records") if gt_df is not None else None,
+        "pipeline_data": (pipeline_result["final_df"].to_dict(orient="records")
+                          if pipeline_result.get("final_df") is not None else None),
+        "trace": pipeline_result.get("trace") or [],
+        "events": pipeline_result.get("events") or [],
+        "pipeline_message": pipeline_result.get("message", ""),
         "answer_check": check_answer(
             pipeline_result.get("answer"), final_turn.query, pipeline_result.get("final_df"),
             answer_is_fallback=is_answer_fallback(all_llm_calls),
@@ -202,7 +232,14 @@ def run_multiturn_eval(
     ids: List[str] | None = None,
     repeats: int = 1,
     turn_delay: float = _TURN_DELAY_S,
+    on_record=None,
+    skip=None,
 ) -> List[Dict[str, Any]]:
+    """
+    on_record : optional callback called with each finished record straight away
+                (used to save results crash-safely as the run progresses).
+    skip      : optional set of (case_id, repeat) pairs to leave out (used to resume).
+    """
     print("=" * 70)
     print("ADAA Multi-Turn Evaluation (Session Memory)")
     print("=" * 70)
@@ -226,9 +263,13 @@ def run_multiturn_eval(
         if repeats > 1:
             print(f"--- Repeat {rep}/{repeats} ---")
         for case in cases:  # each _run_case starts a fresh session_id, so repeats never share memory
+            if skip and (case.id, rep) in skip:
+                continue
             record = _run_case(case, df, verbose, turn_delay=turn_delay)
             record["repeat"] = rep
             records.append(record)
+            if on_record is not None:
+                on_record(record)
 
     return records
 

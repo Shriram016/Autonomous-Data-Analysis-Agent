@@ -57,10 +57,14 @@ def _expects_refusal(rec: Dict[str, Any]) -> bool:
     the correct behaviour is to refuse ("unsolvable"): one result table cannot hold
     two different answers. The saved record shows this as gt_data == None.
     """
+    if "expected_behavior" in rec:
+        return rec["expected_behavior"] == "refuse"
     return "outcome" not in rec and not rec.get("gt_error") and "gt_data" in rec and rec["gt_data"] is None
 
 
 def _passed(rec: Dict[str, Any]) -> bool:
+    if "passed" in rec:  # newer records carry the verdict computed at run time
+        return bool(rec["passed"])
     if "outcome" in rec:  # multi-turn record
         return rec["outcome"] == "pass"
     if _expects_refusal(rec):  # correct = refused; answering anyway counts as a failure

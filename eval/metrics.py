@@ -99,6 +99,14 @@ def compute_record(
 
     gt_shape = gt_df.shape if gt_df is not None else None
 
+    # What the right behaviour is: cases with no ground truth (the compound Q38-Q47)
+    # must be refused ("unsolvable"); answering them anyway is a failure.
+    expected_behavior = "answer" if case.ground_truth_fn is not None else "refuse"
+    if expected_behavior == "refuse":
+        passed = pipeline_result.get("status") == "unsolvable"
+    else:
+        passed = bool(value_match) and not gt_error
+
     events = pipeline_result.get("events") or []
     param_fixes = [e for e in events if e.get("type") == "param_fix"]
     replans = [e for e in events if e.get("type") == "replan"]
@@ -126,6 +134,9 @@ def compute_record(
         "tags": case.tags,
         "compare_mode": case.compare_mode,
         "notes": case.notes,
+        # Did the pipeline do the right thing? (see expected_behavior above)
+        "expected_behavior": expected_behavior,
+        "passed": passed,
         # Pipeline outcome
         "pipeline_status": pipeline_result.get("status"),
         "pipeline_success": pipeline_success,
@@ -208,6 +219,8 @@ def compute_aggregate(records: List[Dict[str, Any]]) -> Dict[str, Any]:
         "pipeline_success_count": sum(1 for r in records if r["pipeline_success"]),
         "pipeline_success_rate": _pct(sum(1 for r in records if r["pipeline_success"]), n),
         "gt_error_count": sum(1 for r in records if r["gt_error"]),
+        "passed_count": sum(1 for r in records if r.get("passed", r.get("value_match"))),
+        "pass_rate": _pct(sum(1 for r in records if r.get("passed", r.get("value_match"))), n),
         "value_match_count": sum(1 for r in successful if r["value_match"]),
         "value_match_rate": _pct(sum(1 for r in successful if r["value_match"]), n_success),
         "full_match_count": sum(1 for r in successful if r["full_match"]),

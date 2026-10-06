@@ -146,6 +146,8 @@ def run_eval(
     verbose: bool = True,
     cases: Optional[List[EvalCase]] = None,
     repeats: int = 1,
+    on_record=None,
+    skip=None,
 ) -> List[Dict[str, Any]]:
     """
     Run eval cases and return the list of per-case records.
@@ -156,6 +158,9 @@ def run_eval(
     cases   : List of EvalCase objects to run. Defaults to all TEST_CASES.
     repeats : Run the whole list this many times (repeat 1 for all cases, then
               repeat 2, ...). Each record carries its `repeat` number (1-based).
+    on_record : Optional callback called with each finished record straight away
+              (used to save results crash-safely as the run progresses).
+    skip    : Optional set of (case_id, repeat) pairs to leave out (used to resume).
     """
     if cases is None:
         cases = TEST_CASES
@@ -169,7 +174,8 @@ def run_eval(
     print(f"Dataset loaded: {len(df):,} rows × {len(df.columns)} columns\n")
 
     records: List[Dict[str, Any]] = []
-    plan = [(rep, case) for rep in range(1, repeats + 1) for case in cases]
+    skip = skip or set()
+    plan = [(rep, case) for rep in range(1, repeats + 1) for case in cases if (case.id, rep) not in skip]
     n = len(plan)
 
     for i, (rep, case) in enumerate(plan, start=1):
@@ -180,6 +186,8 @@ def run_eval(
         record = _run_case(case, df, verbose)
         record["repeat"] = rep
         records.append(record)
+        if on_record is not None:
+            on_record(record)
 
         if verbose:
             icon = _status_icon(record)
