@@ -1,6 +1,6 @@
 # V2 Polish Plan
 
-**Status (2026-10-06):** Part A ✅ done · Part B: B1a/B1b/B1c/B2 ✅ done, B3 moved to after Part M · Part M ✅ done (M1, M2, M4, M5; M3 skipped by decision). **Next: B3c (the real 20 × 3 run, after the cost gate).** ✅ Rate limits resolved: key now shows Developer-plan limits (250K tokens/min, 500K requests/day, no daily token cap; verified 2026-10-06). Answer-generator 404 blocker ✅ resolved (M4). Then the full 63-query run once, C, D, E, F.
+**Status (2026-10-06):** Part A ✅ done · Part B: B1a/B1b/B1c/B2 ✅ done, B3 moved to after Part M · Part M ✅ done (M1, M2, M4, M5; M3 skipped by decision). Part B ✅ done. **Next: the full 63-query run once (baseline), then Part C.** ✅ Rate limits resolved: key now shows Developer-plan limits (250K tokens/min, 500K requests/day, no daily token cap; verified 2026-10-06). Answer-generator 404 blocker ✅ resolved (M4). Then the full 63-query run once, C, D, E, F.
 **Branch:** `version2`
 **Outcome:** a clean, honest, measured, tagged `v2.0` release that serves as the frozen baseline for V3.
 
@@ -18,7 +18,7 @@
 | M | M3 answer-model audition | ⏭ skipped | User decision: Groq-only, one model (`gpt-oss-20b`) for all jobs; no pilot needed |
 | M | M4 switch answer model to `gpt-oss-20b` | ✅ | `ANSWER_MODEL` swapped, low reasoning effort, `max_tokens` 1024, empty answer = failure; 4/4 real answers LLM-written and pass B2 |
 | M | M5 document the model audit | ✅ | "Model Audit" section in `docs/architecture.md`; `docs/others/groq-model-details.md` refreshed (current catalog + config, June content kept as historical) |
-| B | B3 consistency check: 20 queries × 3 runs | 🔄 | Redefined (see below). B3a ✅ runner flags; B3b ✅ stability report; B3c real run 🔜; B3d document. The full 63-query run is separate (before Part C) |
+| B | B3 consistency check: 20 queries × 3 runs | ✅ | Done: 60 runs, 0 API errors; 12 reliable / 4 flaky / 4 broken; findings under Part B. The full 63-query run is separate (before Part C) |
 | C | Failure-cause breakdown | ⬜ | Needs the B3 run |
 | D | Baseline experiment | ⬜ | Code-gen baseline + ablation, reuses the B3 runner |
 | E | Write-up (decisions, README, case study) | ⬜ | |
@@ -99,12 +99,26 @@ tracing, a live Streamlit demo, and honest "What Is Not Caught" / per-query fail
 | A5 | **Unit tests that don't need an LLM:** each of the 10 tools, all 8 critic checks, the schema generator, and the graph routing with the LLM mocked | Deterministic tests show engineering discipline |
 | A6 | **GitHub Actions CI** running those tests on every push, with a badge in the README | Visible proof the tests pass |
 
-## Part B — Make the instrumentation honest
+## Part B — Make the instrumentation honest  ✅ DONE
 
 **Status:** B1a, B1b, B1c, B2 ✅ done (see Completion log). B3 ⏸ moved to after Part M.  
 **Findings so far — ⚠ FINDING (2026-10-06), handled in Part M:** `llama-3.1-8b-instant` (the `ANSWER_MODEL`) returns 404 `model_not_found` for this Groq key; it is no longer in the account's model list. `answer_gen_node` silently falls back to a deterministic non-LLM answer, so new eval runs do NOT exercise the LLM answer generator and are not comparable to the June results. Caught by B1c instrumentation. Needs a decision before any full eval re-run.  
 **Pilot cost data (4 real queries; planner only, since the answer call fails):** ~2,690 input / ~160 output tokens per query ≈ $0.00025/query.  
 **B2 audit of saved results (free, 144 answers across all `eval_*.json`):** 104 pass, 6 flagged, 33 n/a (old `<think>` traces or non-answers), 1 no numbers. Flags: Q31 twice (answer total $2,316,900.86 / $1,317,000.92 vs real $2,297,200.86), Q34 ($630,215 vs real $733,215), Q41 ($763,819 unsupported), Q43 (4 invented ship-mode totals) — all genuine answer-generator hallucinations — plus one April answer truncated mid-number. **Known limit:** numbers only; it cannot catch mislabelled-but-present values (Q43's "region totals" are really the Standard Class rows) or wrong wording, and small integers can match derived values by chance.  
+**B3 consistency findings (2026-10-06; 20 queries x 3 runs = 60 runs; `gpt-oss-20b` for all jobs; 0 runs lost to API errors; files `eval/results/eval_2026_10_06_23_12_09.*`, `multiturn_20261006_231359.json`, `stability_2026_10_06_23_14_03.*`):**
+- **Headline:** 12 queries reliable (3/3), 4 flaky, 4 broken. Accuracy per repeat 65% / 70% / 80% (mean 71.7%, spread 6 points). The sample deliberately over-represents known-hard cases, so this is NOT comparable to the 96.7% headline; it measures consistency, not overall accuracy. Planner plans were identical across runs for 67% of queries.
+- **Cost / speed:** about $0.0005 and 4.3 s per run; whole 60-run test about $0.03.
+- **Flaky = the planner making different calls on the same query:**
+  - Q05: refused once ("no Order ID column") and answered correctly twice (a solvability flip).
+  - MT03: 2/3. In the failing run the planner dropped the Technology filter, so the answer said "Technology generated a total profit of $286,397.02", which is the whole-company total. **The B2 number check passed it (the number is in the table), which is exactly its documented blind spot: a wrong table is a planner failure, not an answer-writer one.**
+  - Q38 (correct = refuse): refused twice, answered once. Q46 (correct = refuse): refused once, answered twice.
+- **Broken (0/3):**
+  - Q36 (compare 2016 vs 2017): the planner refused 3/3 ("cannot filter two distinct years with a single filter"). June runs attempted it and returned a superset, so behaviour has drifted with the same planner model.
+  - Q41, Q43 (correct = refuse): answered 3/3 instead of refusing. **The June answer-writer hallucinations did not reproduce:** all 6 answers passed the B2 check and Q43's ship-mode totals were correct ($351,428.42, $128,363.13, ...). A small sample (n=3), but the move to `gpt-oss-20b` as answer writer did not bring them back.
+  - MT15 (4-turn synthesis): failed 3/3 with three different failures (refused once; wrong year set twice: 2017/2016/2014 and 2014-2016 with an extra row). Consistent with the known 3-question memory window.
+- **Stable and boring:** 12 single-turn queries were reliable with identical tables. Q17 and Q27 passed 3/3 but with differing plan parameters or column names; MT10 passed 3/3 via different routes (`extract_date_part` + two filters, or `date_filter` + filter).
+- **Harness gap found (for Part C):** `compute_aggregate` counts the no-ground-truth compound cases (Q38-Q47) as failures even when refusing is the correct behaviour. The stability report treats a refusal as a pass for those; Part C must define expected behaviour per case and use it everywhere.
+- **Stability-report refinements made after seeing the real run:** (1) answer-number comparison ignores list numbering ("1. California"), rounds to 3 significant digits and accepts an answer that adds extra numbers, because the first version flagged format-only differences as inconsistency; (2) expected-refusal cases pass only when the agent refuses. Both covered by tests (144 offline tests pass).
 **Observed:** one transient no-plan failure on Q03 (passed on re-run) — the kind of infrastructure failure Part C should label.  
 
 *Why: you can't explain failures you didn't record.*
@@ -113,7 +127,7 @@ tracing, a live Streamlit demo, and honest "What Is Not Caught" / per-query fail
 |---|---|
 | B1 ✅ | The eval runner records, per query: the generated plan, **which critic check fired** at each step, param-fixer and replanner events, and tokens, cost and latency per LLM call |
 | B2 ✅ | **Automatic hallucination check:** pull the numbers out of the answer text and check them against the result DataFrame. Catches Q41-style errors ($763K reported vs $286K actual) automatically instead of by hand |
-| B3 🔄 | **Consistency check (redefined 2026-10-06):** run a stratified sample of **20 queries** (17 single-turn across all 12 groups + 3 multi-turn with 2, 3 and 4 turns) **3 times each** and report per-query stability (3/3, 1-2/3, 0/3), plan and answer consistency, and the average and spread. The full 63-query single run is separate: it is needed for Parts C and D and comes before Part C. Sample: Q01 Q05 Q06 Q08 Q11 Q15 Q17 Q20 Q23 Q25 Q27 Q31 Q36 Q38 Q41 Q43 Q46 + MT03 MT10 MT15. Sub-steps: B3a runner flags ✅ · B3b stability report ✅ · B3c real run (cost gate first) · B3d document |
+| B3 ✅ | **Consistency check (redefined 2026-10-06):** run a stratified sample of **20 queries** (17 single-turn across all 12 groups + 3 multi-turn with 2, 3 and 4 turns) **3 times each** and report per-query stability (3/3, 1-2/3, 0/3), plan and answer consistency, and the average and spread. The full 63-query single run is separate: it is needed for Parts C and D and comes before Part C. Sample: Q01 Q05 Q06 Q08 Q11 Q15 Q17 Q20 Q23 Q25 Q27 Q31 Q36 Q38 Q41 Q43 Q46 + MT03 MT10 MT15. Sub-steps: B3a runner flags ✅ · B3b stability report ✅ · B3c real run ✅ · B3d document ✅ |
 
 ## Part M — Model audit (which model for which job, and why)  ✅ DONE
 
@@ -357,4 +371,9 @@ trade-off is a stronger signal than claiming a win.
 **2026-10-06 — B3b ✅ stability report (`eval/stability.py`)**
 - *Done:* reads repeat-run result files (single-turn `eval_*.json` and multi-turn `multiturn_*.json`) and reports per query: result stability (reliable = all runs pass, flaky = some, broken = none, with "same failure each time?"), plan consistency (tools and parameters, ignoring key order and output names), table consistency (single-turn only; multi-turn records do not save the table), answer-number consistency (numbers only, wording ignored; fallback answers excluded), the B2 verdict counts, and API-error losses kept apart from real failures (`infra_only` when every failure was an API error). Overall: accuracy per repeat with mean, min, max and std, status counts, share of queries with an identical plan, average cost and time per run. Saves `stability_<timestamp>.json` / `.txt`. Works on older single-repeat files.
 - *Verified by:* `tests/test_stability.py` (12 tests, made-up records), `dev_checks/check_stability.py` (synthetic repeat files through the real CLI, plus a saved June result file); 140 offline tests pass. No LLM calls.
+
+**2026-10-06 — B3c/B3d ✅ real 20 x 3 run, results read and documented (Part B complete)**
+- *Done:* ran the 17 single-turn cases (`run_eval.py --ids ... --repeats 3`) and the 3 multi-turn cases (`run_multiturn_eval.py --ids MT03,MT10,MT15 --repeats 3 --turn-delay 0`), 60 runs, about 10 minutes, about $0.03, no API errors; produced the stability report; refined the report after inspecting real answers (list numbering, rounding, expected-refusal cases); findings recorded under Part B. Result files committed under `eval/results/`.
+- *Cost gate:* estimated about $0.025 and 10-15 minutes beforehand; actual matched.
+- *Verified by:* 144 offline tests, `dev_checks/check_stability.py`, and the saved reports. *Part B is complete (B1a, B1b, B1c, B2, B3).*
 

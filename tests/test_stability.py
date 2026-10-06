@@ -137,3 +137,52 @@ def test_report_text_and_cli_saves_files(tmp_path, capsys):
     saved = sorted(p.suffix for p in out.iterdir())
     assert saved == [".json", ".txt"]
     capsys.readouterr()
+
+
+# ---------------------------------------------------------------- refinements found in the first real B3c run
+def no_gt(qid, repeat, status, **kw):
+    """A compound case (Q38-Q47): no ground truth, the right behaviour is to refuse."""
+    r = rec(qid, repeat, passed=False, plan=[] if status == "unsolvable" else PLAN_A, table=None,
+            answer=None if status == "unsolvable" else "Total is $100.", **kw)
+    r.update({"gt_data": None, "pipeline_status": status, "mismatches": ["Pipeline returned no result"]})
+    return r
+
+
+def test_no_ground_truth_case_passes_only_when_the_agent_refuses():
+    runs = [no_gt("Q38", 1, "success"), no_gt("Q38", 2, "unsolvable"), no_gt("Q38", 3, "unsolvable")]
+    x = q(compute_stability(runs), "Q38")
+    assert (x["passes"], x["status"], x["expects_refusal"]) == (2, "flaky", True)
+
+    always_answers = compute_stability([no_gt("Q41", i, "success") for i in (1, 2, 3)])
+    x = q(always_answers, "Q41")
+    assert x["status"] == "broken" and x["same_failure"] is True
+
+    always_refuses = compute_stability([no_gt("Q43", i, "unsolvable") for i in (1, 2, 3)])
+    assert q(always_refuses, "Q43")["status"] == "reliable"
+
+
+def test_normal_case_is_not_treated_as_expecting_refusal():
+    runs = [rec("Q01", i, gt_data=[{"v": 1}]) for i in (1, 2)]
+    assert q(compute_stability(runs), "Q01")["expects_refusal"] is False
+
+
+def test_list_numbering_and_rounding_do_not_count_as_different_numbers():
+    listed = "The top five states are:\n\n1. California $457,687.63\n2. Texas $170,188.05"
+    prose = "California leads with $457,687.63, followed by Texas at $170,188.05."
+    assert q(compute_stability([rec("Q11", 1, answer=listed), rec("Q11", 2, answer=prose)]),
+             "Q11")["answer_numbers_consistent"] is True
+
+    rounded = [rec("Q41", 1, answer="Total profit is $286,397.02."),
+               rec("Q41", 2, answer="Total profit is about $286,397.")]
+    assert q(compute_stability(rounded), "Q41")["answer_numbers_consistent"] is True
+
+
+def test_an_answer_that_adds_extra_numbers_is_still_consistent_but_different_numbers_are_not():
+    base = "The average discount is 0.174."
+    extra = "The average discount is 0.174, which means a 17.4% discount."
+    assert q(compute_stability([rec("Q15", 1, answer=base), rec("Q15", 2, answer=extra)]),
+             "Q15")["answer_numbers_consistent"] is True
+
+    changed = [rec("Q15", 1, answer="The average discount is 0.174."),
+               rec("Q15", 2, answer="The average discount is 0.250.")]
+    assert q(compute_stability(changed), "Q15")["answer_numbers_consistent"] is False

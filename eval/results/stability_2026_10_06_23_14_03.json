@@ -1,0 +1,397 @@
+{
+  "queries": {
+    "Q01": {
+      "runs": 3,
+      "passes": 3,
+      "status": "reliable",
+      "infra_failures": 0,
+      "same_failure": null,
+      "plan_consistent": true,
+      "distinct_plans": 1,
+      "table_consistent": true,
+      "answer_numbers_consistent": true,
+      "expects_refusal": false,
+      "answer_check": {
+        "pass": 3
+      },
+      "avg_cost_usd": 0.000262,
+      "avg_duration_s": 2.35,
+      "multi_turn": false
+    },
+    "Q05": {
+      "runs": 3,
+      "passes": 2,
+      "status": "flaky",
+      "infra_failures": 0,
+      "same_failure": null,
+      "plan_consistent": true,
+      "distinct_plans": 1,
+      "table_consistent": true,
+      "answer_numbers_consistent": true,
+      "expects_refusal": false,
+      "answer_check": {
+        "n/a": 1,
+        "pass": 2
+      },
+      "avg_cost_usd": 0.000251,
+      "avg_duration_s": 1.89,
+      "multi_turn": false
+    },
+    "Q06": {
+      "runs": 3,
+      "passes": 3,
+      "status": "reliable",
+      "infra_failures": 0,
+      "same_failure": null,
+      "plan_consistent": true,
+      "distinct_plans": 1,
+      "table_consistent": true,
+      "answer_numbers_consistent": true,
+      "expects_refusal": false,
+      "answer_check": {
+        "pass": 3
+      },
+      "avg_cost_usd": 0.000274,
+      "avg_duration_s": 2.316667,
+      "multi_turn": false
+    },
+    "Q08": {
+      "runs": 3,
+      "passes": 3,
+      "status": "reliable",
+      "infra_failures": 0,
+      "same_failure": null,
+      "plan_consistent": true,
+      "distinct_plans": 1,
+      "table_consistent": true,
+      "answer_numbers_consistent": true,
+      "expects_refusal": false,
+      "answer_check": {
+        "pass": 3
+      },
+      "avg_cost_usd": 0.000289,
+      "avg_duration_s": 2.753333,
+      "multi_turn": false
+    },
+    "Q11": {
+      "runs": 3,
+      "passes": 3,
+      "status": "reliable",
+      "infra_failures": 0,
+      "same_failure": null,
+      "plan_consistent": true,
+      "distinct_plans": 1,
+      "table_consistent": true,
+      "answer_numbers_consistent": true,
+      "expects_refusal": false,
+      "answer_check": {
+        "pass": 3
+      },
+      "avg_cost_usd": 0.000294,
+      "avg_duration_s": 2.643333,
+      "multi_turn": false
+    },
+    "Q15": {
+      "runs": 3,
+      "passes": 3,
+      "status": "reliable",
+      "infra_failures": 0,
+      "same_failure": null,
+      "plan_consistent": true,
+      "distinct_plans": 1,
+      "table_consistent": true,
+      "answer_numbers_consistent": true,
+      "expects_refusal": false,
+      "answer_check": {
+        "pass": 3
+      },
+      "avg_cost_usd": 0.000281,
+      "avg_duration_s": 2.643333,
+      "multi_turn": false
+    },
+    "Q17": {
+      "runs": 3,
+      "passes": 3,
+      "status": "reliable",
+      "infra_failures": 0,
+      "same_failure": null,
+      "plan_consistent": false,
+      "distinct_plans": 2,
+      "table_consistent": false,
+      "answer_numbers_consistent": true,
+      "expects_refusal": false,
+      "answer_check": {
+        "pass": 3
+      },
+      "avg_cost_usd": 0.000305,
+      "avg_duration_s": 4.36,
+      "multi_turn": false
+    },
+    "Q20": {
+      "runs": 3,
+      "passes": 3,
+      "status": "reliable",
+      "infra_failures": 0,
+      "same_failure": null,
+      "plan_consistent": true,
+      "distinct_plans": 1,
+      "table_consistent": true,
+      "answer_numbers_consistent": true,
+      "expects_refusal": false,
+      "answer_check": {
+        "pass": 3
+      },
+      "avg_cost_usd": 0.000298,
+      "avg_duration_s": 4.366667,
+      "multi_turn": false
+    },
+    "Q23": {
+      "runs": 3,
+      "passes": 3,
+      "status": "reliable",
+      "infra_failures": 0,
+      "same_failure": null,
+      "plan_consistent": true,
+      "distinct_plans": 1,
+      "table_consistent": true,
+      "answer_numbers_consistent": true,
+      "expects_refusal": false,
+      "answer_check": {
+        "pass": 3
+      },
+      "avg_cost_usd": 0.000442,
+      "avg_duration_s": 5.01,
+      "multi_turn": false
+    },
+    "Q25": {
+      "runs": 3,
+      "passes": 3,
+      "status": "reliable",
+      "infra_failures": 0,
+      "same_failure": null,
+      "plan_consistent": true,
+      "distinct_plans": 1,
+      "table_consistent": true,
+      "answer_numbers_consistent": true,
+      "expects_refusal": false,
+      "answer_check": {
+        "pass": 3
+      },
+      "avg_cost_usd": 0.000314,
+      "avg_duration_s": 3.93,
+      "multi_turn": false
+    },
+    "Q27": {
+      "runs": 3,
+      "passes": 3,
+      "status": "reliable",
+      "infra_failures": 0,
+      "same_failure": null,
+      "plan_consistent": false,
+      "distinct_plans": 2,
+      "table_consistent": false,
+      "answer_numbers_consistent": true,
+      "expects_refusal": false,
+      "answer_check": {
+        "pass": 3
+      },
+      "avg_cost_usd": 0.00032,
+      "avg_duration_s": 4.213333,
+      "multi_turn": false
+    },
+    "Q31": {
+      "runs": 3,
+      "passes": 3,
+      "status": "reliable",
+      "infra_failures": 0,
+      "same_failure": null,
+      "plan_consistent": true,
+      "distinct_plans": 1,
+      "table_consistent": true,
+      "answer_numbers_consistent": true,
+      "expects_refusal": false,
+      "answer_check": {
+        "pass": 3
+      },
+      "avg_cost_usd": 0.000318,
+      "avg_duration_s": 1.99,
+      "multi_turn": false
+    },
+    "Q36": {
+      "runs": 3,
+      "passes": 0,
+      "status": "broken",
+      "infra_failures": 0,
+      "same_failure": true,
+      "plan_consistent": null,
+      "distinct_plans": 0,
+      "table_consistent": null,
+      "answer_numbers_consistent": null,
+      "expects_refusal": false,
+      "answer_check": {
+        "n/a": 3
+      },
+      "avg_cost_usd": 0.000336,
+      "avg_duration_s": 1.543333,
+      "multi_turn": false
+    },
+    "Q38": {
+      "runs": 3,
+      "passes": 2,
+      "status": "flaky",
+      "infra_failures": 0,
+      "same_failure": null,
+      "plan_consistent": null,
+      "distinct_plans": 1,
+      "table_consistent": null,
+      "answer_numbers_consistent": null,
+      "expects_refusal": true,
+      "answer_check": {
+        "pass": 1,
+        "n/a": 2
+      },
+      "avg_cost_usd": 0.000353,
+      "avg_duration_s": 1.813333,
+      "multi_turn": false
+    },
+    "Q41": {
+      "runs": 3,
+      "passes": 0,
+      "status": "broken",
+      "infra_failures": 0,
+      "same_failure": true,
+      "plan_consistent": true,
+      "distinct_plans": 1,
+      "table_consistent": true,
+      "answer_numbers_consistent": true,
+      "expects_refusal": true,
+      "answer_check": {
+        "pass": 3
+      },
+      "avg_cost_usd": 0.000593,
+      "avg_duration_s": 2.42,
+      "multi_turn": false
+    },
+    "Q43": {
+      "runs": 3,
+      "passes": 0,
+      "status": "broken",
+      "infra_failures": 0,
+      "same_failure": true,
+      "plan_consistent": true,
+      "distinct_plans": 1,
+      "table_consistent": true,
+      "answer_numbers_consistent": false,
+      "expects_refusal": true,
+      "answer_check": {
+        "pass": 3
+      },
+      "avg_cost_usd": 0.000386,
+      "avg_duration_s": 2.306667,
+      "multi_turn": false
+    },
+    "Q46": {
+      "runs": 3,
+      "passes": 1,
+      "status": "flaky",
+      "infra_failures": 0,
+      "same_failure": true,
+      "plan_consistent": false,
+      "distinct_plans": 2,
+      "table_consistent": true,
+      "answer_numbers_consistent": true,
+      "expects_refusal": true,
+      "answer_check": {
+        "pass": 2,
+        "n/a": 1
+      },
+      "avg_cost_usd": 0.000706,
+      "avg_duration_s": 4.57,
+      "multi_turn": false
+    },
+    "MT03": {
+      "runs": 3,
+      "passes": 2,
+      "status": "flaky",
+      "infra_failures": 0,
+      "same_failure": null,
+      "plan_consistent": false,
+      "distinct_plans": 2,
+      "table_consistent": null,
+      "answer_numbers_consistent": false,
+      "expects_refusal": false,
+      "answer_check": {
+        "pass": 3
+      },
+      "avg_cost_usd": 0.000566,
+      "avg_duration_s": 5.043333,
+      "multi_turn": true
+    },
+    "MT10": {
+      "runs": 3,
+      "passes": 3,
+      "status": "reliable",
+      "infra_failures": 0,
+      "same_failure": null,
+      "plan_consistent": false,
+      "distinct_plans": 2,
+      "table_consistent": null,
+      "answer_numbers_consistent": true,
+      "expects_refusal": false,
+      "answer_check": {
+        "pass": 3
+      },
+      "avg_cost_usd": 0.000958,
+      "avg_duration_s": 12.5,
+      "multi_turn": true
+    },
+    "MT15": {
+      "runs": 3,
+      "passes": 0,
+      "status": "broken",
+      "infra_failures": 0,
+      "same_failure": false,
+      "plan_consistent": false,
+      "distinct_plans": 2,
+      "table_consistent": null,
+      "answer_numbers_consistent": false,
+      "expects_refusal": false,
+      "answer_check": {
+        "n/a": 1,
+        "pass": 2
+      },
+      "avg_cost_usd": 0.00167,
+      "avg_duration_s": 16.57,
+      "multi_turn": true
+    }
+  },
+  "summary": {
+    "unique_queries": 20,
+    "total_runs": 60,
+    "repeats": [
+      1,
+      2,
+      3
+    ],
+    "accuracy_per_repeat": {
+      "1": 0.65,
+      "2": 0.7,
+      "3": 0.8
+    },
+    "accuracy_mean": 0.7167,
+    "accuracy_min": 0.65,
+    "accuracy_max": 0.8,
+    "accuracy_std": 0.0624,
+    "status_counts": {
+      "reliable": 12,
+      "flaky": 4,
+      "broken": 4,
+      "infra_only": 0
+    },
+    "infra_failed_runs": 0,
+    "plan_identical_share": 0.6667,
+    "avg_cost_usd_per_run": 0.000461,
+    "avg_duration_s_per_run": 4.261667,
+    "avg_llm_latency_s_per_run": 1.254667
+  }
+}

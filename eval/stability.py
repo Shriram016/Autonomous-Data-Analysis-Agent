@@ -51,9 +51,20 @@ _INFRA_RE = re.compile(
 # Per-record helpers
 # ---------------------------------------------------------------------------
 
+def _expects_refusal(rec: Dict[str, Any]) -> bool:
+    """
+    Single-turn cases with no ground truth (Q38-Q47 compound queries) are ones where
+    the correct behaviour is to refuse ("unsolvable"): one result table cannot hold
+    two different answers. The saved record shows this as gt_data == None.
+    """
+    return "outcome" not in rec and not rec.get("gt_error") and "gt_data" in rec and rec["gt_data"] is None
+
+
 def _passed(rec: Dict[str, Any]) -> bool:
     if "outcome" in rec:  # multi-turn record
         return rec["outcome"] == "pass"
+    if _expects_refusal(rec):  # correct = refused; answering anyway counts as a failure
+        return rec.get("pipeline_status") == "unsolvable"
     return bool(rec.get("value_match")) and not rec.get("gt_error")
 
 
@@ -67,6 +78,8 @@ def _is_infra_failure(rec: Dict[str, Any]) -> bool:
 
 
 def _failure_reason(rec: Dict[str, Any]) -> str:
+    if _expects_refusal(rec):
+        return f"expected a refusal but pipeline_status={rec.get('pipeline_status')}"
     mism = rec.get("mismatches") or []
     return str(mism[0]) if mism else str(rec.get("pipeline_message") or "unknown")
 
@@ -96,11 +109,27 @@ def _canonical_table(rec: Dict[str, Any]) -> Optional[str]:
     return json.dumps(_round(data), sort_keys=True, default=str)
 
 
-def _answer_numbers(rec: Dict[str, Any]) -> Optional[tuple]:
+_LIST_MARKER_RE = re.compile(r"^[ \t]*(?:[-*]\s+)?\d+[.)]\s+", re.MULTILINE)
+
+
+def _sig3(v: float) -> float:
+    """Round to 3 significant digits, so $286,397.02 and $286,397 count as the same number."""
+    return float(f"{v:.3g}")
+
+
+def _answer_numbers(rec: Dict[str, Any]) -> Optional[frozenset]:
+    """Numbers in the answer, ignoring list numbering ("1. California ...") and rounding detail."""
     answer = rec.get("answer")
     if not answer or rec.get("answer_is_fallback"):
         return None
-    return tuple(sorted(round(n["value"], 2) for n in extract_numbers(answer)))
+    text = _LIST_MARKER_RE.sub("", answer)
+    return frozenset(_sig3(abs(n["value"])) for n in extract_numbers(text))
+
+
+def _is_chain(sets: List[frozenset]) -> bool:
+    """True if every answer's numbers are contained in the next larger one (extras allowed)."""
+    ordered = sorted(sets, key=len)
+    return all(a <= b for a, b in zip(ordered, ordered[1:]))
 
 
 def _consistent(values: List[Any]) -> Optional[bool]:
@@ -109,6 +138,13 @@ def _consistent(values: List[Any]) -> Optional[bool]:
     if len(present) < 2:
         return None
     return len(set(present)) == 1
+
+
+def _numbers_consistent(values: List[Optional[frozenset]]) -> Optional[bool]:
+    present = [v for v in values if v is not None]
+    if len(present) < 2:
+        return None
+    return _is_chain(present)
 
 
 def _mean(xs: List[float]) -> float:
@@ -151,7 +187,8 @@ def compute_stability(records: List[Dict[str, Any]]) -> Dict[str, Any]:
             "plan_consistent": _consistent(plans),
             "distinct_plans": len({p for p in plans if p is not None}),
             "table_consistent": _consistent([_canonical_table(r) for r in runs]),
-            "answer_numbers_consistent": _consistent([_answer_numbers(r) for r in runs]),
+            "answer_numbers_consistent": _numbers_consistent([_answer_numbers(r) for r in runs]),
+            "expects_refusal": all(_expects_refusal(r) for r in runs),
             "answer_check": dict(Counter(r.get("answer_check", "n/a") for r in runs)),
             "avg_cost_usd": _mean([r.get("cost_usd") or 0.0 for r in runs]),
             "avg_duration_s": _mean([r.get("duration_s") or 0.0 for r in runs]),
@@ -215,6 +252,8 @@ def render_report(result: Dict[str, Any]) -> str:
         note = ""
         if q["infra_failures"]:
             note = f"  [{q['infra_failures']} infra]"
+        if q.get("expects_refusal"):
+            note += "  [correct = refuse]"
         if q["status"] == "broken" and q["same_failure"] is not None:
             note += "  [same failure each time]" if q["same_failure"] else "  [failure differs]"
         lines.append(
@@ -237,7 +276,9 @@ def render_report(result: Dict[str, Any]) -> str:
         f"{s['avg_llm_latency_s_per_run']:.1f}s in LLM calls",
         "",
         "Notes: 'n/a' means there was nothing to compare (e.g. multi-turn records do not save the result table).",
-        "Answer wording is ignored; only the numbers in the answer text are compared.",
+        "Answer wording is ignored; only the numbers in the answer text are compared (list numbering ignored,",
+        "rounded to 3 significant digits, and an answer that adds extra numbers still counts as consistent).",
+        "'[correct = refuse]': no ground truth exists for this query; the right behaviour is to answer 'unsolvable'.",
     ]
     return "\n".join(lines)
 

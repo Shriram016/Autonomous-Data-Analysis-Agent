@@ -1,0 +1,127 @@
+====================================================================================================
+ADAA EVALUATION REPORT
+Generated: 2026-10-06 23:12:09
+====================================================================================================
+
+ID     Status        Val  Full  Mode          Exec Retry    Time  Query
+----------------------------------------------------------------------------------------------------
+Q01    success        Y     Y   value_only       1     0    2.8s  What is the total sales across all order
+Q05    unsolvable    ERR   ERR  value_only       0     0    1.4s  What is the average quantity ordered per
+Q06    success        Y     Y   value_only       2     0    2.2s  What are the total sales for the Technol
+Q08    success        Y     Y   value_only       2     0    2.8s  How many orders were placed in the Consu
+Q11    success        Y     Y   ordered          3     0    2.6s  Which are the top 5 states by total sale
+Q15    success        Y     Y   ordered          3     0    2.3s  Which product category has the highest a
+Q17    success        Y     Y   value_only       4     0    4.6s  Which month has the highest number of or
+Q20    success        Y     Y   value_only       4     0    4.5s  Which year had the highest total profit?
+Q23    success        Y     Y   value_only       5     1    5.2s  What is the average profit for Technolog
+Q25    success        Y     Y   ordered          4     0    4.1s  Which are the top 5 customers by sales i
+Q27    success        Y     Y   value_only       4     0    4.2s  Which product category has the longest a
+Q31    success        Y     Y   value_only       1     0    2.1s  What are total sales? Also break it down
+Q36    unsolvable    ERR   ERR  value_only       0     0    1.4s  Compare total sales in 2016 versus 2017.
+Q38    success        N     N   value_only       3     1    2.9s  What are the total sales and total profi
+Q41    success        N     N   value_only       2     0    2.5s  Show me total profit and also which stat
+Q43    success        N     N   value_only       1     0    2.8s  What is the total sales by region and by
+Q46    success        N     N   value_only       3     0    5.3s  In the West region, how many orders were
+Q01    success        Y     Y   value_only       1     0    2.2s  What is the total sales across all order
+Q05    success        Y     Y   value_only       1     0    2.2s  What is the average quantity ordered per
+Q06    success        Y     Y   value_only       2     0    2.5s  What are the total sales for the Technol
+Q08    success        Y     Y   value_only       2     0    2.7s  How many orders were placed in the Consu
+Q11    success        Y     Y   ordered          3     0    2.7s  Which are the top 5 states by total sale
+Q15    success        Y     Y   ordered          3     0    2.8s  Which product category has the highest a
+Q17    success        Y     Y   value_only       4     0    4.2s  Which month has the highest number of or
+Q20    success        Y     Y   value_only       4     0    4.3s  Which year had the highest total profit?
+Q23    success        Y     Y   value_only       5     1    5.0s  What is the average profit for Technolog
+Q25    success        Y     Y   ordered          4     0    3.9s  Which are the top 5 customers by sales i
+Q27    success        Y     Y   value_only       4     0    4.3s  Which product category has the longest a
+Q31    success        Y     Y   value_only       1     0    2.0s  What are total sales? Also break it down
+Q36    unsolvable    ERR   ERR  value_only       0     0    1.9s  Compare total sales in 2016 versus 2017.
+Q38    unsolvable    ERR   ERR  value_only       0     0    1.3s  What are the total sales and total profi
+Q41    success        N     N   value_only       2     0    2.3s  Show me total profit and also which stat
+Q43    success        N     N   value_only       1     0    2.2s  What is the total sales by region and by
+Q46    success        N     N   value_only       2     0    6.2s  In the West region, how many orders were
+Q01    success        Y     Y   value_only       1     0    2.1s  What is the total sales across all order
+Q05    success        Y     Y   value_only       1     0    2.1s  What is the average quantity ordered per
+Q06    success        Y     Y   value_only       2     0    2.2s  What are the total sales for the Technol
+Q08    success        Y     Y   value_only       2     0    2.8s  How many orders were placed in the Consu
+Q11    success        Y     Y   ordered          3     0    2.6s  Which are the top 5 states by total sale
+Q15    success        Y     Y   ordered          3     0    2.8s  Which product category has the highest a
+Q17    success        Y     Y   value_only       4     0    4.2s  Which month has the highest number of or
+Q20    success        Y     Y   value_only       4     0    4.3s  Which year had the highest total profit?
+Q23    success        Y     Y   value_only       5     1    4.8s  What is the average profit for Technolog
+Q25    success        Y     Y   ordered          4     0    3.8s  Which are the top 5 customers by sales i
+Q27    success        Y     Y   value_only       4     0    4.1s  Which product category has the longest a
+Q31    success        Y     Y   value_only       1     0    1.9s  What are total sales? Also break it down
+Q36    unsolvable    ERR   ERR  value_only       0     0    1.3s  Compare total sales in 2016 versus 2017.
+Q38    unsolvable    ERR   ERR  value_only       0     0    1.2s  What are the total sales and total profi
+Q41    success        N     N   value_only       2     0    2.4s  Show me total profit and also which stat
+Q43    success        N     N   value_only       1     0    1.9s  What is the total sales by region and by
+Q46    unsolvable    ERR   ERR  value_only       0     0    2.1s  In the West region, how many orders were
+----------------------------------------------------------------------------------------------------
+
+OVERALL  (51 queries | 153s total | 3.0s avg)
+  Pipeline success : 44/51 (86%)
+  Value match      : 35/44 (80%)  [primary correctness metric]
+  Full match       : 35/44 (80%)  [shape + columns + values]
+  Avg executions   : 2.3
+  Avg retries      : 0.08
+
+GROUP BREAKDOWN
+  Group                     Success    Value     Full  AvgRetry
+  ------------------------------------------------------------
+  Group 1 Simple Aggregation     83%     100%     100%      0.00
+  Group 2 Filtering           100%     100%     100%      0.00
+  Group 3 Grouping + Ranking    100%     100%     100%      0.00
+  Group 4 Time Based          100%     100%     100%      0.00
+  Group 5 Multi Condition     100%     100%     100%      0.50
+  Group 6 Derived Calculations    100%     100%     100%      0.00
+  Group 7 Pseudo-Compound (Breakdown)    100%     100%     100%      0.00
+  Group 8 Pseudo-Compound (Comparison)     17%       0%       0%      0.17
+  Group 9 Compound (Two Scalars)    100%       0%       0%      0.00
+  Group 10 Compound (Scalar + Ranked)     67%       0%       0%      0.00
+
+PIPELINE ERRORS
+  Q05: What is the average quantity ordered per transaction?
+    status=unsolvable  msg=Query cannot be answered with available tools: The schema does not contain an Or
+  Q36: Compare total sales in 2016 versus 2017.
+    status=unsolvable  msg=Query cannot be answered with available tools: Cannot filter for two distinct ye
+  Q36: Compare total sales in 2016 versus 2017.
+    status=unsolvable  msg=Query cannot be answered with available tools: Cannot filter for two distinct ye
+  Q38: What are the total sales and total profit across all orders?
+    status=unsolvable  msg=Query cannot be answered with available tools: The query requires computing two 
+  Q36: Compare total sales in 2016 versus 2017.
+    status=unsolvable  msg=Query cannot be answered with available tools: Cannot filter for two distinct ye
+  Q38: What are the total sales and total profit across all orders?
+    status=unsolvable  msg=Query cannot be answered with available tools: The query requires computing two 
+  Q46: In the West region, how many orders were placed and what was the total
+    status=unsolvable  msg=Query cannot be answered with available tools: The schema does not include an Or
+
+VALUE MISMATCHES
+  Q38: What are the total sales and total profit across all orders?
+    gt_shape=None  pipeline_shape=None
+    -> Pipeline returned no result -- comparison skipped
+  Q41: Show me total profit and also which states are most profitable.
+    gt_shape=None  pipeline_shape=None
+    -> Pipeline returned no result -- comparison skipped
+  Q43: What is the total sales by region and by ship mode?
+    gt_shape=None  pipeline_shape=None
+    -> Pipeline returned no result -- comparison skipped
+  Q46: In the West region, how many orders were placed and what was the total
+    gt_shape=None  pipeline_shape=None
+    -> Pipeline returned no result -- comparison skipped
+  Q41: Show me total profit and also which states are most profitable.
+    gt_shape=None  pipeline_shape=None
+    -> Pipeline returned no result -- comparison skipped
+  Q43: What is the total sales by region and by ship mode?
+    gt_shape=None  pipeline_shape=None
+    -> Pipeline returned no result -- comparison skipped
+  Q46: In the West region, how many orders were placed and what was the total
+    gt_shape=None  pipeline_shape=None
+    -> Pipeline returned no result -- comparison skipped
+  Q41: Show me total profit and also which states are most profitable.
+    gt_shape=None  pipeline_shape=None
+    -> Pipeline returned no result -- comparison skipped
+  Q43: What is the total sales by region and by ship mode?
+    gt_shape=None  pipeline_shape=None
+    -> Pipeline returned no result -- comparison skipped
+
+====================================================================================================

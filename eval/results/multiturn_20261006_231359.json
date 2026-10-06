@@ -1,0 +1,1117 @@
+{
+  "summary": {
+    "total": 9,
+    "passed": 5,
+    "failed": 4,
+    "skipped": 0,
+    "pass_rate": 0.556
+  },
+  "records": [
+    {
+      "id": "MT03",
+      "tags": [
+        "multiturn",
+        "category_swap",
+        "2turn"
+      ],
+      "num_turns": 2,
+      "final_query": "What about Technology?",
+      "outcome": "pass",
+      "session_id": "294f3859-412e-4069-a02a-6de738c075e3",
+      "pipeline_status": "success",
+      "value_match": true,
+      "mismatches": [],
+      "duration_s": 5.65,
+      "plan": [
+        {
+          "step": 1,
+          "tool": "filter_by_condition",
+          "parameters": {
+            "col_name": "Category",
+            "col_type": "object",
+            "val_to_filter": "Technology",
+            "operator": "=="
+          },
+          "input": "original_df",
+          "output": "step_1_output"
+        },
+        {
+          "step": 2,
+          "tool": "aggregate_column",
+          "parameters": {
+            "col_name": "Profit",
+            "operation": "sum",
+            "new_col_name": "Profit_sum"
+          },
+          "input": "step_1_output",
+          "output": "step_2_output"
+        }
+      ],
+      "answer": "The Technology sector generated a total profit of $145,454.95. This figure represents the combined earnings across all technology-related activities. It highlights the sector\u2019s strong contribution to overall profitability.",
+      "answer_check": "pass",
+      "llm_call_count": 4,
+      "input_tokens": 5949,
+      "output_tokens": 415,
+      "llm_latency_s": 1.3,
+      "cost_usd": 0.000571,
+      "cost_all_prices_verified": true,
+      "llm_calls": [
+        {
+          "name": "planner",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 2691,
+          "output_tokens": 139,
+          "total_tokens": 2830,
+          "latency_s": 0.43,
+          "error": null,
+          "cost_usd": 0.00024352499999999997
+        },
+        {
+          "name": "answer_gen",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 279,
+          "output_tokens": 48,
+          "total_tokens": 327,
+          "latency_s": 0.191,
+          "error": null,
+          "cost_usd": 3.5325000000000005e-05
+        },
+        {
+          "name": "planner",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 2707,
+          "output_tokens": 159,
+          "total_tokens": 2866,
+          "latency_s": 0.437,
+          "error": null,
+          "cost_usd": 0.000250725
+        },
+        {
+          "name": "answer_gen",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 272,
+          "output_tokens": 69,
+          "total_tokens": 341,
+          "latency_s": 0.239,
+          "error": null,
+          "cost_usd": 4.1099999999999996e-05
+        }
+      ],
+      "repeat": 1
+    },
+    {
+      "id": "MT10",
+      "tags": [
+        "multiturn",
+        "metric_swap",
+        "3turn"
+      ],
+      "num_turns": 3,
+      "final_query": "And the total quantity instead?",
+      "outcome": "pass",
+      "session_id": "158f016c-7b7b-4552-875c-f777687e25d5",
+      "pipeline_status": "success",
+      "value_match": true,
+      "mismatches": [],
+      "duration_s": 13.81,
+      "plan": [
+        {
+          "step": 1,
+          "tool": "extract_date_part",
+          "parameters": {
+            "col_name": "Order Date",
+            "part": "year",
+            "new_col_name": "Order_Year"
+          },
+          "input": "original_df",
+          "output": "step_1_output"
+        },
+        {
+          "step": 2,
+          "tool": "filter_by_condition",
+          "parameters": {
+            "col_name": "Category",
+            "col_type": "object",
+            "val_to_filter": "Office Supplies",
+            "operator": "=="
+          },
+          "input": "step_1_output",
+          "output": "step_2_output"
+        },
+        {
+          "step": 3,
+          "tool": "filter_by_condition",
+          "parameters": {
+            "col_name": "Order_Year",
+            "col_type": "numeric",
+            "val_to_filter": 2014,
+            "operator": "=="
+          },
+          "input": "step_2_output",
+          "output": "step_3_output"
+        },
+        {
+          "step": 4,
+          "tool": "aggregate_column",
+          "parameters": {
+            "col_name": "Quantity",
+            "operation": "sum",
+            "new_col_name": "Quantity_sum"
+          },
+          "input": "step_3_output",
+          "output": "step_4_output"
+        }
+      ],
+      "answer": "The total quantity is 4,569 units.",
+      "answer_check": "pass",
+      "llm_call_count": 6,
+      "input_tokens": 8956,
+      "output_tokens": 962,
+      "llm_latency_s": 2.58,
+      "cost_usd": 0.00096,
+      "cost_all_prices_verified": true,
+      "llm_calls": [
+        {
+          "name": "planner",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 2693,
+          "output_tokens": 250,
+          "total_tokens": 2943,
+          "latency_s": 0.506,
+          "error": null,
+          "cost_usd": 0.000276975
+        },
+        {
+          "name": "answer_gen",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 279,
+          "output_tokens": 60,
+          "total_tokens": 339,
+          "latency_s": 0.221,
+          "error": null,
+          "cost_usd": 3.8925e-05
+        },
+        {
+          "name": "planner",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 2713,
+          "output_tokens": 298,
+          "total_tokens": 3011,
+          "latency_s": 0.951,
+          "error": null,
+          "cost_usd": 0.000292875
+        },
+        {
+          "name": "answer_gen",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 277,
+          "output_tokens": 78,
+          "total_tokens": 355,
+          "latency_s": 0.206,
+          "error": null,
+          "cost_usd": 4.4174999999999996e-05
+        },
+        {
+          "name": "planner",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 2721,
+          "output_tokens": 246,
+          "total_tokens": 2967,
+          "latency_s": 0.542,
+          "error": null,
+          "cost_usd": 0.000277875
+        },
+        {
+          "name": "answer_gen",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 273,
+          "output_tokens": 30,
+          "total_tokens": 303,
+          "latency_s": 0.155,
+          "error": null,
+          "cost_usd": 2.9474999999999998e-05
+        }
+      ],
+      "repeat": 1
+    },
+    {
+      "id": "MT15",
+      "tags": [
+        "multiturn",
+        "synthesis",
+        "4turn"
+      ],
+      "num_turns": 4,
+      "final_query": "Can you show the 3 years we discussed in a table?",
+      "outcome": "fail",
+      "session_id": "07d554d2-2c9e-4175-ac55-10c95d4c448c",
+      "pipeline_status": "unsolvable",
+      "value_match": false,
+      "mismatches": [
+        "Pipeline returned no final_df"
+      ],
+      "duration_s": 12.9,
+      "plan": [],
+      "answer": null,
+      "answer_check": "n/a",
+      "llm_call_count": 7,
+      "input_tokens": 11663,
+      "output_tokens": 1072,
+      "llm_latency_s": 2.38,
+      "cost_usd": 0.001196,
+      "cost_all_prices_verified": true,
+      "llm_calls": [
+        {
+          "name": "planner",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 2690,
+          "output_tokens": 191,
+          "total_tokens": 2881,
+          "latency_s": 0.442,
+          "error": null,
+          "cost_usd": 0.00025905000000000004
+        },
+        {
+          "name": "answer_gen",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 278,
+          "output_tokens": 43,
+          "total_tokens": 321,
+          "latency_s": 0.169,
+          "error": null,
+          "cost_usd": 3.375e-05
+        },
+        {
+          "name": "planner",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 2708,
+          "output_tokens": 202,
+          "total_tokens": 2910,
+          "latency_s": 0.428,
+          "error": null,
+          "cost_usd": 0.0002637
+        },
+        {
+          "name": "answer_gen",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 273,
+          "output_tokens": 60,
+          "total_tokens": 333,
+          "latency_s": 0.217,
+          "error": null,
+          "cost_usd": 3.847499999999999e-05
+        },
+        {
+          "name": "planner",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 2714,
+          "output_tokens": 198,
+          "total_tokens": 2912,
+          "latency_s": 0.382,
+          "error": null,
+          "cost_usd": 0.00026294999999999997
+        },
+        {
+          "name": "answer_gen",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 271,
+          "output_tokens": 70,
+          "total_tokens": 341,
+          "latency_s": 0.226,
+          "error": null,
+          "cost_usd": 4.1325e-05
+        },
+        {
+          "name": "planner",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 2729,
+          "output_tokens": 308,
+          "total_tokens": 3037,
+          "latency_s": 0.512,
+          "error": null,
+          "cost_usd": 0.000297075
+        }
+      ],
+      "repeat": 1
+    },
+    {
+      "id": "MT03",
+      "tags": [
+        "multiturn",
+        "category_swap",
+        "2turn"
+      ],
+      "num_turns": 2,
+      "final_query": "What about Technology?",
+      "outcome": "fail",
+      "session_id": "777f89fb-46ad-4b7c-9c4e-4642b279d9b6",
+      "pipeline_status": "success",
+      "value_match": false,
+      "mismatches": [
+        "Value[0]: GT=145454.9481, Pipeline=286397.0217, diff=96.90%"
+      ],
+      "duration_s": 4.54,
+      "plan": [
+        {
+          "step": 1,
+          "tool": "aggregate_column",
+          "parameters": {
+            "col_name": "Profit",
+            "operation": "sum",
+            "new_col_name": "Profit_sum"
+          },
+          "input": "original_df",
+          "output": "step_1_output"
+        }
+      ],
+      "answer": "Technology generated a total profit of $286,397.02. This figure represents the cumulative earnings for the sector.",
+      "answer_check": "pass",
+      "llm_call_count": 4,
+      "input_tokens": 5949,
+      "output_tokens": 376,
+      "llm_latency_s": 1.13,
+      "cost_usd": 0.000559,
+      "cost_all_prices_verified": true,
+      "llm_calls": [
+        {
+          "name": "planner",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 2691,
+          "output_tokens": 139,
+          "total_tokens": 2830,
+          "latency_s": 0.351,
+          "error": null,
+          "cost_usd": 0.00024352499999999997
+        },
+        {
+          "name": "answer_gen",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 279,
+          "output_tokens": 62,
+          "total_tokens": 341,
+          "latency_s": 0.214,
+          "error": null,
+          "cost_usd": 3.9525e-05
+        },
+        {
+          "name": "planner",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 2707,
+          "output_tokens": 121,
+          "total_tokens": 2828,
+          "latency_s": 0.357,
+          "error": null,
+          "cost_usd": 0.00023932499999999998
+        },
+        {
+          "name": "answer_gen",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 272,
+          "output_tokens": 54,
+          "total_tokens": 326,
+          "latency_s": 0.206,
+          "error": null,
+          "cost_usd": 3.6599999999999995e-05
+        }
+      ],
+      "repeat": 2
+    },
+    {
+      "id": "MT10",
+      "tags": [
+        "multiturn",
+        "metric_swap",
+        "3turn"
+      ],
+      "num_turns": 3,
+      "final_query": "And the total quantity instead?",
+      "outcome": "pass",
+      "session_id": "541d729a-d8b0-49fa-b41f-fc518f973d01",
+      "pipeline_status": "success",
+      "value_match": true,
+      "mismatches": [],
+      "duration_s": 11.55,
+      "plan": [
+        {
+          "step": 1,
+          "tool": "date_filter",
+          "parameters": {
+            "col_name": "Order Date",
+            "time_period": "1Y",
+            "end_date": "2014-12-31"
+          },
+          "input": "original_df",
+          "output": "step_1_output"
+        },
+        {
+          "step": 2,
+          "tool": "filter_by_condition",
+          "parameters": {
+            "col_name": "Category",
+            "col_type": "object",
+            "val_to_filter": "Office Supplies",
+            "operator": "=="
+          },
+          "input": "step_1_output",
+          "output": "step_2_output"
+        },
+        {
+          "step": 3,
+          "tool": "aggregate_column",
+          "parameters": {
+            "col_name": "Quantity",
+            "operation": "sum",
+            "new_col_name": "Quantity_sum"
+          },
+          "input": "step_2_output",
+          "output": "step_3_output"
+        }
+      ],
+      "answer": "The total quantity is 4,569 units.",
+      "answer_check": "pass",
+      "llm_call_count": 6,
+      "input_tokens": 8981,
+      "output_tokens": 931,
+      "llm_latency_s": 2.33,
+      "cost_usd": 0.000953,
+      "cost_all_prices_verified": true,
+      "llm_calls": [
+        {
+          "name": "planner",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 2693,
+          "output_tokens": 183,
+          "total_tokens": 2876,
+          "latency_s": 0.54,
+          "error": null,
+          "cost_usd": 0.000256875
+        },
+        {
+          "name": "answer_gen",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 304,
+          "output_tokens": 85,
+          "total_tokens": 389,
+          "latency_s": 0.231,
+          "error": null,
+          "cost_usd": 4.8299999999999995e-05
+        },
+        {
+          "name": "planner",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 2713,
+          "output_tokens": 302,
+          "total_tokens": 3015,
+          "latency_s": 0.562,
+          "error": null,
+          "cost_usd": 0.000294075
+        },
+        {
+          "name": "answer_gen",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 277,
+          "output_tokens": 79,
+          "total_tokens": 356,
+          "latency_s": 0.215,
+          "error": null,
+          "cost_usd": 4.4475e-05
+        },
+        {
+          "name": "planner",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 2721,
+          "output_tokens": 253,
+          "total_tokens": 2974,
+          "latency_s": 0.621,
+          "error": null,
+          "cost_usd": 0.00027997499999999996
+        },
+        {
+          "name": "answer_gen",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 273,
+          "output_tokens": 29,
+          "total_tokens": 302,
+          "latency_s": 0.157,
+          "error": null,
+          "cost_usd": 2.9174999999999998e-05
+        }
+      ],
+      "repeat": 2
+    },
+    {
+      "id": "MT15",
+      "tags": [
+        "multiturn",
+        "synthesis",
+        "4turn"
+      ],
+      "num_turns": 4,
+      "final_query": "Can you show the 3 years we discussed in a table?",
+      "outcome": "fail",
+      "session_id": "c79621be-7a46-42b2-b2db-d6e4a7faed99",
+      "pipeline_status": "success",
+      "value_match": false,
+      "mismatches": [
+        "Value[3]: GT=470532.5090, Pipeline=484247.4981, diff=2.91%"
+      ],
+      "duration_s": 18.66,
+      "plan": [
+        {
+          "step": 1,
+          "tool": "extract_date_part",
+          "parameters": {
+            "col_name": "Order Date",
+            "part": "year",
+            "new_col_name": "Order Year"
+          },
+          "input": "original_df",
+          "output": "step_1_output"
+        },
+        {
+          "step": 2,
+          "tool": "groupby_aggregate",
+          "parameters": {
+            "group_col": "Order Year",
+            "agg_col": {
+              "Sales": "sum"
+            }
+          },
+          "input": "step_1_output",
+          "output": "step_2_output"
+        },
+        {
+          "step": 3,
+          "tool": "sort",
+          "parameters": {
+            "sort_col": {
+              "Sales_sum": "desc"
+            }
+          },
+          "input": "step_2_output",
+          "output": "step_3_output"
+        },
+        {
+          "step": 4,
+          "tool": "top_n",
+          "parameters": {
+            "N": 3
+          },
+          "input": "step_3_output",
+          "output": "step_4_output"
+        }
+      ],
+      "answer": "Here are the sales totals for the three years we discussed:\n\n| Year | Sales |\n|------|-------|\n| 2017 | $733,215.26 |\n| 2016 | $609,205.60 |\n| 2014 | $484,247.50 |\n\nThe highest sales were in 2017, followed by 2016, with 2014 showing the lowest total.",
+      "answer_check": "pass",
+      "llm_call_count": 11,
+      "input_tokens": 18948,
+      "output_tokens": 1566,
+      "llm_latency_s": 5.81,
+      "cost_usd": 0.001891,
+      "cost_all_prices_verified": true,
+      "llm_calls": [
+        {
+          "name": "planner",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 2690,
+          "output_tokens": 191,
+          "total_tokens": 2881,
+          "latency_s": 0.531,
+          "error": null,
+          "cost_usd": 0.00025905000000000004
+        },
+        {
+          "name": "answer_gen",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 278,
+          "output_tokens": 41,
+          "total_tokens": 319,
+          "latency_s": 0.193,
+          "error": null,
+          "cost_usd": 3.315e-05
+        },
+        {
+          "name": "planner",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 2708,
+          "output_tokens": 254,
+          "total_tokens": 2962,
+          "latency_s": 0.486,
+          "error": null,
+          "cost_usd": 0.0002793
+        },
+        {
+          "name": "answer_gen",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 273,
+          "output_tokens": 64,
+          "total_tokens": 337,
+          "latency_s": 0.2,
+          "error": null,
+          "cost_usd": 3.9674999999999995e-05
+        },
+        {
+          "name": "planner",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 2714,
+          "output_tokens": 198,
+          "total_tokens": 2912,
+          "latency_s": 0.362,
+          "error": null,
+          "cost_usd": 0.00026294999999999997
+        },
+        {
+          "name": "answer_gen",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 271,
+          "output_tokens": 48,
+          "total_tokens": 319,
+          "latency_s": 0.18,
+          "error": null,
+          "cost_usd": 3.4725e-05
+        },
+        {
+          "name": "planner",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 2729,
+          "output_tokens": 331,
+          "total_tokens": 3060,
+          "latency_s": 0.632,
+          "error": null,
+          "cost_usd": 0.00030397499999999995
+        },
+        {
+          "name": "param_fixer",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 1475,
+          "output_tokens": 53,
+          "total_tokens": 1528,
+          "latency_s": 0.513,
+          "error": null,
+          "cost_usd": 0.000126525
+        },
+        {
+          "name": "param_fixer",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 1472,
+          "output_tokens": 57,
+          "total_tokens": 1529,
+          "latency_s": 1.389,
+          "error": null,
+          "cost_usd": 0.00012749999999999998
+        },
+        {
+          "name": "replanner",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 4027,
+          "output_tokens": 215,
+          "total_tokens": 4242,
+          "latency_s": 0.653,
+          "error": null,
+          "cost_usd": 0.000366525
+        },
+        {
+          "name": "answer_gen",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 311,
+          "output_tokens": 114,
+          "total_tokens": 425,
+          "latency_s": 0.667,
+          "error": null,
+          "cost_usd": 5.752499999999999e-05
+        }
+      ],
+      "repeat": 2
+    },
+    {
+      "id": "MT03",
+      "tags": [
+        "multiturn",
+        "category_swap",
+        "2turn"
+      ],
+      "num_turns": 2,
+      "final_query": "What about Technology?",
+      "outcome": "pass",
+      "session_id": "332a1e22-38f8-4fa7-9672-7bc1d482dfd5",
+      "pipeline_status": "success",
+      "value_match": true,
+      "mismatches": [],
+      "duration_s": 4.94,
+      "plan": [
+        {
+          "step": 1,
+          "tool": "filter_by_condition",
+          "parameters": {
+            "col_name": "Category",
+            "col_type": "object",
+            "val_to_filter": "Technology",
+            "operator": "=="
+          },
+          "input": "original_df",
+          "output": "step_1_output"
+        },
+        {
+          "step": 2,
+          "tool": "aggregate_column",
+          "parameters": {
+            "col_name": "Profit",
+            "operation": "sum",
+            "new_col_name": "Profit_sum"
+          },
+          "input": "step_1_output",
+          "output": "step_2_output"
+        }
+      ],
+      "answer": "The Technology sector generated a total profit of $145,454.95. This figure represents the combined earnings across all technology-related products and services.",
+      "answer_check": "pass",
+      "llm_call_count": 4,
+      "input_tokens": 5949,
+      "output_tokens": 410,
+      "llm_latency_s": 1.81,
+      "cost_usd": 0.000569,
+      "cost_all_prices_verified": true,
+      "llm_calls": [
+        {
+          "name": "planner",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 2691,
+          "output_tokens": 122,
+          "total_tokens": 2813,
+          "latency_s": 0.667,
+          "error": null,
+          "cost_usd": 0.00023842499999999998
+        },
+        {
+          "name": "answer_gen",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 279,
+          "output_tokens": 50,
+          "total_tokens": 329,
+          "latency_s": 0.353,
+          "error": null,
+          "cost_usd": 3.5925e-05
+        },
+        {
+          "name": "planner",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 2707,
+          "output_tokens": 159,
+          "total_tokens": 2866,
+          "latency_s": 0.402,
+          "error": null,
+          "cost_usd": 0.000250725
+        },
+        {
+          "name": "answer_gen",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 272,
+          "output_tokens": 79,
+          "total_tokens": 351,
+          "latency_s": 0.384,
+          "error": null,
+          "cost_usd": 4.4099999999999995e-05
+        }
+      ],
+      "repeat": 3
+    },
+    {
+      "id": "MT10",
+      "tags": [
+        "multiturn",
+        "metric_swap",
+        "3turn"
+      ],
+      "num_turns": 3,
+      "final_query": "And the total quantity instead?",
+      "outcome": "pass",
+      "session_id": "28f1789a-e0aa-400c-a34b-361df4014eb5",
+      "pipeline_status": "success",
+      "value_match": true,
+      "mismatches": [],
+      "duration_s": 12.14,
+      "plan": [
+        {
+          "step": 1,
+          "tool": "date_filter",
+          "parameters": {
+            "col_name": "Order Date",
+            "time_period": "1Y",
+            "end_date": "2014-12-31"
+          },
+          "input": "original_df",
+          "output": "step_1_output"
+        },
+        {
+          "step": 2,
+          "tool": "filter_by_condition",
+          "parameters": {
+            "col_name": "Category",
+            "col_type": "object",
+            "val_to_filter": "Office Supplies",
+            "operator": "=="
+          },
+          "input": "step_1_output",
+          "output": "step_2_output"
+        },
+        {
+          "step": 3,
+          "tool": "aggregate_column",
+          "parameters": {
+            "col_name": "Quantity",
+            "operation": "sum",
+            "new_col_name": "Quantity_sum"
+          },
+          "input": "step_2_output",
+          "output": "step_3_output"
+        }
+      ],
+      "answer": "The total quantity across all records is 4,569 units. This figure represents the cumulative count of items in the dataset.",
+      "answer_check": "pass",
+      "llm_call_count": 6,
+      "input_tokens": 8956,
+      "output_tokens": 962,
+      "llm_latency_s": 2.52,
+      "cost_usd": 0.00096,
+      "cost_all_prices_verified": true,
+      "llm_calls": [
+        {
+          "name": "planner",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 2693,
+          "output_tokens": 250,
+          "total_tokens": 2943,
+          "latency_s": 0.641,
+          "error": null,
+          "cost_usd": 0.000276975
+        },
+        {
+          "name": "answer_gen",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 279,
+          "output_tokens": 39,
+          "total_tokens": 318,
+          "latency_s": 0.181,
+          "error": null,
+          "cost_usd": 3.2625e-05
+        },
+        {
+          "name": "planner",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 2713,
+          "output_tokens": 302,
+          "total_tokens": 3015,
+          "latency_s": 0.519,
+          "error": null,
+          "cost_usd": 0.000294075
+        },
+        {
+          "name": "answer_gen",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 277,
+          "output_tokens": 61,
+          "total_tokens": 338,
+          "latency_s": 0.206,
+          "error": null,
+          "cost_usd": 3.9075e-05
+        },
+        {
+          "name": "planner",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 2721,
+          "output_tokens": 259,
+          "total_tokens": 2980,
+          "latency_s": 0.811,
+          "error": null,
+          "cost_usd": 0.00028177499999999995
+        },
+        {
+          "name": "answer_gen",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 273,
+          "output_tokens": 51,
+          "total_tokens": 324,
+          "latency_s": 0.167,
+          "error": null,
+          "cost_usd": 3.5774999999999995e-05
+        }
+      ],
+      "repeat": 3
+    },
+    {
+      "id": "MT15",
+      "tags": [
+        "multiturn",
+        "synthesis",
+        "4turn"
+      ],
+      "num_turns": 4,
+      "final_query": "Can you show the 3 years we discussed in a table?",
+      "outcome": "fail",
+      "session_id": "7a8a2fed-ce6f-45c7-bc0d-55231fe924af",
+      "pipeline_status": "success",
+      "value_match": false,
+      "mismatches": [
+        "Numeric value count mismatch: GT has 6 value(s), pipeline has 8 value(s). GT shape=(3, 2), pipeline shape=(4, 2)."
+      ],
+      "duration_s": 18.15,
+      "plan": [
+        {
+          "step": 1,
+          "tool": "extract_date_part",
+          "parameters": {
+            "col_name": "Order Date",
+            "part": "year",
+            "new_col_name": "Order Year"
+          },
+          "input": "original_df",
+          "output": "step_1_output"
+        },
+        {
+          "step": 2,
+          "tool": "groupby_aggregate",
+          "parameters": {
+            "group_col": "Order Year",
+            "agg_col": {
+              "Sales": "sum"
+            }
+          },
+          "input": "step_1_output",
+          "output": "step_2_output"
+        },
+        {
+          "step": 3,
+          "tool": "sort",
+          "parameters": {
+            "sort_col": {
+              "Order Year": "asc"
+            }
+          },
+          "input": "step_2_output",
+          "output": "step_3_output"
+        }
+      ],
+      "answer": "Here are the sales totals for the three years we discussed:\n\n| Year | Sales |\n|------|-------|\n| 2014 | $484,247.50 |\n| 2015 | $470,532.51 |\n| 2016 | $609,205.60 |\n\nThese figures show a decline from 2014 to 2015, followed by a significant increase in 2016.",
+      "answer_check": "pass",
+      "llm_call_count": 11,
+      "input_tokens": 18959,
+      "output_tokens": 1670,
+      "llm_latency_s": 6.77,
+      "cost_usd": 0.001923,
+      "cost_all_prices_verified": true,
+      "llm_calls": [
+        {
+          "name": "planner",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 2690,
+          "output_tokens": 191,
+          "total_tokens": 2881,
+          "latency_s": 0.922,
+          "error": null,
+          "cost_usd": 0.00025905000000000004
+        },
+        {
+          "name": "answer_gen",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 278,
+          "output_tokens": 65,
+          "total_tokens": 343,
+          "latency_s": 0.398,
+          "error": null,
+          "cost_usd": 4.034999999999999e-05
+        },
+        {
+          "name": "planner",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 2708,
+          "output_tokens": 189,
+          "total_tokens": 2897,
+          "latency_s": 0.657,
+          "error": null,
+          "cost_usd": 0.0002598
+        },
+        {
+          "name": "answer_gen",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 273,
+          "output_tokens": 52,
+          "total_tokens": 325,
+          "latency_s": 0.266,
+          "error": null,
+          "cost_usd": 3.6074999999999996e-05
+        },
+        {
+          "name": "planner",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 2714,
+          "output_tokens": 198,
+          "total_tokens": 2912,
+          "latency_s": 1.091,
+          "error": null,
+          "cost_usd": 0.00026294999999999997
+        },
+        {
+          "name": "answer_gen",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 271,
+          "output_tokens": 49,
+          "total_tokens": 320,
+          "latency_s": 0.446,
+          "error": null,
+          "cost_usd": 3.5025e-05
+        },
+        {
+          "name": "planner",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 2729,
+          "output_tokens": 425,
+          "total_tokens": 3154,
+          "latency_s": 0.706,
+          "error": null,
+          "cost_usd": 0.00033217499999999993
+        },
+        {
+          "name": "param_fixer",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 1475,
+          "output_tokens": 53,
+          "total_tokens": 1528,
+          "latency_s": 0.272,
+          "error": null,
+          "cost_usd": 0.000126525
+        },
+        {
+          "name": "param_fixer",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 1472,
+          "output_tokens": 69,
+          "total_tokens": 1541,
+          "latency_s": 0.306,
+          "error": null,
+          "cost_usd": 0.0001311
+        },
+        {
+          "name": "replanner",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 4027,
+          "output_tokens": 239,
+          "total_tokens": 4266,
+          "latency_s": 0.648,
+          "error": null,
+          "cost_usd": 0.000373725
+        },
+        {
+          "name": "answer_gen",
+          "model": "openai/gpt-oss-20b",
+          "input_tokens": 322,
+          "output_tokens": 140,
+          "total_tokens": 462,
+          "latency_s": 1.062,
+          "error": null,
+          "cost_usd": 6.615000000000001e-05
+        }
+      ],
+      "repeat": 3
+    }
+  ]
+}
