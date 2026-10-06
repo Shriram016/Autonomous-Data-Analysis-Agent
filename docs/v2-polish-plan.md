@@ -1,6 +1,6 @@
 # V2 Polish Plan
 
-**Status (2026-10-06):** Part A ✅ done · Part B: B1a/B1b/B1c/B2 ✅ done, B3 moved to after Part M · Part M: M1 ✅, **next M2 (availability and price check)**. Open blocker: answer-generator model returns 404 (see Findings under Part B).
+**Status (2026-10-06):** Part A ✅ done · Part B: B1a/B1b/B1c/B2 ✅ done, B3 moved to after Part M · Part M: M1 ✅, M2 ✅, **next M3 (answer-model pilot)**. ⚠ Key looks like Groq FREE tier, not paid — check billing; it limits eval run speed. Open blocker: answer-generator model returns 404 (see Findings under Part B).
 **Branch:** `version2`
 **Outcome:** a clean, honest, measured, tagged `v2.0` release that serves as the frozen baseline for V3.
 
@@ -14,7 +14,8 @@
 | B | B1c tokens, cost, latency per LLM call | ✅ | `llm_calls` log; `cost_usd`; `eval/pricing.py` |
 | B | B2 answer number check | ✅ | `eval/answer_check.py`; found Q31, Q34, Q41, Q43 hallucinations in saved runs |
 | M | M1 inventory of LLM calls | ✅ | Table of every LLM job: model, settings, tokens (see Part M) |
-| M | M2–M5 availability/price, answer-model comparison, decision, docs | 🔜 | Next: M2. Settles the answer-generator model (planner/fixer/replanner frozen) |
+| M | M2 availability, price, limits | ✅ | 5 usable models; key looks like Groq FREE tier (8K tokens/min, 200K/day) — see finding |
+| M | M3–M5 answer-model comparison, decision, docs | 🔜 | Next: M3 pilot. Settles the answer-generator model (planner/fixer/replanner frozen) |
 | B | B3 run each eval 3× | ⏸ | Moved: build and run after Part M, so the first counted run uses a working answer model |
 | C | Failure-cause breakdown | ⬜ | Needs the B3 run |
 | D | Baseline experiment | ⬜ | Code-gen baseline + ablation, reuses the B3 runner |
@@ -124,7 +125,7 @@ tracing, a live Streamlit demo, and honest "What Is Not Caught" / per-query fail
 | # | Change | Why |
 |---|---|---|
 | M1 ✅ | **Inventory:** a table of every LLM call in the system (planner, param fixer, replanner, answer generator, and the Part D code-gen baseline). For each: model, job, settings (temperature, reasoning effort, JSON mode), and tokens per call (from B1c) | Shows exactly where LLMs are used |
-| M2 | **Availability and price check:** for each model, whether the key can use it, price per 1M input/output tokens, rate limits and context size, with the date checked | Prices and availability change; one model is already missing |
+| M2 ✅ | **Availability and price check:** for each model, whether the key can use it, price per 1M input/output tokens, rate limits and context size, with the date checked | Prices and availability change; one model is already missing |
 | M3 | **Answer-generator comparison:** on a small fixed pilot (about 10-12 queries), compare the available candidates for this job on answer correctness (using the B2 number check), cost and latency | Turns "I picked it" into "I measured it" |
 | M4 | **Decision per job:** keep or change, with the reason. Planner, fixer and replanner: keep (frozen for the baseline). Answer generator: pick the best available candidate | Keeps the baseline stable while fixing what is broken |
 | M5 | **Document it:** one "Model audit" table (job x model x why x price x result) in this file, copied into `docs/architecture.md`, and `docs/others/groq-model-details.md` refreshed. No new markdown files | Visible proof of the thinking |
@@ -147,6 +148,27 @@ Source: `src/config.py`, the four LLM modules, `docs/others/groq-model-details.m
 - A typical query costs about 2,900 input + 400 output tokens across planner and answer generator, roughly $0.0003 (planner measured; answer call estimated).
 - The answer generator reads the whole result table, so its input grows with table size; large tables are the main cost risk for that call.
 - `gpt-oss-20b` is a reasoning model, so its output tokens include hidden reasoning. The measured output counts above already include it.
+
+### M2 result — availability, price and limits (✅ 2026-10-06)
+
+Method: one tiny real call per model (plain text and JSON mode) on the user's key, plus Groq's public models page. Limits are read from the response headers of those calls (`x-ratelimit-*`). Prices from `console.groq.com/docs/models`, checked 2026-10-06.
+
+| Model | Works on this key? | Price per 1M tokens (in / out) | Context / max output | Limits seen on this key | Reasoning? | JSON mode | Verdict for the answer-generator job |
+|---|---|---|---|---|---|---|---|
+| `openai/gpt-oss-20b` | ✅ | $0.075 / $0.30 | 131,072 / 65,536 | 8,000 tokens/min, 1,000 requests/day (+200K tokens/day per 2026-06-20 notes) | Yes (hidden reasoning, no `<think>` in the text) | ✅ | **Candidate** — already used by 3 jobs, cheapest |
+| `openai/gpt-oss-120b` | ✅ | $0.15 / $0.60 | 131,072 / 65,536 | 8,000 tokens/min, 1,000 requests/day | Yes | ✅ | **Candidate** — bigger, 2× price, likely overkill |
+| `qwen/qwen3.8-27b` | ✅ | $0.80 / $4.00 | 131,072 / 16,384 | 8,000 tokens/min, 1,000 requests/day | No reasoning field, no `<think>` in the test | ✅ | **Candidate** — closest to the old "plain, non-reasoning" choice; ~10× the price |
+| `allam-2-7b` | ✅ | not listed on the docs page | not listed | 6,000 tokens/min, 7,000 requests/day | No | ✅ | Weak candidate — Arabic-focused, price unknown |
+| `openai/gpt-oss-safeguard-20b` | ✅ | $0.075 / $0.30 | 131,072 / 65,536 | 2,000 tokens/min | Yes | ✅ | Excluded — a safety-policy classifier, not a text writer |
+| `llama-3.1-8b-instant` (current answer model) | ❌ 404 `model_not_found` (confirmed again) | — | — | — | — | — | Gone from this key |
+| whisper-large-v3 (+turbo), orpheus (2), llama-prompt-guard-2 (2) | not tested | — | — | — | — | — | Excluded — speech / filter models, not text generators |
+
+**Findings:**
+1. **⚠ The key behaves like Groq's FREE tier, not the paid Developer plan.** Headers show 1,000 requests/day and 8,000 tokens/minute (the Developer plan lists 250K tokens/min and 1K requests/min), and the 2026-06-20 notes record hitting a 200K tokens/day cap. This contradicts the "paid plan" assumption behind open question 1. Billing status is only visible in the Groq console, so the user should check it.
+   - *Impact:* the planner alone uses about 2,700 tokens per query, so 8,000 tokens/min is only about 2–3 queries a minute, and 200K tokens/day is only about 65 queries a day. B3 (63 queries × 3 runs) would take about 3 days; Part D (3 systems × 3 runs) about 9 days. Upgrading to the Developer plan removes this, and the whole project's token cost is under about $1.
+2. **Reasoning-token risk for gpt-oss as answer writer:** these models spend hidden reasoning tokens inside `max_tokens`. The answer call caps output at 256, which could cut the answer short or leave it empty. M3 must test this (low reasoning effort and a higher cap would be needed if gpt-oss is chosen).
+3. **Cost per answer call is negligible for every candidate** (about 230 input + 150 output tokens): gpt-oss-20b ≈ $0.00006, gpt-oss-120b ≈ $0.00013, qwen3.8-27b ≈ $0.0008. Price should not decide this; answer correctness (B2 check) and robustness should.
+4. The model list on the key changed since `groq-model-details.md` was written (16 models then, 11 now). M5 refreshes that file.
 
 **Cost gate:** the pilot is very cheap, but the estimate is shown and approved before it runs.
 **Exit rule:** the answer-generator model must be settled here, before any full eval re-run (Part D). M3 depends on the B2 number check, so B2 comes first.
@@ -229,6 +251,7 @@ trade-off is a stronger signal than claiming a win.
 
 1. **Eval re-runs:** ✅ **DECIDED:** Option A (full plan: 63 queries × 3 runs × 3 systems, ~570 runs). User is on a **paid Groq plan**. Runs happen *after* the instrumentation (Part B) and baseline (Part D) code is built. **Cost gate before any big run:** confirm the Groq model, input/output tokens per query, cost per query and total cost for one full pass (from a small pilot or Langfuse traces), then user approves.
    *(original question: OK with ~570 runs? Which Groq plan? Fallbacks were 2 runs or baseline on 30 single-turn queries only.)*
+   **⚠ Update 2026-10-06 (M2):** the key's rate limits match the FREE tier (8,000 tokens/min, 200K tokens/day), not paid. Either upgrade to the Developer plan (cheap, removes the bottleneck) or spread runs over days (B3 ~3 days, Part D ~9 days). User to check billing in the Groq console.
 2. **Baseline sandbox:** ✅ **DECIDED:** restricted Python `exec` (whitelisted pandas/numpy only, no file/network/import access). Experiment-only on a public dataset run by us; write-up must note it is NOT safe for production (supports the constrained-tools argument).
    *(original question: restricted `exec` enough, or a proper sandbox?)*
 3. **Failure labels:** ✅ **DECIDED:** auto-label from recorded data (API errors, critic fired, etc.); user reviews only the ambiguous ones.
@@ -278,4 +301,9 @@ trade-off is a stronger signal than claiming a win.
 **2026-10-06 — M1 ✅ LLM call inventory**
 - *Done:* table of all LLM jobs (planner, param fixer, replanner, answer generator, Part D baseline placeholder) with model, settings, output format, prompt and output token sizes and the repo's stated reason for each choice, plus observations (3 of 4 jobs share `gpt-oss-20b`; only the planner runs on every query; answer generator input grows with table size). Documentation only, no code changes.
 - *Verified by:* read from config and source; planner tokens are measured (B1c pilot), the other token figures are offline estimates and are marked as such. Commit: see git log.
+
+**2026-10-06 — M2 ✅ model availability, price and limits**
+- *Done:* tested every text-capable model on the key with real tiny calls (text and JSON mode), read rate limits from response headers, took prices and context sizes from Groq's models page. Result table and findings in Part M. Answer-generator candidates: `gpt-oss-20b`, `gpt-oss-120b`, `qwen3.8-27b` (weak: `allam-2-7b`); `gpt-oss-safeguard-20b` excluded.
+- *Key finding:* the key's limits match Groq's free tier, which constrains B3 and Part D run time (open question 1 updated). Also a reasoning-token truncation risk for gpt-oss as the answer writer (to test in M3).
+- *Verified by:* about 12 real API calls (total cost well under $0.001). No code changes. Probe scripts were scratch files, not committed.
 
