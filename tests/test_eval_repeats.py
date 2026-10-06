@@ -116,3 +116,10 @@ def test_llm_usage_summary_and_fallback_detection():
     failed[1]["error"] = "NotFoundError"
     assert is_answer_fallback(failed) is True
     assert is_answer_fallback([]) is False           # no call log (old runs): assume LLM answer
+
+
+def test_refusal_is_not_a_fallback_answer():
+    planner_only = [dict(CALLS[0])]                      # planner refused: the answer step never ran
+    assert is_answer_fallback(planner_only) is False
+    attempted_but_failed = planner_only + [dict(CALLS[1], error="NotFoundError", total_tokens=None)]
+    assert is_answer_fallback(attempted_but_failed) is True

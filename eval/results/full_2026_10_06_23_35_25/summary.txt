@@ -1,0 +1,46 @@
+==============================================================================
+ADAA FULL EVAL SUMMARY
+==============================================================================
+Run        : full_2026_10_06_23_35_25  (status: complete)
+Code       : 195229a854 on version2  (+1 uncommitted file(s))
+Models     : planner/fixer/replanner openai/gpt-oss-20b, answer openai/gpt-oss-20b
+Repeats    : 1
+
+PASS RATE (right behaviour: correct table, or a correct refusal where no answer exists)
+  All cases                       : 48/63 (76.2%)
+  Single-turn, answer expected    : 33/37 (89.2%)
+  Single-turn, refusal expected   : 5/10 (50.0%)
+  Multi-turn                      : 10/16 (62.5%)
+
+FAILURES BY KIND (15)
+  wrong_result                    7
+  answered_instead_of_refusing    5
+  refused_but_answerable          2
+  skipped_context_turn            1
+    Q06: wrong_result
+    Q07: wrong_result
+    Q33: refused_but_answerable
+    Q36: refused_but_answerable
+    Q41: answered_instead_of_refusing
+    Q42: answered_instead_of_refusing
+    Q43: answered_instead_of_refusing
+    Q45: answered_instead_of_refusing
+    Q46: answered_instead_of_refusing
+    MT03: wrong_result
+    MT04: wrong_result
+    MT07: skipped_context_turn
+    MT13: wrong_result
+    MT15: wrong_result
+    MT16: wrong_result
+
+ANSWER NUMBER CHECK (are the answer's numbers in the result table?)
+  fail: 2, n/a: 8, pass: 53
+  answers that were the non-LLM fallback: 0
+
+REPAIR ACTIVITY
+  critic failures: 7   param-fixer calls: 6 (changed params: 5)   replans: 1
+
+COST AND TIME
+  LLM calls: 183   input tokens: 285,439   output tokens: 25,975
+  cost: $0.0292 total, $0.00046 per case (prices as of 2026-10-06)
+  time: 263s total, 4.2s per case

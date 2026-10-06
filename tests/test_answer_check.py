@@ -144,3 +144,20 @@ def test_think_block_is_ignored_and_unclosed_think_is_not_applicable():
     assert check_answer(closed, "q", t)["verdict"] == "pass"
     unclosed = "<think>\nOkay, the value is 286,433. I need 2-3 sentences"
     assert check_answer(unclosed, "q", t)["verdict"] == "n/a"
+
+
+# ---------------------------------------------------------------- found in the first full 63-case run
+def test_list_numbering_is_not_read_as_a_number_q30_style():
+    t = pd.DataFrame({"State": ["DC", "WY", "ME"], "days_mean": [5.70, 5.00, 5.00]})
+    answer = "The longest average shipping times are:\n\n1. DC - 5.70 days\n2. WY - 5.00 days\n3. ME - 5.00 days"
+    r = check_answer(answer, "which states have the longest shipping time?", t)
+    assert r["verdict"] == "pass" and r["unsupported"] == []
+
+
+def test_arithmetic_slip_in_a_difference_is_flagged_q37_style():
+    t = pd.DataFrame({"Segment": ["Consumer", "Corporate"], "Sales_sum": [1161401.35, 706146.37]})
+    good = "Consumer $1,161,401.35 leads Corporate $706,146.37 by $455,254.98."
+    bad = "Consumer $1,161,401.35 leads Corporate $706,146.37 by $455,255.98."   # off by exactly $1
+    assert check_answer(good, "q", t)["verdict"] == "pass"
+    r = check_answer(bad, "q", t)
+    assert r["verdict"] == "fail" and r["unsupported"] == ["$455,255.98"]

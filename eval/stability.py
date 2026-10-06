@@ -35,7 +35,7 @@ _PROJECT_ROOT = os.path.dirname(_EVAL_DIR)
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
-from eval.answer_check import extract_numbers  # noqa: E402
+from eval.answer_check import extract_numbers, strip_list_markers  # noqa: E402
 
 _RESULTS_DIR = os.path.join(_EVAL_DIR, "results")
 
@@ -139,9 +139,6 @@ def _canonical_table(rec: Dict[str, Any]) -> Optional[str]:
     return json.dumps(rows)
 
 
-_LIST_MARKER_RE = re.compile(r"^[ \t]*(?:[-*]\s+)?\d+[.)]\s+", re.MULTILINE)
-
-
 def _sig3(v: float) -> float:
     """Round to 3 significant digits, so $286,397.02 and $286,397 count as the same number."""
     return float(f"{v:.3g}")
@@ -152,7 +149,7 @@ def _answer_numbers(rec: Dict[str, Any]) -> Optional[frozenset]:
     answer = rec.get("answer")
     if not answer or rec.get("answer_is_fallback"):
         return None
-    text = _LIST_MARKER_RE.sub("", answer)
+    text = strip_list_markers(answer)
     return frozenset(_sig3(abs(n["value"])) for n in extract_numbers(text))
 
 

@@ -43,13 +43,14 @@ def llm_usage_summary(llm_calls: List[Dict[str, Any]]) -> Dict[str, Any]:
 
 def is_answer_fallback(llm_calls: List[Dict[str, Any]]) -> bool:
     """
-    True if a call log exists but holds no successful answer_gen call, i.e. the
-    deterministic fallback answer was shown. Without a call log (older runs) we
-    cannot tell, so assume an LLM answer.
+    True if the answer step was attempted but no answer_gen call succeeded, i.e. the
+    deterministic fallback answer was shown. A run that never reached the answer step
+    (the planner refused) has no answer_gen call and is NOT a fallback. Without a call
+    log (older runs) we cannot tell, so assume an LLM answer.
     """
-    return bool(llm_calls) and not any(
-        c.get("name") == "answer_gen" and c.get("error") is None and c.get("total_tokens")
-        for c in llm_calls
+    answer_calls = [c for c in llm_calls if c.get("name") == "answer_gen"]
+    return bool(answer_calls) and not any(
+        c.get("error") is None and c.get("total_tokens") for c in answer_calls
     )
 
 

@@ -32,9 +32,15 @@ _NUM_RE = re.compile(
 )
 
 _SCALES = {"k": 1e3, "thousand": 1e3, "m": 1e6, "million": 1e6, "b": 1e9, "billion": 1e9}
+_LIST_MARKER_RE = re.compile(r"^[ \t]*(?:[-*]\s+)?\d+[.)]\s+", re.MULTILINE)
 _THINK_BLOCK = re.compile(r"<think>.*?</think>", re.DOTALL | re.IGNORECASE)
 _MAX_GROUPS = 30  # roll-up (group-by) sums are computed for text columns with at most this many groups
 _MAX_PAIR_VALUES = 40  # pairwise derived values are computed on at most this many distinct values
+
+
+def strip_list_markers(text: str) -> str:
+    """Remove list numbering at the start of lines ("1. California ...") so it is not read as a number."""
+    return _LIST_MARKER_RE.sub("", text or "")
 
 
 def extract_numbers(text: str) -> List[Dict[str, Any]]:
@@ -135,7 +141,7 @@ def check_answer(
     empty = {"verdict": "n/a", "numbers_checked": 0, "supported": [], "derived": [],
              "excused": [], "unsupported": []}
     if answer:
-        answer = _THINK_BLOCK.sub("", answer)
+        answer = strip_list_markers(_THINK_BLOCK.sub("", answer))
         if "<think>" in answer.lower():  # unclosed reasoning trace: cannot separate it from the answer
             return {**empty, "note": "answer contains an unclosed <think> reasoning trace"}
     if not answer or table is None or table.empty or answer_is_fallback:

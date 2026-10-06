@@ -36,6 +36,8 @@ import time
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set, Tuple
 
+import pandas as pd
+
 _EVAL_DIR = os.path.dirname(os.path.abspath(__file__))
 _PROJECT_ROOT = os.path.dirname(_EVAL_DIR)
 if _PROJECT_ROOT not in sys.path:
@@ -47,6 +49,8 @@ from eval.test_cases import TEST_CASES                                # noqa: E4
 from eval.test_cases2 import TEST_CASES_2                             # noqa: E402
 from eval.test_cases3 import TEST_CASES_3                             # noqa: E402
 from eval.pricing import PRICES, PRICES_AS_OF                         # noqa: E402
+from eval.answer_check import check_answer                            # noqa: E402
+from eval.metrics import is_answer_fallback                           # noqa: E402
 from eval.stability import _is_infra_failure, compute_stability, render_report  # noqa: E402
 
 _RESULTS_DIR = os.path.join(_EVAL_DIR, "results")
@@ -203,6 +207,25 @@ def done_keys(records: List[Dict[str, Any]]) -> Set[Tuple[str, str, int]]:
     return done
 
 
+def recompute_derived(rec: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Recompute the fields derived from the raw evidence (answer text, result table, LLM call log):
+    whether the answer was a fallback, and the answer-number check. Used by --rebuild so that a
+    fix to the checks never needs a new (paid) run. The raw evidence itself is never changed.
+    """
+    calls = rec.get("llm_calls") or []
+    rec["answer_is_fallback"] = is_answer_fallback(calls)
+    data = rec.get("pipeline_data")
+    res = check_answer(
+        rec.get("answer"), rec.get("query") or rec.get("final_query") or "",
+        pd.DataFrame(data) if data else None, answer_is_fallback=rec["answer_is_fallback"],
+    )
+    rec["answer_check"] = res["verdict"]
+    rec["answer_numbers_unsupported"] = res["unsupported"]
+    rec["answer_numbers_derived"] = res["derived"]
+    return rec
+
+
 # ---------------------------------------------------------------------------
 # Failure kinds and summary
 # ---------------------------------------------------------------------------
@@ -275,7 +298,7 @@ def render_summary(records: List[Dict[str, Any]], manifest: Dict[str, Any]) -> s
     checks: Dict[str, int] = {}
     for r in records:
         checks[r.get("answer_check", "n/a")] = checks.get(r.get("answer_check", "n/a"), 0) + 1
-    fallbacks = sum(1 for r in records if r.get("answer_is_fallback"))
+    fallbacks = sum(1 for r in records if is_answer_fallback(r.get("llm_calls") or []))
     lines += ["ANSWER NUMBER CHECK (are the answer's numbers in the result table?)",
               "  " + ", ".join(f"{k}: {v}" for k, v in sorted(checks.items())),
               f"  answers that were the non-LLM fallback: {fallbacks}", ""]
@@ -319,6 +342,49 @@ def _write_json(path: str, obj: Any) -> None:
         json.dump(obj, f, indent=2, default=str)
 
 
+def _finalize(run_dir: str, manifest: Dict[str, Any], records: List[Dict[str, Any]],
+              expected: Set[Tuple[str, str, int]]) -> None:
+    """Write manifest, results.json, results.csv and summary.txt from the final records."""
+    lost = [r for r in records if not r.get("passed") and _is_infra_failure(r)]
+    missing = expected - {(r["kind"], r["id"], r.get("repeat", 1)) for r in records}
+    manifest["status"] = "complete" if not lost and not missing else "incomplete"
+    manifest["finished_at"] = _now()
+    manifest["totals"] = {
+        "records": len(records), "passed": sum(1 for r in records if r.get("passed")),
+        "lost_to_api_errors": len(lost), "missing": len(missing),
+        "cost_usd": round(sum(r.get("cost_usd") or 0 for r in records), 6),
+    }
+    _write_json(os.path.join(run_dir, "manifest.json"), manifest)
+    _write_json(os.path.join(run_dir, "results.json"), {"manifest": manifest, "records": records})
+    write_csv(os.path.join(run_dir, "results.csv"), records)
+    summary = render_summary(records, manifest)
+    if manifest["repeats"] > 1:
+        summary += "\n\n" + render_report(compute_stability(records))
+    with open(os.path.join(run_dir, "summary.txt"), "w", encoding="utf-8") as f:
+        f.write(summary)
+    print("\n" + summary)
+    print(f"\nAll files saved in: {run_dir}")
+    if manifest["status"] == "incomplete":
+        print(f"{len(lost)} case(s) were lost to API errors and {len(missing)} are missing. "
+              f"Re-run only those with: python eval/run_full_eval.py --resume \"{run_dir}\"")
+
+
+def _rebuild(run_dir: str) -> int:
+    """Recompute derived fields and rewrite results.json / .csv / summary.txt from records.jsonl. Free."""
+    mpath = os.path.join(run_dir, "manifest.json")
+    if not os.path.exists(mpath):
+        print(f"Cannot rebuild: {mpath} not found")
+        return 2
+    manifest = json.load(open(mpath, encoding="utf-8"))
+    records = [recompute_derived(r) for r in final_records(load_jsonl(os.path.join(run_dir, "records.jsonl")))]
+    expected = {(r["kind"], r["id"], r.get("repeat", 1)) for r in records}
+    manifest.setdefault("events", []).append(
+        {"rebuilt_at": _now(), "note": "derived fields (answer_is_fallback, answer_check) recomputed from raw "
+                                       "evidence with the current checks; no LLM calls"})
+    _finalize(run_dir, manifest, records, expected)
+    return 0
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -347,7 +413,13 @@ def main(argv: Optional[List[str]] = None) -> int:
                         help="seconds between context turns of a multi-turn case (0 on the Developer plan)")
     parser.add_argument("--yes", action="store_true", help="do not ask for confirmation")
     parser.add_argument("--dry-run", action="store_true", help="run every check and write the manifest, no LLM calls")
+    parser.add_argument("--rebuild", type=str, default=None,
+                        help="folder of a finished run: recompute derived fields and rewrite results/summary "
+                             "from records.jsonl (free, no LLM calls)")
     args = parser.parse_args(argv)
+
+    if args.rebuild:
+        return _rebuild(os.path.abspath(args.rebuild))
 
     ids = [i.strip() for i in args.ids.split(",") if i.strip()] if args.ids else None
     single, multi = _plan(args.only, ids)
@@ -484,30 +556,9 @@ def main(argv: Optional[List[str]] = None) -> int:
             raise
 
         # ---- finalize
-        records = final_records(load_jsonl(records_path))
-        lost = [r for r in records if not r.get("passed") and _is_infra_failure(r)]
-        missing = expected - {(r["kind"], r["id"], r.get("repeat", 1)) for r in records}
-        manifest["status"] = "complete" if not lost and not missing else "incomplete"
-        manifest["finished_at"] = _now()
+        records = [recompute_derived(r) for r in final_records(load_jsonl(records_path))]
         manifest["wall_clock_s"] = round(time.perf_counter() - started, 1)
-        manifest["totals"] = {
-            "records": len(records), "passed": sum(1 for r in records if r.get("passed")),
-            "lost_to_api_errors": len(lost), "missing": len(missing),
-            "cost_usd": round(sum(r.get("cost_usd") or 0 for r in records), 6),
-        }
-        _write_json(manifest_path, manifest)
-        _write_json(os.path.join(run_dir, "results.json"), {"manifest": manifest, "records": records})
-        write_csv(os.path.join(run_dir, "results.csv"), records)
-        summary = render_summary(records, manifest)
-        if args.repeats > 1:
-            summary += "\n\n" + render_report(compute_stability(records))
-        with open(os.path.join(run_dir, "summary.txt"), "w", encoding="utf-8") as f:
-            f.write(summary)
-        print("\n" + summary)
-        print(f"\nAll files saved in: {run_dir}")
-        if manifest["status"] == "incomplete":
-            print(f"{len(lost)} case(s) were lost to API errors and {len(missing)} are missing. "
-                  f"Re-run only those with: python eval/run_full_eval.py --resume \"{run_dir}\"")
+        _finalize(run_dir, manifest, records, expected)
         return 0
     finally:
         sys.stdout = real_stdout

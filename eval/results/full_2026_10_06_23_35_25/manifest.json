@@ -1,0 +1,109 @@
+{
+  "run_id": "full_2026_10_06_23_35_25",
+  "started_at": "2026-10-06T23:35:25",
+  "command": [
+    "eval/run_full_eval.py",
+    "--yes"
+  ],
+  "repeats": 1,
+  "only": "both",
+  "turn_delay_s": 0.0,
+  "git": {
+    "commit": "195229a8543220fa2e1cb179cda3e13ecb2cf614",
+    "branch": "version2",
+    "uncommitted_tracked_files": [
+      ".claude/settings.local.json"
+    ]
+  },
+  "python": "3.13.3",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "settings": {
+    "PLANNER_MODEL": "openai/gpt-oss-20b",
+    "PLANNER_TEMPERATURE": 0.0,
+    "PLANNER_MAX_TOKENS": 2048,
+    "PARAM_FIXER_MODEL": "openai/gpt-oss-20b",
+    "PARAM_FIXER_TEMPERATURE": 0.0,
+    "PARAM_FIXER_MAX_TOKENS": 2048,
+    "REPLANNER_MODEL": "openai/gpt-oss-20b",
+    "REPLANNER_TEMPERATURE": 0.0,
+    "REPLANNER_MAX_TOKENS": 2048,
+    "ANSWER_MODEL": "openai/gpt-oss-20b",
+    "MAX_RETRIES_PER_STEP": 2
+  },
+  "code_hashes": {
+    "src/core/planner.py": "8c0f042548a5150b",
+    "src/core/param_fixer.py": "376aacc5ecc7dd33",
+    "src/core/replanner.py": "a2b4f061123734e1",
+    "src/core/answer_generator.py": "4e47b41a9bf2f25d",
+    "src/core/nodes.py": "8e63cd27d057d093",
+    "src/core/graph.py": "77d4658819461b89",
+    "src/critics/rule_based_critic.py": "29ca0732a29450d5",
+    "src/config.py": "c5dad32493b61e26",
+    "src/prompts/__init__.py": "e3b0c44298fc1c14",
+    "src/prompts/param_fixer_prompt.py": "f5157c3cb0649b27",
+    "src/prompts/planner_prompt.py": "8e5920747a4e29d5",
+    "src/prompts/replanner_prompt.py": "92abca50f910e4f2"
+  },
+  "dataset": {
+    "path": "data\\Sample - Superstore.csv",
+    "sha256": "58fb59c63089e564d835e4aabe19d371757de1137a5bf1888243ae386c4b7a97"
+  },
+  "prices": {
+    "as_of": "2026-10-06",
+    "usd_per_1m_tokens_in_out_verified": {
+      "openai/gpt-oss-20b": [
+        0.075,
+        0.3,
+        true
+      ],
+      "llama-3.1-8b-instant": [
+        0.05,
+        0.08,
+        false
+      ]
+    }
+  },
+  "plan": {
+    "single_cases": 47,
+    "multi_cases": 16,
+    "runs_expected": 63
+  },
+  "preflight": [
+    {
+      "check": "dataset present",
+      "ok": true,
+      "detail": "E:\\AI Agent Project\\data\\Sample - Superstore.csv"
+    },
+    {
+      "check": "results folder writable",
+      "ok": true,
+      "detail": "E:\\AI Agent Project\\eval\\results"
+    },
+    {
+      "check": "code version recorded",
+      "ok": true,
+      "detail": "195229a854, 1 uncommitted file(s)"
+    },
+    {
+      "check": "LLM reachable",
+      "ok": true,
+      "detail": "models reachable: openai/gpt-oss-20b"
+    }
+  ],
+  "events": [
+    {
+      "rebuilt_at": "2026-10-06T23:42:24",
+      "note": "derived fields (answer_is_fallback, answer_check) recomputed from raw evidence with the current checks; no LLM calls"
+    }
+  ],
+  "status": "complete",
+  "finished_at": "2026-10-06T23:42:24",
+  "wall_clock_s": 265.9,
+  "totals": {
+    "records": 63,
+    "passed": 48,
+    "lost_to_api_errors": 0,
+    "missing": 0,
+    "cost_usd": 0.029201
+  }
+}

@@ -1,6 +1,6 @@
 # V2 Polish Plan
 
-**Status (2026-10-06):** Part A ✅ done · Part B: B1a/B1b/B1c/B2 ✅ done, B3 moved to after Part M · Part M ✅ done (M1, M2, M4, M5; M3 skipped by decision). Part B ✅ done. Full-run harness ✅ ready. **Next: the real 63-query run (commit first so the manifest is clean), then Part C.** ✅ Rate limits resolved: key now shows Developer-plan limits (250K tokens/min, 500K requests/day, no daily token cap; verified 2026-10-06). Answer-generator 404 blocker ✅ resolved (M4). Then the full 63-query run once, C, D, E, F.
+**Status (2026-10-06):** Part A ✅ done · Part B: B1a/B1b/B1c/B2 ✅ done, B3 moved to after Part M · Part M ✅ done (M1, M2, M4, M5; M3 skipped by decision). Part B ✅ done. Full-run harness ✅ ready. Baseline 63-query run ✅ done. **Next: Part C (failure-cause breakdown).** ✅ Rate limits resolved: key now shows Developer-plan limits (250K tokens/min, 500K requests/day, no daily token cap; verified 2026-10-06). Answer-generator 404 blocker ✅ resolved (M4). Then the full 63-query run once, C, D, E, F.
 **Branch:** `version2`
 **Outcome:** a clean, honest, measured, tagged `v2.0` release that serves as the frozen baseline for V3.
 
@@ -20,7 +20,8 @@
 | M | M5 document the model audit | ✅ | "Model Audit" section in `docs/architecture.md`; `docs/others/groq-model-details.md` refreshed (current catalog + config, June content kept as historical) |
 | B | B3 consistency check: 20 queries × 3 runs | ✅ | Done: 60 runs, 0 API errors; 12 reliable / 4 flaky / 4 broken; findings under Part B. The full 63-query run is separate (before Part C) |
 | B | Full-run harness (`eval/run_full_eval.py`) | ✅ | One command for all 63 cases; crash-safe records, manifest, preflight, resume. Ready for the real run |
-| C | Failure-cause breakdown | ⬜ | Needs the full 63-query run |
+| B | Full 63-query baseline run | ✅ | `eval/results/full_2026_10_06_23_35_25/`: 48/63 right behaviour (76.2%), $0.029, 263 s, nothing lost |
+| C | Failure-cause breakdown | 🔜 | Next. Labels the 15 failures from the baseline run |
 | D | Baseline experiment | ⬜ | Code-gen baseline + ablation, reuses the B3 runner |
 | E | Write-up (decisions, README, case study) | ⬜ | |
 | F | Tag `v2.0` | ⬜ | Then `v2.1` simple answer-hallucination fix |
@@ -167,6 +168,27 @@ Recommended: F1 as the only simple `v2.1` candidate (matches the Q7 decision: a 
 5. Everything lands in `eval/results/full_<timestamp>/`: `manifest.json` (git commit, models/settings, code and prompt hashes, dataset hash, prices, command, status), `records.jsonl` (each case written and flushed the moment it finishes), `console.log`, `results.json`, `results.csv`, `summary.txt` (pass rates by expected behaviour, failures by kind, answer-number check, repair activity, cost and time).
 6. Options: `--repeats N`, `--only single|multi`, `--ids Q01,MT03`, `--turn-delay S`, `--dry-run`.
 Records now carry `expected_behavior` (answer / refuse) and `passed`, so correct refusals on the no-ground-truth compound cases (Q38-Q47) count as passes; multi-turn records carry the final table, ground truth, trace, events and a per-turn summary. Failure kinds in the summary: `api_error`, `answered_instead_of_refusing`, `refused_but_answerable`, `wrong_result`, `pipeline_error`, `skipped_context_turn`.
+**Baseline 63-query run (2026-10-06, one run, `gpt-oss-20b` for every job; folder `eval/results/full_2026_10_06_23_35_25/`, code commit `195229a`; all 63 records saved, status complete, 0 API errors; $0.0292, 263 s, 183 LLM calls, 285K input / 26K output tokens):**
+| Group | Right behaviour |
+|---|---|
+| All 63 cases | **48/63 (76.2%)** |
+| Single-turn where an answer is expected (Q01-Q37) | 33/37 (89.2%) |
+| Single-turn where a refusal is correct (Q38-Q47, no ground truth) | 5/10 (50.0%) |
+| Multi-turn (MT01-MT16) | 10/16 (62.5%) |
+Sub-split: round 1 (Q01-Q30) 28/30; round 2 (Q31-Q37) 5/7. These are one run each and not comparable to the earlier headline numbers: the answer writer and the run-to-run variance changed (see the B3 consistency findings).
+
+**The 15 failures, by kind (to be formalised in Part C):**
+- **Missing filter, 4 cases (the dominant planner failure):** Q06 (Technology), Q07 (West), MT03, MT04. The planner used `aggregate_column` over the whole dataset and answered with the company total ($2,297,200.86 or $286,397.02) instead of the filtered figure. The number check cannot see this because the number is in the table.
+- **Refused but answerable, 2:** Q33 (overall plus per-category average) and Q36 (2016 vs 2017; also refused 3/3 in the B3 runs).
+- **Answered instead of refusing, 5 of the 10 refusal cases:** Q41, Q42, Q43, Q45, Q46 (the other 5 refused correctly: Q38, Q39, Q40, Q44, Q47).
+- **Multi-turn context, 4:** MT13 and MT15, MT16 (4-turn cases; the synthesis cases returned 4 rows instead of 3) and MT07, whose first turn planned `aggregate_column` before `filter_by_condition`, so the filter column no longer existed and the case was skipped (a plan-ordering error, not a memory problem).
+- **Repair loop activity:** the critic fired 7 times, all `not_none` (tool errors): Q23 and Q42 (fixed by the param fixer on the first try) and MT15 (5 times; 3 fixes changed parameters, 1 did not, then 1 replan). 6 param-fixer calls (5 changed parameters), 1 replan. So the critic caught no semantic failure: every one of the 15 failures got past it.
+- **Answer-number check (B2):** 53 pass, 2 flagged, 8 not applicable (refusals), 0 fallback answers. Both flags are real answer-writer arithmetic slips: Q37 says Consumer leads Corporate by $455,255.98 when 1,161,401.35 - 706,146.37 = 455,254.98 (off by $1), and Q41 gives a total of $286,397.04 vs the true $286,397.02 (off by 2 cents). The June-style invented values did not appear.
+
+**Bugs in my own checks found by this run and fixed (no LLM calls needed, all derived fields can be recomputed):**
+1. The "answer was the non-LLM fallback" flag was set for every refused query (7 of them), because a refusal never reaches the answer step; it now requires the answer step to have been attempted and to have failed.
+2. The answer-number check read list numbering ("3. Maine") as a number and flagged Q30; list markers are now ignored, as in the stability report.
+3. New `--rebuild <folder>` mode recomputes those derived fields from the saved evidence and rewrites `results.json`, `results.csv` and `summary.txt` for free; `records.jsonl` (the raw evidence) is never changed. Used on this run: fallback answers 7 to 0, number-check failures 3 to 2.
 **Observed:** one transient no-plan failure on Q03 (passed on re-run) — the kind of infrastructure failure Part C should label.  
 
 *Why: you can't explain failures you didn't record.*
@@ -432,4 +454,9 @@ trade-off is a stronger signal than claiming a win.
 **2026-10-06 — Full-run harness ✅ ready for the 63-query baseline**
 - *Done:* `eval/run_full_eval.py` runs all 47 single-turn and 16 multi-turn cases in one command and saves everything in one folder (manifest with code/model/prompt/dataset hashes, crash-safe `records.jsonl` flushed per case, `console.log`, `results.json`/`.csv`, `summary.txt`); preflight checks (dataset, writable folder, git state, a real tiny call to every configured model) before any spend; cost estimate and confirmation; `--dry-run`; `--resume` that re-runs only missing cases and cases lost to API errors. Records gained `expected_behavior` and `passed` (correct refusals now score as passes; `compute_aggregate` also reports `pass_rate`), multi-turn records gained the final table, ground truth, trace, events and per-turn summaries; both runners gained `on_record` and `skip` hooks; the stability report prefers the recorded `passed` verdict.
 - *Verified by:* `tests/test_full_eval.py` (13 tests: normal run and artifacts, scoring of refusals, crash at call 10 then resume with exactly one record per case, API-error cases re-run alone, half-written last line, dry run makes no pipeline calls, failed preflight writes nothing, confirmation prompt, repeats, failure kinds); `dev_checks/check_full_eval.py --ping` (real dry run and a real preflight that reached `gpt-oss-20b`; answering "n" saved nothing); 160 offline tests pass. Bug caught on the way: the uncommitted-files list lost the first character of its first path. No pipeline code under `src/` changed.
+
+**2026-10-06 — Full 63-query baseline run ✅ (first real use of the full-run harness)**
+- *Done:* ran `python eval/run_full_eval.py --yes` after the preflight (dataset, writable folder, git state, real call to `gpt-oss-20b`); 63 of 63 records saved crash-safely, status complete, nothing lost. Results, findings and the 15 failures are under Part B. Two bugs in my own derived checks (false fallback flag on refusals, list numbering read as a number) were found by the run and fixed, with a free `--rebuild` mode to recompute the summary from the saved evidence.
+- *Cost gate:* estimated $0.037 and about 5 minutes; actual $0.029 and 263 s.
+- *Verified by:* 164 offline tests (new: refusal is not a fallback, list numbering ignored, an arithmetic slip is still flagged, `--rebuild` recomputes without any pipeline call and leaves the raw records untouched); the saved folder (`manifest.json`, `records.jsonl`, `console.log`, `results.json`, `results.csv`, `summary.txt`).
 

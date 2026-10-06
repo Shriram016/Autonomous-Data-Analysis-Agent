@@ -219,3 +219,31 @@ def test_git_info_lists_uncommitted_files_with_intact_paths(monkeypatch):
     monkeypatch.setattr(rfe, "_git", lambda *a: " M .claude/settings.local.json\n M eval/metrics.py"
                         if a[0] == "status" else "abc123")
     assert rfe._git_info()["uncommitted_tracked_files"] == [".claude/settings.local.json", "eval/metrics.py"]
+
+
+# ---------------------------------------------------------------- --rebuild (free recompute from saved evidence)
+def test_rebuild_recomputes_derived_fields_without_any_llm_call(fake, tmp_path, capsys):
+    rfe.main(["--yes", "--out-dir", str(tmp_path), "--only", "single", "--ids", "Q41,Q01"])
+    d = run_dir_of(tmp_path)
+    path = d / "records.jsonl"
+    recs = rfe.load_jsonl(str(path))
+    refused = next(r for r in recs if r["id"] == "Q41")                 # no ground truth -> refused by the fake
+    answered = next(r for r in recs if r["id"] == "Q01")
+    # Simulate the old buggy flags: a refusal marked as a fallback, and a list-numbered answer marked as failing
+    refused["answer_is_fallback"] = True
+    answered["answer"] = "Total sales:\n1. All orders $2,297,200.86"
+    answered["answer_check"] = "fail"
+    path.write_text("\n".join(json.dumps(r) for r in recs) + "\n", encoding="utf-8")
+
+    fake.calls = 0
+    assert rfe.main(["--rebuild", str(d)]) == 0
+    assert fake.calls == 0                                            # nothing was run
+    out = {r["id"]: r for r in json.loads((d / "results.json").read_text(encoding="utf-8"))["records"]}
+    assert out["Q41"]["answer_is_fallback"] is False                  # never reached the answer step
+    assert out["Q01"]["answer_check"] in ("pass", "no_numbers", "n/a") # list numbering no longer counts
+    assert json.loads((d / "manifest.json").read_text(encoding="utf-8"))["events"][-1]["rebuilt_at"]
+    assert "answers that were the non-LLM fallback: 0" in (d / "summary.txt").read_text(encoding="utf-8")
+    # the raw evidence is untouched
+    raw = {r["id"]: r for r in rfe.load_jsonl(str(path))}
+    assert raw["Q41"]["answer_is_fallback"] is True and raw["Q01"]["answer_check"] == "fail"
+    capsys.readouterr()
