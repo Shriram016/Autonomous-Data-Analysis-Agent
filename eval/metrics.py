@@ -13,6 +13,7 @@ from typing import Any, Dict, List, Optional
 import pandas as pd
 
 from eval.comparator import CompareResult
+from eval.pricing import call_cost
 from eval.test_cases import EvalCase
 
 
@@ -66,6 +67,15 @@ def compute_record(
     param_fixes = [e for e in events if e.get("type") == "param_fix"]
     replans = [e for e in events if e.get("type") == "replan"]
 
+    llm_calls = pipeline_result.get("llm_calls") or []
+    cost_usd = 0.0
+    cost_all_verified = True
+    for c in llm_calls:
+        cost, verified = call_cost(c.get("model"), c.get("input_tokens"), c.get("output_tokens"))
+        c["cost_usd"] = cost
+        cost_usd += cost
+        cost_all_verified &= verified
+
     # Plan as plain dicts (PlanStep is a pydantic model, not JSON-serialisable)
     plan_dicts = [
         s.model_dump() if hasattr(s, "model_dump") else s for s in plan
@@ -100,6 +110,14 @@ def compute_record(
         "replan_count": len(replans),
         "had_step_error": had_step_error,
         "duration_s": round(duration_s, 2),
+        # LLM usage (all attempts, including failed ones)
+        "llm_call_count": len(llm_calls),
+        "input_tokens": sum(c.get("input_tokens") or 0 for c in llm_calls),
+        "output_tokens": sum(c.get("output_tokens") or 0 for c in llm_calls),
+        "llm_latency_s": round(sum(c.get("latency_s") or 0 for c in llm_calls), 2),
+        "cost_usd": round(cost_usd, 6),
+        "cost_all_prices_verified": cost_all_verified,
+        "llm_calls": llm_calls,
         # Instrumentation: what the agent planned and what the critic said per step
         "plan": plan_dicts,
         "trace": trace,
@@ -369,7 +387,8 @@ def save_results(
         "id", "pipeline_status", "pipeline_success", "gt_error",
         "value_match", "full_match", "shape_match", "columns_match",
         "plan_steps", "total_executions", "retries", "had_step_error",
-        "duration_s", "compare_mode", "gt_shape", "pipeline_shape", "query",
+        "duration_s", "llm_call_count", "input_tokens", "output_tokens",
+        "llm_latency_s", "cost_usd", "compare_mode", "gt_shape", "pipeline_shape", "query",
     ]
     with open(csv_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=csv_fields, extrasaction="ignore")

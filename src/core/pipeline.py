@@ -9,7 +9,7 @@ from src.utils.logger import get_logger, log_event
 from src.core.planner import PlanStep
 from src.core.graph import build_graph
 from src.config import GRAPH_RECURSION_LIMIT
-from src.utils.langfuse_helper import graph_trace, trace_id_for_run
+from src.utils.langfuse_helper import graph_trace, trace_id_for_run, pop_llm_calls
 # from src.core.schema_gen import generate_schema
 # from src.core.planner import plan
 # from src.core.loop_controller import run
@@ -49,6 +49,8 @@ def _make_response(
         "session_id":        session_id,
         "recent_questions":  recent_questions if recent_questions is not None else [],
         "events":            events if events is not None else [],
+        # Every LLM attempt for this run (tokens, latency, error); see langfuse_helper
+        "llm_calls":         pop_llm_calls(run_id),
     }
 
 

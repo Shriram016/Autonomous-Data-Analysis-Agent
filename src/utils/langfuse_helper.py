@@ -9,6 +9,8 @@ Everything here is a no-op when LANGFUSE_ENABLED is False (no API keys
 configured) — callers don't need to branch on that themselves.
 """
 
+import threading
+import time
 from contextlib import contextmanager, nullcontext
 from typing import Any, Dict, List, Optional
 
@@ -141,8 +143,89 @@ def graph_trace(run_id: Optional[str], session_id: Optional[str]):
                 raise
 
 
+# ---------------------------------------------------------------------------
+# Per-run LLM call log (instrumentation for the eval; works with Langfuse off)
+# ---------------------------------------------------------------------------
+
+_LLM_CALLS: Dict[str, List[Dict[str, Any]]] = {}
+_LLM_CALLS_LOCK = threading.Lock()
+
+
+def pop_llm_calls(run_id: Optional[str]) -> List[Dict[str, Any]]:
+    """
+    Returns (and clears) every LLM attempt recorded for `run_id`, oldest first.
+    Each record: name, model, input_tokens, output_tokens, total_tokens,
+    latency_s, error. Tokens are None for attempts that failed before a
+    response (timeout, connection error).
+    """
+    with _LLM_CALLS_LOCK:
+        return _LLM_CALLS.pop(run_id, [])
+
+
+class _TrackedGeneration:
+    """Proxy that remembers usage()/error() calls, then delegates to the real generation."""
+
+    def __init__(self, inner):
+        self._inner = inner
+        self.usage_tokens: Optional[tuple] = None
+        self.error_message: Optional[str] = None
+
+    def usage(self, prompt_tokens, completion_tokens, total_tokens) -> None:
+        self.usage_tokens = (prompt_tokens, completion_tokens, total_tokens)
+        self._inner.usage(prompt_tokens, completion_tokens, total_tokens)
+
+    def error(self, message: str) -> None:
+        self.error_message = message
+        self._inner.error(message)
+
+    def __getattr__(self, attr):
+        return getattr(self._inner, attr)
+
+
 @contextmanager
 def llm_generation(
+    name: str,
+    model: str,
+    model_params: Dict[str, Any],
+    input_messages: List[Dict[str, Any]],
+    run_id: Optional[str],
+    session_id: Optional[str],
+    extra_metadata: Optional[Dict[str, Any]] = None,
+):
+    """
+    Wraps one LLM attempt: records tokens / latency / error for the eval
+    (see pop_llm_calls) and delegates to the Langfuse observation below.
+    The behaviour seen by callers is unchanged.
+    """
+    start = time.perf_counter()
+    tracked: Optional[_TrackedGeneration] = None
+    error: Optional[str] = None
+    try:
+        with _langfuse_generation(
+            name, model, model_params, input_messages, run_id, session_id, extra_metadata
+        ) as gen:
+            tracked = _TrackedGeneration(gen)
+            yield tracked
+    except Exception as e:
+        error = f"{type(e).__name__}: {e}"
+        raise
+    finally:
+        tokens = tracked.usage_tokens if tracked else None
+        record = {
+            "name": name,
+            "model": model,
+            "input_tokens": tokens[0] if tokens else None,
+            "output_tokens": tokens[1] if tokens else None,
+            "total_tokens": tokens[2] if tokens else None,
+            "latency_s": round(time.perf_counter() - start, 3),
+            "error": error or (tracked.error_message if tracked else None),
+        }
+        with _LLM_CALLS_LOCK:
+            _LLM_CALLS.setdefault(run_id, []).append(record)
+
+
+@contextmanager
+def _langfuse_generation(
     name: str,
     model: str,
     model_params: Dict[str, Any],
