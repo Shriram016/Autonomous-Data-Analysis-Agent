@@ -13,6 +13,7 @@ from typing import Any, Dict, List, Optional
 import pandas as pd
 
 from eval.comparator import CompareResult
+from eval.answer_check import check_answer
 from eval.pricing import call_cost
 from eval.test_cases import EvalCase
 
@@ -76,6 +77,18 @@ def compute_record(
         cost_usd += cost
         cost_all_verified &= verified
 
+    # B2: do the numbers in the answer come from the result table?
+    # With a call log (B1c) we can tell if the LLM answer failed and a deterministic
+    # fallback was shown instead; without one (older runs) assume an LLM answer.
+    answer_is_fallback = bool(llm_calls) and not any(
+        c.get("name") == "answer_gen" and c.get("error") is None and c.get("total_tokens")
+        for c in llm_calls
+    )
+    answer_check = check_answer(
+        pipeline_result.get("answer"), case.query, pipeline_result.get("final_df"),
+        answer_is_fallback=answer_is_fallback,
+    )
+
     # Plan as plain dicts (PlanStep is a pydantic model, not JSON-serialisable)
     plan_dicts = [
         s.model_dump() if hasattr(s, "model_dump") else s for s in plan
@@ -118,6 +131,12 @@ def compute_record(
         "cost_usd": round(cost_usd, 6),
         "cost_all_prices_verified": cost_all_verified,
         "llm_calls": llm_calls,
+        # Answer number check (B2)
+        "answer_is_fallback": answer_is_fallback,
+        "answer_check": answer_check["verdict"],
+        "answer_numbers_checked": answer_check["numbers_checked"],
+        "answer_numbers_unsupported": answer_check["unsupported"],
+        "answer_numbers_derived": answer_check["derived"],
         # Instrumentation: what the agent planned and what the critic said per step
         "plan": plan_dicts,
         "trace": trace,
@@ -388,7 +407,7 @@ def save_results(
         "value_match", "full_match", "shape_match", "columns_match",
         "plan_steps", "total_executions", "retries", "had_step_error",
         "duration_s", "llm_call_count", "input_tokens", "output_tokens",
-        "llm_latency_s", "cost_usd", "compare_mode", "gt_shape", "pipeline_shape", "query",
+        "llm_latency_s", "cost_usd", "answer_check", "answer_is_fallback", "compare_mode", "gt_shape", "pipeline_shape", "query",
     ]
     with open(csv_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=csv_fields, extrasaction="ignore")
