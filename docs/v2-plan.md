@@ -21,7 +21,7 @@ V1 used raw Python orchestration as a default, not a reasoned rejection of frame
 - [x] Implement real **Param Fixer** — LLM node receiving failed step + error message + critic check name + query + schema → returns corrected parameters. Replaces current stub in `src/core/param_fixer.py`.
 - [x] Implement real **Replanner** — LLM node generating a completely new plan from `original_df`. Replaces current stub in `src/core/replanner.py`.
 
-> Completed via [docs/langgraph-migration-todo.md](langgraph-migration-todo.md) Steps 1-9 (all checked).
+> Completed via [docs/langgraph-migration-todo.md](others/langgraph-migration-todo.md) Steps 1-9 (all checked).
 
 ### 2. Session Memory (Option A)
 
@@ -41,8 +41,8 @@ V1 used raw Python orchestration as a default, not a reasoned rejection of frame
 - [x] Nested traces: one root trace per query, one span per LangGraph node
 - [x] Capture per span: prompt, response, model name, tokens, latency, cost
 
-> Design: [docs/langfuse-observability.md](langfuse-observability.md). Step-by-step progress:
-> [docs/langfuse-observability-todo.md](langfuse-observability-todo.md).
+> Design: [docs/langfuse-observability.md](others/langfuse-observability.md). Step-by-step progress:
+> [docs/langfuse-observability-todo.md](others/langfuse-observability-todo.md).
 
 ### 4. Compound / Dual-Intent Query Handling
 
@@ -124,7 +124,7 @@ End-to-end evaluation across all query types to produce a cumulative eval report
 - [x] Fix misclassified compound queries (Q41, Q43, Q45, Q46) — documented in report, deferred replacement
 - [x] Finalize cumulative eval report with cross-round summary
 
-> Results and analysis: [eval/results/eval_report_final.md](../eval/results/eval_report_final.md). Re-run instructions: [docs/eval-rerun-todo.md](eval-rerun-todo.md).
+> Results and analysis: [eval_report_final.md](eval_report_final.md). Re-run instructions: [docs/others/eval-rerun-todo.md](others/eval-rerun-todo.md).
 
 ---
 

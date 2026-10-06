@@ -1,11 +1,18 @@
 """
 check_gt.py — Quick ground truth checker.
 
-Set QUERY to any of the 30 eval queries, run this file,
+Set QUERY to any of the 30 eval queries, run this file
+from the project root (python dev_checks/check_gt.py),
 and it prints the expected output DataFrame for that query.
 """
 
+import sys
+from pathlib import Path
+
 import pandas as pd
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 from eval.test_cases import TEST_CASES
 
 # ---------------------------------------------------------------------------

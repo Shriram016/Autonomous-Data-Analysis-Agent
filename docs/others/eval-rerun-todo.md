@@ -44,7 +44,7 @@ Check each case against what failed in the first run:
 
 ## Step 3 — Update eval report
 
-After the run, append Round 4 (Multi-Turn) results to `eval/results/eval_report_final.md`:
+After the run, append Round 4 (Multi-Turn) results to `docs/eval_report_final.md`:
 
 - Update the test suite summary table at the top with multi-turn status
 - Add a "Round 4 — Multi-Turn" section with:

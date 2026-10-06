@@ -78,7 +78,7 @@ Tested across **63 queries** in 4 categories on the Sample Superstore dataset:
 |---|---|
 | Language | Python |
 | Data operations | Pandas |
-| LLM | Groq API — `openai/gpt-oss-20b` |
+| LLM | Groq API — `openai/gpt-oss-20b` (planner, param fixer, replanner), `llama-3.1-8b-instant` (answer generator) |
 | Orchestration | LangGraph |
 | Data validation | Pydantic |
 | Observability | Langfuse |
@@ -92,8 +92,8 @@ Tested across **63 queries** in 4 categories on the Sample Superstore dataset:
 
 ```bash
 # 1. Clone the repository
-git clone <repo-url>
-cd adaa
+git clone https://github.com/Shriram016/Autonomous-Data-Analysis-Agent.git
+cd Autonomous-Data-Analysis-Agent
 
 # 2. Create a virtual environment and install dependencies
 python -m venv agent_env
