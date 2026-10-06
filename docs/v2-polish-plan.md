@@ -1,6 +1,6 @@
 # V2 Polish Plan
 
-**Status (2026-10-06):** Part A ✅ done · Part B: B1a/B1b/B1c/B2 ✅ done, B3 moved to after Part M · **Next: Part M (model audit)**. Open blocker: answer-generator model returns 404 (see Findings under Part B).
+**Status (2026-10-06):** Part A ✅ done · Part B: B1a/B1b/B1c/B2 ✅ done, B3 moved to after Part M · Part M: M1 ✅, **next M2 (availability and price check)**. Open blocker: answer-generator model returns 404 (see Findings under Part B).
 **Branch:** `version2`
 **Outcome:** a clean, honest, measured, tagged `v2.0` release that serves as the frozen baseline for V3.
 
@@ -13,7 +13,8 @@
 | B | B1b fixer / replanner events | ✅ | `events` in state; real fix and replan counts |
 | B | B1c tokens, cost, latency per LLM call | ✅ | `llm_calls` log; `cost_usd`; `eval/pricing.py` |
 | B | B2 answer number check | ✅ | `eval/answer_check.py`; found Q31, Q34, Q41, Q43 hallucinations in saved runs |
-| M | M1–M5 model audit | 🔜 | Next. Settles the answer-generator model (planner/fixer/replanner frozen) |
+| M | M1 inventory of LLM calls | ✅ | Table of every LLM job: model, settings, tokens (see Part M) |
+| M | M2–M5 availability/price, answer-model comparison, decision, docs | 🔜 | Next: M2. Settles the answer-generator model (planner/fixer/replanner frozen) |
 | B | B3 run each eval 3× | ⏸ | Moved: build and run after Part M, so the first counted run uses a working answer model |
 | C | Failure-cause breakdown | ⬜ | Needs the B3 run |
 | D | Baseline experiment | ⬜ | Code-gen baseline + ablation, reuses the B3 runner |
@@ -122,11 +123,30 @@ tracing, a live Streamlit demo, and honest "What Is Not Caught" / per-query fail
 
 | # | Change | Why |
 |---|---|---|
-| M1 | **Inventory:** a table of every LLM call in the system (planner, param fixer, replanner, answer generator, and the Part D code-gen baseline). For each: model, job, settings (temperature, reasoning effort, JSON mode), and tokens per call (from B1c) | Shows exactly where LLMs are used |
+| M1 ✅ | **Inventory:** a table of every LLM call in the system (planner, param fixer, replanner, answer generator, and the Part D code-gen baseline). For each: model, job, settings (temperature, reasoning effort, JSON mode), and tokens per call (from B1c) | Shows exactly where LLMs are used |
 | M2 | **Availability and price check:** for each model, whether the key can use it, price per 1M input/output tokens, rate limits and context size, with the date checked | Prices and availability change; one model is already missing |
 | M3 | **Answer-generator comparison:** on a small fixed pilot (about 10-12 queries), compare the available candidates for this job on answer correctness (using the B2 number check), cost and latency | Turns "I picked it" into "I measured it" |
 | M4 | **Decision per job:** keep or change, with the reason. Planner, fixer and replanner: keep (frozen for the baseline). Answer generator: pick the best available candidate | Keeps the baseline stable while fixing what is broken |
 | M5 | **Document it:** one "Model audit" table (job x model x why x price x result) in this file, copied into `docs/architecture.md`, and `docs/others/groq-model-details.md` refreshed. No new markdown files | Visible proof of the thinking |
+
+### M1 result — LLM call inventory (✅ 2026-10-06)
+
+Source: `src/config.py`, the four LLM modules, `docs/others/groq-model-details.md`. Token figures marked *measured* come from real runs (B1c); *est.* are offline estimates from the prompt text (about 4 characters per token) and should be confirmed by a real run.
+
+| Job | Model | Settings | Output format | Prompt size (input tokens) | Output tokens | Why this model (from the repo's notes) |
+|---|---|---|---|---|---|---|
+| **Planner** (question → JSON plan) | `openai/gpt-oss-20b` | temp 0.0, `reasoning_effort: low`, max 2048, timeout 90s, up to 2 attempts | `json_object`, validated afterwards by Pydantic | ~2,690 *measured* (system prompt ~1,900 + schema + question) | ~70–230 *measured* | Reasoning model that follows the strict tool/JSON rules; sits in the 20B size class with cheap pricing |
+| **Param fixer** (repair a failed step) | `openai/gpt-oss-20b` | temp 0.0, `reasoning_effort: low`, max 2048, timeout 90s; one extra attempt if the fix is invalid | `json_object` → `ParamFixResponse` | ~1,100 *est.* (system ~450 + step/error/schema ~630) | small, ~100–300 *est.* | Same model as the planner, so one model family for all JSON jobs |
+| **Replanner** (new plan after retries fail) | `openai/gpt-oss-20b` | temp 0.0, `reasoning_effort: low`, max 2048, timeout 90s; one extra attempt | `json_object` → `PlanResponse` | ~2,800 *est.* (system ~2,250 + failure context ~510) | like the planner, ~100–400 *est.* | Same as the planner (reuses its plan format) |
+| **Answer generator** (result table → 2–3 sentence answer) | `llama-3.1-8b-instant` — **not available on this key (404)** | temp 0.3, max 256, timeout 90s | free text, no format enforced | ~230 *est.* for a small table (system ~180 + question + table; grows with table size) | ≤ 256 (cap) | Small non-reasoning model, chosen so `<think>` traces don't leak into the answer (config comment) |
+| **Part D code-gen baseline** | not chosen yet | — | pandas code | — | — | Filled in when Part D is built |
+
+**Observations:**
+- Three of four jobs share one model (`gpt-oss-20b`). Only the answer generator uses a different one, and it is the one that is broken.
+- Only the planner runs on every query. The fixer and replanner run only after a step fails (about 1 query in 30 historically), so they add very little cost.
+- A typical query costs about 2,900 input + 400 output tokens across planner and answer generator, roughly $0.0003 (planner measured; answer call estimated).
+- The answer generator reads the whole result table, so its input grows with table size; large tables are the main cost risk for that call.
+- `gpt-oss-20b` is a reasoning model, so its output tokens include hidden reasoning. The measured output counts above already include it.
 
 **Cost gate:** the pilot is very cheap, but the estimate is shown and approved before it runs.
 **Exit rule:** the answer-generator model must be settled here, before any full eval re-run (Part D). M3 depends on the B2 number check, so B2 comes first.
@@ -254,3 +274,8 @@ trade-off is a stronger signal than claiming a win.
 - *Verified by:* `tests/test_answer_check.py`, `dev_checks/check_answer_check.py` (run over all 144 saved answers: 104 pass, 6 flagged, 33 n/a, 1 no numbers; the flags are real hallucinations Q31 ×2, Q34, Q41, Q43, plus one truncated answer). Commit `7215761`.
 
 **2026-10-06 — Plan change: B3 moved to after Part M** (the full 3× run needs a working answer model).
+
+**2026-10-06 — M1 ✅ LLM call inventory**
+- *Done:* table of all LLM jobs (planner, param fixer, replanner, answer generator, Part D baseline placeholder) with model, settings, output format, prompt and output token sizes and the repo's stated reason for each choice, plus observations (3 of 4 jobs share `gpt-oss-20b`; only the planner runs on every query; answer generator input grows with table size). Documentation only, no code changes.
+- *Verified by:* read from config and source; planner tokens are measured (B1c pilot), the other token figures are offline estimates and are marked as such. Commit: see git log.
+
