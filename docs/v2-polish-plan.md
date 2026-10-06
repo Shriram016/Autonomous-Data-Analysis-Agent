@@ -1,8 +1,27 @@
 # V2 Polish Plan
 
-**Status:** All 7 open questions answered. **Part M (model audit) added.** **Part A done** (A1–A6, verified by `dev_checks/check_part_a.py`). Next: B2 (number check), then B3, then Part M.
+**Status (2026-10-06):** Part A ✅ done · Part B: B1a/B1b/B1c/B2 ✅ done, B3 moved to after Part M · **Next: Part M (model audit)**. Open blocker: answer-generator model returns 404 (see Findings under Part B).
 **Branch:** `version2`
 **Outcome:** a clean, honest, measured, tagged `v2.0` release that serves as the frozen baseline for V3.
+
+### Progress tracker (✅ done · 🔜 next · ⬜ not started · ⏸ deferred)
+
+| Part | Item | Status | One-line summary |
+|---|---|---|---|
+| A | A1–A6 hygiene, tests, CI | ✅ | Eval tracked, docs fixed, 75 offline tests, CI + pinned requirements |
+| B | B1a plan + critic check per step | ✅ | `critic_check`/`critic_reason` in trace; `plan`, `trace` in eval record |
+| B | B1b fixer / replanner events | ✅ | `events` in state; real fix and replan counts |
+| B | B1c tokens, cost, latency per LLM call | ✅ | `llm_calls` log; `cost_usd`; `eval/pricing.py` |
+| B | B2 answer number check | ✅ | `eval/answer_check.py`; found Q31, Q34, Q41, Q43 hallucinations in saved runs |
+| M | M1–M5 model audit | 🔜 | Next. Settles the answer-generator model (planner/fixer/replanner frozen) |
+| B | B3 run each eval 3× | ⏸ | Moved: build and run after Part M, so the first counted run uses a working answer model |
+| C | Failure-cause breakdown | ⬜ | Needs the B3 run |
+| D | Baseline experiment | ⬜ | Code-gen baseline + ablation, reuses the B3 runner |
+| E | Write-up (decisions, README, case study) | ⬜ | |
+| F | Tag `v2.0` | ⬜ | Then `v2.1` simple answer-hallucination fix |
+
+Each item, when completed, gets a dated entry in the **Completion log** at the bottom of this file.
+
 
 ---
 
@@ -62,7 +81,7 @@ tracing, a live Streamlit demo, and honest "What Is Not Caught" / per-query fail
 
 ## Part A — Repo credibility and hygiene  ✅ DONE
 
-**Progress:** A1 ✅ (eval tracked, `.log` files ignored) · A2 ✅ (`check_gt.py`→`dev_checks/`, report→`docs/`, notebook deleted, `PROJECT_GUIDE.md` ignored) · A3 ✅ (10 tools; planner/fixer/replanner = `gpt-oss-20b`, answer gen = `llama-3.1-8b-instant`; README clone URL; broken `docs/others/` links) · A4 ✅ (`.env.example`, pinned `requirements.txt`, `requirements-dev.txt`) · A5 ✅ (75 offline tests: 10 tools, 8 critic checks, param fixer, replanner, graph routing + full mocked graph runs; autouse guard blocks real Groq calls) · A6 ✅ (`.github/workflows/ci.yml` + README badge; badge turns green after the first push).  
+**Status: ✅ done.** What was built and how it was verified: see the Completion log at the bottom.  
 **Notes:** CLAUDE.md stays private (gitignored) but was updated. `docs/others/` kept public. Tests run with Python 3.13 (pandas 3 needs 3.11+).  
 
 *Why: today a recruiter can't check the headline numbers, and the repo has loose ends.*
@@ -78,9 +97,9 @@ tracing, a live Streamlit demo, and honest "What Is Not Caught" / per-query fail
 
 ## Part B — Make the instrumentation honest
 
-**Progress (B1 split into pieces, one approved at a time):** B1a ✅ plan + critic check/reason saved per step (`critic_check`, `critic_reason` added to the trace record in `executor.py`; `plan` and `trace` added to the eval record; verified by `tests/test_trace_record.py` and `dev_checks/check_trace_fields.py`) · B1b ✅ `events` list in `PipelineState` (param_fix: old/new params, `changed`, triggering critic check; replan: old plan, new plan, result) + `param_fix_count`, `param_fix_effective_count`, `replan_count` in eval records (`tests/test_events.py`, `dev_checks/check_events.py`) · B1c ✅ every LLM attempt (incl. failed) logged in `llm_generation` → `llm_calls` in pipeline result; eval record gets tokens, latency, `cost_usd`; `eval/pricing.py` (gpt-oss-20b $0.075/$0.30 per 1M verified 2026-10-06; llama price unverified) (`tests/test_llm_calls.py`, `dev_checks/check_llm_calls.py`) · B2 ✅ `eval/answer_check.py`: every number in the answer is classified supported / derived / excused (in the question) / unsupported; eval records get `answer_check`, `answer_numbers_unsupported`, `answer_is_fallback` (`tests/test_answer_check.py`, `dev_checks/check_answer_check.py`) · B3 ⬜  
-**⚠ FINDING (2026-10-06) — OPEN DECISION:** `llama-3.1-8b-instant` (the `ANSWER_MODEL`) returns 404 `model_not_found` for this Groq key; it is no longer in the account's model list. `answer_gen_node` silently falls back to a deterministic non-LLM answer, so new eval runs do NOT exercise the LLM answer generator and are not comparable to the June results. Caught by B1c instrumentation. Needs a decision before any full eval re-run.  
-**Pilot cost data (4 real queries, planner only works):** ~2,690 input / ~160 output tokens per query for the planner ≈ $0.00025/query.  
+**Status:** B1a, B1b, B1c, B2 ✅ done (see Completion log). B3 ⏸ moved to after Part M.  
+**Findings so far — ⚠ FINDING (2026-10-06), handled in Part M:** `llama-3.1-8b-instant` (the `ANSWER_MODEL`) returns 404 `model_not_found` for this Groq key; it is no longer in the account's model list. `answer_gen_node` silently falls back to a deterministic non-LLM answer, so new eval runs do NOT exercise the LLM answer generator and are not comparable to the June results. Caught by B1c instrumentation. Needs a decision before any full eval re-run.  
+**Pilot cost data (4 real queries; planner only, since the answer call fails):** ~2,690 input / ~160 output tokens per query ≈ $0.00025/query.  
 **B2 audit of saved results (free, 144 answers across all `eval_*.json`):** 104 pass, 6 flagged, 33 n/a (old `<think>` traces or non-answers), 1 no numbers. Flags: Q31 twice (answer total $2,316,900.86 / $1,317,000.92 vs real $2,297,200.86), Q34 ($630,215 vs real $733,215), Q41 ($763,819 unsupported), Q43 (4 invented ship-mode totals) — all genuine answer-generator hallucinations — plus one April answer truncated mid-number. **Known limit:** numbers only; it cannot catch mislabelled-but-present values (Q43's "region totals" are really the Standard Class rows) or wrong wording, and small integers can match derived values by chance.  
 **Observed:** one transient no-plan failure on Q03 (passed on re-run) — the kind of infrastructure failure Part C should label.  
 
@@ -88,9 +107,9 @@ tracing, a live Streamlit demo, and honest "What Is Not Caught" / per-query fail
 
 | # | Change |
 |---|---|
-| B1 | The eval runner records, per query: the generated plan, **which critic check fired** at each step, param-fixer and replanner events, and tokens, cost and latency per LLM call |
-| B2 | **Automatic hallucination check:** pull the numbers out of the answer text and check them against the result DataFrame. Catches Q41-style errors ($763K reported vs $286K actual) automatically instead of by hand |
-| B3 | Run each eval **3 times** and report the average and spread. Turns "Q06 was a fluke" from a guess into a measurement |
+| B1 ✅ | The eval runner records, per query: the generated plan, **which critic check fired** at each step, param-fixer and replanner events, and tokens, cost and latency per LLM call |
+| B2 ✅ | **Automatic hallucination check:** pull the numbers out of the answer text and check them against the result DataFrame. Catches Q41-style errors ($763K reported vs $286K actual) automatically instead of by hand |
+| B3 ⏸ | Run each eval **3 times** and report the average and spread. Turns "Q06 was a fluke" from a guess into a measurement | **Moved to after Part M** (user decision 2026-10-06): the 3× run only counts once the answer-generator model is settled. Build the runner and run it then.
 
 ## Part M — Model audit (which model for which job, and why)
 
@@ -173,7 +192,7 @@ trade-off is a stronger signal than claiming a win.
 
 ## Order and effort
 
-**A → B → M → C → D → E → F** (B2 before M, since M3 uses the number check), roughly **2–3 weeks** part-time.
+**A → B(1,2) → M → B3 → C → D → E → F** (B2 before M, since M3 uses the number check; B3 after M, since the 3× run needs a working answer model), roughly **2–3 weeks** part-time.
 
 - Part D (baseline) is the largest single piece.
 - Parts B and D both require several eval re-runs, so Groq rate limits will drive the schedule.
@@ -199,5 +218,39 @@ trade-off is a stronger signal than claiming a win.
 5. **`docs/others/`:** ✅ **DECIDED:** keep public as evidence of process. Add a short "design notes" index; mark finished to-do lists as done; fix stale content that contradicts the README.
    *(original question: keep public, or move out?)*
 6. **Blog post:** ✅ **DECIDED:** later. V2 delivers only `docs/case-study.md`; a blog post can be derived from it after `v2.0` is tagged.
-7. **Answer-generator hallucination:** ✅ **DECIDED:** capture and document it first (Part B2 auto number-check, Part C breakdown) and tag `v2.0` with the failure unfixed = frozen baseline. **After** the tag, try a simple fix as a separate step (`v2.1`); if it works, keep it and document before/after numbers. If no simple fix works, document that instead. Fix must stay small (no redesign).
+7. **Answer-generator hallucination:** ✅ **DECIDED:** capture and document it first (Part B2 auto number-check, Part C breakdown) and tag `v2.0` with the failure unfixed = frozen baseline. **After** the tag, try a simple fix as a separate step (`v2.1`); if it works, keep it and document before/after numbers. If no simple fix works, document that instead. Fix must stay small (no redesign). **Clarification (2026-10-06):** the forced model swap in Part M (the old model is gone from the API) is *not* this hallucination fix; it just restores a working answer step. The frozen `v2.0` baseline is V2 with a working answer model and the hallucination behaviour unfixed.
    *(original question: leave unfixed for V3, or fix in V2?)*
+
+
+
+---
+
+## Completion log
+
+*One short entry per completed item: what was done, how it was verified, commit. Newest at the bottom. All commits are local on `version2` unless noted.*
+
+**2026-10-06 — Part A ✅ (hygiene, tests, CI)**
+- *Done:* `.gitignore` no longer hides `eval/` (eval code and April/June results now tracked; logs ignored); `PROJECT_GUIDE.md` ignored; `check_gt.py` → `dev_checks/`, `eval_report_final.md` → `docs/`, scratch notebook deleted; README/CLAUDE.md contradictions fixed (10 tools; planner/fixer/replanner = `gpt-oss-20b`, answer generator = `llama-3.1-8b-instant`), real clone URL, broken `docs/others/` links; `.env.example`, pinned `requirements.txt`, `requirements-dev.txt`; 75 offline tests (10 tools, 8 critic checks, param fixer, replanner, graph routing, mocked full-graph runs) with an autouse guard that blocks real Groq calls; GitHub Actions CI + README badge.
+- *Verified by:* `dev_checks/check_part_a.py` (17/17), pytest with all API keys blanked.
+- *Commits:* `0536910`, `4ce6513`, `978b619`, `4b5fdac`. *Note:* badge shows real status only after the first push.
+
+**2026-10-06 — B1a ✅ plan + critic check per step**
+- *Done:* `critic_check` and `critic_reason` added to each trace record (`src/core/executor.py`); eval records keep the full `plan` and `trace`. Instrumentation only.
+- *Verified by:* `tests/test_trace_record.py`, `dev_checks/check_trace_fields.py` (3 real queries). Commit `6894b1e`.
+
+**2026-10-06 — B1b ✅ param-fixer / replanner events**
+- *Done:* `events` list in `PipelineState`; param fixer records old/new parameters, triggering error and critic check, and `changed`; replanner records old plan, new plan and result (the replanner overwrites the plan, so the old one was previously lost). Eval records get `param_fix_count`, `param_fix_effective_count`, `replan_count`.
+- *Verified by:* `tests/test_events.py` (real nodes, faked LLM), `dev_checks/check_events.py`. Commit `fc8226d`.
+
+**2026-10-06 — B1c ✅ tokens, cost, latency per LLM call**
+- *Done:* `llm_generation` (`src/utils/langfuse_helper.py`) logs every LLM attempt, including failures, per run; pipeline returns `llm_calls`; eval records get token, latency and `cost_usd` totals; `eval/pricing.py` (gpt-oss-20b $0.075 in / $0.30 out per 1M tokens, verified on Groq's docs page 2026-10-06; llama price unverified).
+- *Verified by:* `tests/test_llm_calls.py`, `dev_checks/check_llm_calls.py` (4 real queries). Commit `e981eaa`.
+- *Found:* `llama-3.1-8b-instant` returns 404 for this key, so the answer step silently uses the non-LLM fallback (see Findings, Part B).
+
+**2026-10-06 — Plan change: Part M (model audit) added.** Planner/fixer/replanner frozen; only the answer generator may change; candidates limited to models the key can use. Commit `557cf6c`.
+
+**2026-10-06 — B2 ✅ answer number check**
+- *Done:* `eval/answer_check.py` classifies each number in an answer as supported / derived / excused / unsupported; eval records get `answer_check`, `answer_numbers_unsupported`, `answer_is_fallback`.
+- *Verified by:* `tests/test_answer_check.py`, `dev_checks/check_answer_check.py` (run over all 144 saved answers: 104 pass, 6 flagged, 33 n/a, 1 no numbers; the flags are real hallucinations Q31 ×2, Q34, Q41, Q43, plus one truncated answer). Commit `7215761`.
+
+**2026-10-06 — Plan change: B3 moved to after Part M** (the full 3× run needs a working answer model).
