@@ -12,7 +12,45 @@ account/model-level facts and should stay accurate.
 
 ---
 
-## All 16 models on this Groq account
+> **Updated 2026-10-06.** The sections marked *historical* below were written in June 2026 and are kept as a record. The current catalog and the current LLM configuration are in the first two sections.
+
+## Current catalog (2026-10-06)
+
+Source: `console.groq.com/docs/models` (fetched twice), `/docs/deprecations`, the key's own model list and direct test calls. "Docs rate limit" is Groq's paid Developer plan; the key itself showed 8,000 tokens/min and 1,000 requests/day when tested (billing status unconfirmed).
+
+| Groq's status | Model | Price per 1M (in / out) | Context / max out | Docs rate limit | On this key? | Notes |
+|---|---|---|---|---|---|---|
+| Production | `openai/gpt-oss-20b` | $0.075 / $0.30 | 131,072 / 65,536 | 250K TPM / 1K RPM | Yes | **Used for all four LLM jobs.** Reasoning model (reasoning returned in a separate field; tokens count toward `max_tokens`) |
+| Production | `openai/gpt-oss-120b` | $0.15 / $0.60 | 131,072 / 65,536 | 250K TPM / 1K RPM | Yes | Considered; 2x the price, no measured benefit |
+| Production (Enterprise) | `llama-3.1-8b-instant` | Contact Sales | 131,072 / 131,072 | Contact Sales | No (404) | Deprecated 2026-08-16 (replacement: `gpt-oss-20b`). Was the answer model |
+| Production (Enterprise) | `llama-3.3-70b-versatile` | Contact Sales | 131,072 / 32,768 | Contact Sales | No (404) | Deprecated 2026-08-16 |
+| Production | `whisper-large-v3`, `whisper-large-v3-turbo` | $0.111 / $0.04 per hour | audio | 200K / 400K ASH | Yes (listed) | Speech-to-text |
+| Preview | `qwen/qwen3.8-27b` | $0.80 / $4.00 | 131,072 / 16,384 | 250K TPM / 1K RPM | Yes | Non-reasoning in tests; Preview = may be discontinued at short notice |
+| Preview | `openai/gpt-oss-safeguard-20b` | $0.075 / $0.30 | 131,072 / 65,536 | 150K TPM / 1K RPM | Yes | Safety classifier, not a text writer |
+| Preview | `minimaxai/minimax-m2.7` | Contact Sales | 196,608 / 131,072 | Contact Sales | No | Enterprise only |
+| Preview | `canopylabs/orpheus-v1-english`, `orpheus-arabic-saudi` | $22 / $40 per 1M chars | 4,000 | 50K TPM | Yes (listed) | Text-to-speech |
+| Preview | `meta-llama/llama-prompt-guard-2-22m`, `-86m` | $0.03 / $0.04 | 512 | 30K TPM | Yes (listed) | Safety filters |
+| Not on Groq's page | `allam-2-7b` | not documented | not documented | not documented | Yes | Undocumented/legacy; not a safe pick |
+
+Also deprecated (return 404): `meta-llama/llama-4-scout-17b-16e-instruct` and `qwen/qwen3-32b` (2026-07-17), `groq/compound` (2026-09-21). `moonshotai/kimi-k2-instruct` returns 404 too (reason unknown).
+
+## Current LLM call configuration (2026-10-06)
+
+| Job | Model | Temperature | Reasoning effort | `max_tokens` | Output format |
+|---|---|---|---|---|---|
+| Planner | `openai/gpt-oss-20b` | 0.0 | low | 2048 | `json_object`, validated by Pydantic |
+| Param Fixer | `openai/gpt-oss-20b` | 0.0 | low | 2048 | `json_object` |
+| Replanner | `openai/gpt-oss-20b` | 0.0 | low | 2048 | `json_object` |
+| Answer Generator | `openai/gpt-oss-20b` | 0.3 | low | 1024 | free text |
+
+Why one model, and the audit behind it: see "Model Audit" in [../architecture.md](../architecture.md).
+
+---
+
+
+*(Historical, June 2026)*
+
+## Historical snapshot: all 16 models on this Groq account
 
 Fetched via `dev_checks/check_list_models.py` → `GET https://api.groq.com/openai/v1/models`.
 
@@ -60,7 +98,7 @@ Source: [Structured Outputs - Groq Docs](https://console.groq.com/docs/structure
 
 ---
 
-## Current production LLM call configuration (as of this investigation)
+## LLM call configuration (historical, June 2026; superseded by the section above)
 
 Read directly from source (`src/core/planner.py`, `src/core/replanner.py`, `src/core/param_fixer.py`, `src/core/answer_generator.py`):
 
@@ -81,7 +119,9 @@ The Pydantic models today are a **post-hoc safety net only** — they don't guid
 
 ---
 
-## Proposed change (discussed, not yet implemented)
+## Proposed change (discussed in June 2026): SUPERSEDED 2026-10-06
+
+> Not implemented and no longer applicable: `llama-4-scout` and `llama-3.3-70b-versatile` have since been deprecated, and V2 stays on `json_object` with `gpt-oss-20b`. Moving the JSON jobs to `response_format: json_schema` remains a candidate for V3.
 
 Switch to `response_format={"type": "json_schema", "json_schema": {"name": ..., "strict": False, "schema": <PydanticModel>.model_json_schema()}}` for Planner/Replanner/Param Fixer:
 - Additive, not a replacement — `model_validate_json(raw)` and the existing retry-on-`ValidationError` loop stay exactly as-is as the final safety net.

@@ -232,6 +232,33 @@ class PipelineState(TypedDict):
 
 ---
 
+## Model Audit (checked 2026-10-06)
+
+V2 is Groq-only and runs one model, `openai/gpt-oss-20b`, for every LLM job.
+
+| Job | Model | Settings | Tokens per call (in / out) | Why |
+|---|---|---|---|---|
+| Planner | `openai/gpt-oss-20b` | temp 0, low reasoning, JSON mode | ~2,690 / ~70-230 (measured) | Follows the strict tool/JSON rules; locked for the baseline |
+| Param Fixer | `openai/gpt-oss-20b` | same | ~1,100 / ~100-300 (estimate) | Same family as the planner |
+| Replanner | `openai/gpt-oss-20b` | same | ~2,800 / ~100-400 (estimate) | Reuses the planner's plan format |
+| Answer Generator | `openai/gpt-oss-20b` | temp 0.3, low reasoning, `max_tokens` 1024 | ~280 / ~75 (measured) | Groq's recommended replacement for the deprecated `llama-3.1-8b-instant` |
+
+**Price:** `gpt-oss-20b` costs $0.075 input / $0.30 output per 1M tokens. A typical query costs about $0.0003.
+
+**Alternatives considered**
+- `openai/gpt-oss-120b` ($0.15 / $0.60): twice the price with no measured benefit.
+- `qwen/qwen3.8-27b` ($0.80 / $4.00): Preview status, so it can be discontinued at short notice.
+- `llama-3.1-8b-instant`, `llama-3.3-70b-versatile`: deprecated or enterprise-only; return 404 on the key (this is why the answer generator moved).
+- `allam-2-7b`: undocumented by Groq. The remaining models on the key are speech or safety models, not text writers.
+
+**Rate limits:** the planner uses about 2,700 tokens per query, so the account's tokens-per-minute limit sets how fast evals can run (8,000 tokens/min on the key when tested, versus 250K on Groq's paid Developer plan).
+
+**Known limitation:** all jobs share one model, so a single deprecation or outage breaks all four. A provider-agnostic LLM layer with fallbacks is a V3 item (see `docs/v3-problem-statement.md`, checklist row 10).
+
+Full catalog and the data behind this table: [others/groq-model-details.md](others/groq-model-details.md).
+
+---
+
 ## Key Design Decisions
 
 | Decision | Choice | Reason |

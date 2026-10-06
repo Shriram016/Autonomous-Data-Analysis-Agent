@@ -1,6 +1,6 @@
 # V2 Polish Plan
 
-**Status (2026-10-06):** Part A ✅ done · Part B: B1a/B1b/B1c/B2 ✅ done, B3 moved to after Part M · Part M: M1 ✅, M2 ✅, M3 skipped (decision), M4 ✅, **next M5 (document the audit)**. ⚠ Suspected (unconfirmed) free-tier limits on the key — user checking billing; it limits eval run speed. Answer-generator 404 blocker ✅ resolved (M4). After M5: B3 (first counted 3× run), then C, D, E, F.
+**Status (2026-10-06):** Part A ✅ done · Part B: B1a/B1b/B1c/B2 ✅ done, B3 moved to after Part M · Part M ✅ done (M1, M2, M4, M5; M3 skipped by decision). **Next: B3 (first counted 3× run).** ⚠ Suspected (unconfirmed) free-tier limits on the key — user checking billing; it limits eval run speed. Answer-generator 404 blocker ✅ resolved (M4). Then C, D, E, F.
 **Branch:** `version2`
 **Outcome:** a clean, honest, measured, tagged `v2.0` release that serves as the frozen baseline for V3.
 
@@ -17,8 +17,8 @@
 | M | M2 availability, price, limits | ✅ | 5 usable models; missing ones were deprecated by Groq; limits suspiciously low (see finding) |
 | M | M3 answer-model audition | ⏭ skipped | User decision: Groq-only, one model (`gpt-oss-20b`) for all jobs; no pilot needed |
 | M | M4 switch answer model to `gpt-oss-20b` | ✅ | `ANSWER_MODEL` swapped, low reasoning effort, `max_tokens` 1024, empty answer = failure; 4/4 real answers LLM-written and pass B2 |
-| M | M5 document the model audit | 🔜 | Next: audit table into `docs/architecture.md`, refresh `docs/others/groq-model-details.md` (README/CLAUDE.md/architecture lines already done) |
-| B | B3 run each eval 3× | ⏸ | Moved: build and run after Part M, so the first counted run uses a working answer model |
+| M | M5 document the model audit | ✅ | "Model Audit" section in `docs/architecture.md`; `docs/others/groq-model-details.md` refreshed (current catalog + config, June content kept as historical) |
+| B | B3 run each eval 3× | 🔜 | Next. Build the 3× runner and run V2 on all 63 queries (needs the cost gate; rate limits may stretch it over days) |
 | C | Failure-cause breakdown | ⬜ | Needs the B3 run |
 | D | Baseline experiment | ⬜ | Code-gen baseline + ablation, reuses the B3 runner |
 | E | Write-up (decisions, README, case study) | ⬜ | |
@@ -115,7 +115,7 @@ tracing, a live Streamlit demo, and honest "What Is Not Caught" / per-query fail
 | B2 ✅ | **Automatic hallucination check:** pull the numbers out of the answer text and check them against the result DataFrame. Catches Q41-style errors ($763K reported vs $286K actual) automatically instead of by hand |
 | B3 ⏸ | Run each eval **3 times** and report the average and spread. Turns "Q06 was a fluke" from a guess into a measurement | **Moved to after Part M** (user decision 2026-10-06): the 3× run only counts once the answer-generator model is settled. Build the runner and run it then.
 
-## Part M — Model audit (which model for which job, and why)
+## Part M — Model audit (which model for which job, and why)  ✅ DONE
 
 *Why: the choices of `gpt-oss-20b` and `llama-3.1-8b-instant` were never documented with evidence, and one of them is already gone from the API (see the FINDING under Part B). A reader should be able to see why each model was chosen, what it costs, and whether it was the best option.*
 
@@ -131,7 +131,7 @@ tracing, a live Streamlit demo, and honest "What Is Not Caught" / per-query fail
 | M2 ✅ | **Availability and price check:** for each model, whether the key can use it, price per 1M input/output tokens, rate limits and context size, with the date checked | Prices and availability change; one model is already missing |
 | M3 ⏭ | **Answer-generator comparison (skipped by user decision, see Decisions below):** on a small fixed pilot (about 10-12 queries), compare the available candidates for this job on answer correctness (using the B2 number check), cost and latency | Turns "I picked it" into "I measured it" |
 | M4 ✅ | **Decision per job:** keep or change, with the reason. Planner, fixer and replanner: keep (frozen for the baseline). Answer generator: pick the best available candidate | Keeps the baseline stable while fixing what is broken |
-| M5 | **Document it:** one "Model audit" table (job x model x why x price x result) in this file, copied into `docs/architecture.md`, and `docs/others/groq-model-details.md` refreshed. No new markdown files | Visible proof of the thinking |
+| M5 ✅ | **Document it:** one "Model audit" table (job x model x why x price x result) in this file, copied into `docs/architecture.md`, and `docs/others/groq-model-details.md` refreshed. No new markdown files | Visible proof of the thinking |
 
 ### M1 result — LLM call inventory (✅ 2026-10-06)
 
@@ -341,4 +341,8 @@ trade-off is a stronger signal than claiming a win.
 - *Done:* `ANSWER_MODEL` → `openai/gpt-oss-20b` (`src/config.py`); answer call now `reasoning_effort: low`, `max_tokens` 1,024 (was 256, which hidden reasoning tokens could exhaust); an empty answer is now an error that falls back visibly (`answer_is_fallback`) instead of a blank success (`src/core/answer_generator.py`). README, CLAUDE.md (private) and `docs/architecture.md` updated with the one-model rationale. M3 audition skipped by user decision.
 - *Behaviour change (the only one in V2 polish):* forced, because the old model is gone from the API. The 96.7% / 75% figures came from the llama answer writer; `v2.0` answers are written by `gpt-oss-20b`. State this in the write-up.
 - *Verified by:* `tests/test_answer_generator.py` (121 offline tests pass); `dev_checks/check_answer_generator.py` on 4 real queries (Q01, Q11, Q20, Q29): all answers LLM-written (about 280 input / 75 output tokens, about 0.5 s), all pass the B2 number check, about $0.0003 per query end to end. Note: gpt-oss writes a narrow no-break space (U+202F) in some names ("New York"), harmless but relevant for text comparisons.
+
+**2026-10-06 — M5 ✅ model audit documented (Part M complete)**
+- *Done:* new "Model Audit" section in `docs/architecture.md` (job x model x settings x tokens x why, price, alternatives considered, rate limits, known single-model limitation); `docs/others/groq-model-details.md` refreshed with the current 11-model catalog and current call configuration, June content kept and labelled historical, the old `llama-4-scout` / `json_schema` proposal marked superseded (json_schema noted as a V3 candidate). Docs only, no code.
+- *Part M outcome:* inventory (M1), availability/price/limits with Groq catalog cross-check (M2), audition skipped by decision (M3), answer generator moved to `gpt-oss-20b` (M4), documented (M5). One model for all LLM jobs; rationale in README and CLAUDE.md.
 
