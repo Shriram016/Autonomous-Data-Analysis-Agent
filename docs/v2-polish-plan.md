@@ -1,6 +1,6 @@
 # V2 Polish Plan
 
-**Status (2026-10-06):** Part A ✅ done · Part B: B1a/B1b/B1c/B2 ✅ done, B3 moved to after Part M · Part M: M1 ✅, M2 ✅, **next M3 (answer-model pilot)**. ⚠ Key looks like Groq FREE tier, not paid — check billing; it limits eval run speed. Open blocker: answer-generator model returns 404 (see Findings under Part B).
+**Status (2026-10-06):** Part A ✅ done · Part B: B1a/B1b/B1c/B2 ✅ done, B3 moved to after Part M · Part M: M1 ✅, M2 ✅, **next M3 (answer-model pilot)**. ⚠ Suspected (unconfirmed) free-tier limits on the key — user checking billing; it limits eval run speed. Open blocker: answer-generator model returns 404 (see Findings under Part B).
 **Branch:** `version2`
 **Outcome:** a clean, honest, measured, tagged `v2.0` release that serves as the frozen baseline for V3.
 
@@ -14,7 +14,7 @@
 | B | B1c tokens, cost, latency per LLM call | ✅ | `llm_calls` log; `cost_usd`; `eval/pricing.py` |
 | B | B2 answer number check | ✅ | `eval/answer_check.py`; found Q31, Q34, Q41, Q43 hallucinations in saved runs |
 | M | M1 inventory of LLM calls | ✅ | Table of every LLM job: model, settings, tokens (see Part M) |
-| M | M2 availability, price, limits | ✅ | 5 usable models; key looks like Groq FREE tier (8K tokens/min, 200K/day) — see finding |
+| M | M2 availability, price, limits | ✅ | 5 usable models; missing ones were deprecated by Groq; limits suspiciously low (see finding) |
 | M | M3–M5 answer-model comparison, decision, docs | 🔜 | Next: M3 pilot. Settles the answer-generator model (planner/fixer/replanner frozen) |
 | B | B3 run each eval 3× | ⏸ | Moved: build and run after Part M, so the first counted run uses a working answer model |
 | C | Failure-cause breakdown | ⬜ | Needs the B3 run |
@@ -164,11 +164,12 @@ Method: one tiny real call per model (plain text and JSON mode) on the user's ke
 | whisper-large-v3 (+turbo), orpheus (2), llama-prompt-guard-2 (2) | not tested | — | — | — | — | — | Excluded — speech / filter models, not text generators |
 
 **Findings:**
-1. **⚠ The key behaves like Groq's FREE tier, not the paid Developer plan.** Headers show 1,000 requests/day and 8,000 tokens/minute (the Developer plan lists 250K tokens/min and 1K requests/min), and the 2026-06-20 notes record hitting a 200K tokens/day cap. This contradicts the "paid plan" assumption behind open question 1. Billing status is only visible in the Groq console, so the user should check it.
+1. **⚠ SUSPECTED (unconfirmed): the key's limits look like Groq's FREE tier, not the paid Developer plan.** This is an inference, not a confirmed fact; only the Groq console shows the real billing status (user is checking; the Developer role may have been disabled). Headers show 1,000 requests/day and 8,000 tokens/minute (the Developer plan lists 250K tokens/min and 1K requests/min), and the 2026-06-20 notes record hitting a 200K tokens/day cap. This contradicts the "paid plan" assumption behind open question 1. Billing status is only visible in the Groq console, so the user should check it.
    - *Impact:* the planner alone uses about 2,700 tokens per query, so 8,000 tokens/min is only about 2–3 queries a minute, and 200K tokens/day is only about 65 queries a day. B3 (63 queries × 3 runs) would take about 3 days; Part D (3 systems × 3 runs) about 9 days. Upgrading to the Developer plan removes this, and the whole project's token cost is under about $1.
 2. **Reasoning-token risk for gpt-oss as answer writer:** these models spend hidden reasoning tokens inside `max_tokens`. The answer call caps output at 256, which could cut the answer short or leave it empty. M3 must test this (low reasoning effort and a higher cap would be needed if gpt-oss is chosen).
 3. **Cost per answer call is negligible for every candidate** (about 230 input + 150 output tokens): gpt-oss-20b ≈ $0.00006, gpt-oss-120b ≈ $0.00013, qwen3.8-27b ≈ $0.0008. Price should not decide this; answer correctness (B2 check) and robustness should.
 4. The model list on the key changed since `groq-model-details.md` was written (16 models then, 11 now). M5 refreshes that file.
+5. **The missing models were deprecated by Groq, not hidden by tier.** Direct calls to `llama-3.3-70b-versatile`, `llama-4-scout`, `qwen3-32b`, `groq/compound(-mini)` and `kimi-k2` all return 404. Groq's deprecations page (checked 2026-10-06) lists `llama-3.1-8b-instant` as deprecated on 2026-08-16 with **`openai/gpt-oss-20b` as the recommended replacement**; `llama-3.3-70b-versatile` (2026-08-16), `llama-4-scout` and `qwen3-32b` (2026-07-17) and `groq/compound` (2026-09-21) are deprecated too. So the 11-model list is the current catalog, and Groq's own recommendation supports `gpt-oss-20b` as the answer-model candidate to beat in M3. (`kimi-k2` is not on the page I fetched; reason unknown.)
 
 **Cost gate:** the pilot is very cheap, but the estimate is shown and approved before it runs.
 **Exit rule:** the answer-generator model must be settled here, before any full eval re-run (Part D). M3 depends on the B2 number check, so B2 comes first.
@@ -251,7 +252,7 @@ trade-off is a stronger signal than claiming a win.
 
 1. **Eval re-runs:** ✅ **DECIDED:** Option A (full plan: 63 queries × 3 runs × 3 systems, ~570 runs). User is on a **paid Groq plan**. Runs happen *after* the instrumentation (Part B) and baseline (Part D) code is built. **Cost gate before any big run:** confirm the Groq model, input/output tokens per query, cost per query and total cost for one full pass (from a small pilot or Langfuse traces), then user approves.
    *(original question: OK with ~570 runs? Which Groq plan? Fallbacks were 2 runs or baseline on 30 single-turn queries only.)*
-   **⚠ Update 2026-10-06 (M2):** the key's rate limits match the FREE tier (8,000 tokens/min, 200K tokens/day), not paid. Either upgrade to the Developer plan (cheap, removes the bottleneck) or spread runs over days (B3 ~3 days, Part D ~9 days). User to check billing in the Groq console.
+   **⚠ Update 2026-10-06 (M2):** the key's rate limits look like the FREE tier (8,000 tokens/min, 200K tokens/day), not paid; this is suspected, not confirmed. Either upgrade to the Developer plan (cheap, removes the bottleneck) or spread runs over days (B3 ~3 days, Part D ~9 days). User to check billing in the Groq console.
 2. **Baseline sandbox:** ✅ **DECIDED:** restricted Python `exec` (whitelisted pandas/numpy only, no file/network/import access). Experiment-only on a public dataset run by us; write-up must note it is NOT safe for production (supports the constrained-tools argument).
    *(original question: restricted `exec` enough, or a proper sandbox?)*
 3. **Failure labels:** ✅ **DECIDED:** auto-label from recorded data (API errors, critic fired, etc.); user reviews only the ambiguous ones.
@@ -304,6 +305,6 @@ trade-off is a stronger signal than claiming a win.
 
 **2026-10-06 — M2 ✅ model availability, price and limits**
 - *Done:* tested every text-capable model on the key with real tiny calls (text and JSON mode), read rate limits from response headers, took prices and context sizes from Groq's models page. Result table and findings in Part M. Answer-generator candidates: `gpt-oss-20b`, `gpt-oss-120b`, `qwen3.8-27b` (weak: `allam-2-7b`); `gpt-oss-safeguard-20b` excluded.
-- *Key finding:* the key's limits match Groq's free tier, which constrains B3 and Part D run time (open question 1 updated). Also a reasoning-token truncation risk for gpt-oss as the answer writer (to test in M3).
+- *Key findings:* (1) the key's limits look like Groq's free tier (suspected, unconfirmed; user checking billing), which would constrain B3 and Part D run time (open question 1 updated); (2) the missing models (incl. the old answer model) were deprecated by Groq on known dates, and Groq recommends `gpt-oss-20b` as the replacement. Also a reasoning-token truncation risk for gpt-oss as the answer writer (to test in M3).
 - *Verified by:* about 12 real API calls (total cost well under $0.001). No code changes. Probe scripts were scratch files, not committed.
 
