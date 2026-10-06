@@ -62,6 +62,10 @@ def compute_record(
 
     gt_shape = gt_df.shape if gt_df is not None else None
 
+    events = pipeline_result.get("events") or []
+    param_fixes = [e for e in events if e.get("type") == "param_fix"]
+    replans = [e for e in events if e.get("type") == "replan"]
+
     # Plan as plain dicts (PlanStep is a pydantic model, not JSON-serialisable)
     plan_dicts = [
         s.model_dump() if hasattr(s, "model_dump") else s for s in plan
@@ -90,12 +94,16 @@ def compute_record(
         # Execution stats
         "plan_steps": plan_steps,
         "total_executions": total_executions,
-        "retries": retries,
+        "retries": retries,  # legacy estimate (executions - plan steps); see param_fix_count
+        "param_fix_count": len(param_fixes),
+        "param_fix_effective_count": sum(1 for e in param_fixes if e.get("changed")),
+        "replan_count": len(replans),
         "had_step_error": had_step_error,
         "duration_s": round(duration_s, 2),
         # Instrumentation: what the agent planned and what the critic said per step
         "plan": plan_dicts,
         "trace": trace,
+        "events": events,
         # Answer
         "answer": pipeline_result.get("answer"),
         # Raw DataFrames (serialized for JSON)

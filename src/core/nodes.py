@@ -262,9 +262,23 @@ def param_fixer_node(state: PipelineState) -> Dict[str, Any]:
         "parameters": fixed_step.parameters,
     })
 
+    last_trace = state["trace"][-1] if state["trace"] else {}
+    event = {
+        "type": "param_fix",
+        "step": step.step,
+        "tool": step.tool,
+        "trigger_message": state["message"],
+        "trigger_critic_check": last_trace.get("critic_check"),
+        "old_parameters": step.parameters,
+        "new_parameters": fixed_step.parameters,
+        # False = the LLM call failed, was invalid, or returned the same params
+        "changed": fixed_step.parameters != step.parameters,
+    }
+
     return {
         "plan": new_plan,
         "retry_count": state["retry_count"] + 1,
+        "events": state.get("events", []) + [event],
         "status": "running",
         "message": "",
     }
@@ -310,18 +324,32 @@ def replanner_node(state: PipelineState) -> Dict[str, Any]:
 
     result = replan(planner_output, error_context, state["query"], state["schema"], logger=logger, run_id=run_id, session_id=state["session_id"])
 
+    # Instrumentation: the replanner overwrites `plan`, so keep the old one here.
+    event = {
+        "type": "replan",
+        "failed_step": failed_step.step,
+        "failed_tool": failed_step.tool,
+        "trigger_message": state["message"],
+        "old_plan": [s.model_dump() for s in state["plan"]],
+        "result": result.get("status"),
+        "new_plan": None,
+        "result_message": result.get("message"),
+    }
+    events = state.get("events", []) + [event]
+
     if result.get("status") == "unsolvable":
         reason = result.get("message", "No reason provided.")
         msg = f"Query cannot be answered with available tools: {reason}"
         log_event(logger, run_id, "replanner_failed", {"message": msg})
-        return {"status": "unsolvable", "message": msg}
+        return {"status": "unsolvable", "message": msg, "events": events}
 
     if result.get("status") != "success":
         msg = f"Replanner failed: {result.get('message', 'Unknown error.')}"
         log_event(logger, run_id, "replanner_failed", {"message": msg})
-        return {"status": "error", "message": msg}
+        return {"status": "error", "message": msg, "events": events}
 
     new_plan = result["plan"]
+    event["new_plan"] = [s.model_dump() for s in new_plan]
     log_event(logger, run_id, "replanner_completed", {
         "step_count": len(new_plan),
         "plan_summary": " -> ".join(s.tool for s in new_plan),
@@ -333,6 +361,7 @@ def replanner_node(state: PipelineState) -> Dict[str, Any]:
         "current_step_index": 0,
         "retry_count": 0,
         "state_store": {"original_df": state["original_df"]},
+        "events": events,
         "status": "running",
         "message": "",
     }

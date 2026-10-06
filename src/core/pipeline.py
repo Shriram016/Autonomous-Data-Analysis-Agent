@@ -33,6 +33,7 @@ def _make_response(
     answer: Optional[str] = None,
     session_id: Optional[str] = None,
     recent_questions: Optional[List[str]] = None,
+    events: Optional[List[Dict[str, Any]]] = None,
 ) -> Dict[str, Any]:
     return {
         "run_id":            run_id,
@@ -47,6 +48,7 @@ def _make_response(
         "answer":            answer,
         "session_id":        session_id,
         "recent_questions":  recent_questions if recent_questions is not None else [],
+        "events":            events if events is not None else [],
     }
 
 
@@ -151,6 +153,7 @@ def run_pipeline(query: str, session_id: Optional[str] = None) -> Dict[str, Any]
                 "retry_count": 0,
                 "total_executions": 0,
                 "trace": [],
+                "events": [],
                 "final_df": None,
                 "status": "pending",
                 "message": "",
@@ -199,6 +202,7 @@ def run_pipeline(query: str, session_id: Optional[str] = None) -> Dict[str, Any]
             answer=final_state.get("answer"),
             session_id=session_id,
             recent_questions=final_state.get("recent_questions", []),
+            events=final_state.get("events", []),
         )
 
     except Exception as e:

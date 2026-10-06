@@ -42,6 +42,9 @@ class PipelineState(TypedDict):
     retry_count: int
     total_executions: int
     trace: list[dict]
+    # Param-fixer / replanner events, appended in order (instrumentation only;
+    # read with state.get("events", []) since older checkpoints lack the key).
+    events: list[dict]
 
     # -----------------------------------------------------------------
     # Final outputs
