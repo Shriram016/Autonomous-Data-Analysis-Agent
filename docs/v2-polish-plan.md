@@ -1,6 +1,6 @@
 # V2 Polish Plan
 
-**Status:** All 7 open questions answered. **Part A done** (A1–A6, verified by `dev_checks/check_part_a.py`). Next: Part B (plan first).
+**Status:** All 7 open questions answered. **Part M (model audit) added.** **Part A done** (A1–A6, verified by `dev_checks/check_part_a.py`). Next: B2 (number check), then B3, then Part M.
 **Branch:** `version2`
 **Outcome:** a clean, honest, measured, tagged `v2.0` release that serves as the frozen baseline for V3.
 
@@ -91,6 +91,28 @@ tracing, a live Streamlit demo, and honest "What Is Not Caught" / per-query fail
 | B2 | **Automatic hallucination check:** pull the numbers out of the answer text and check them against the result DataFrame. Catches Q41-style errors ($763K reported vs $286K actual) automatically instead of by hand |
 | B3 | Run each eval **3 times** and report the average and spread. Turns "Q06 was a fluke" from a guess into a measurement |
 
+## Part M — Model audit (which model for which job, and why)
+
+*Why: the choices of `gpt-oss-20b` and `llama-3.1-8b-instant` were never documented with evidence, and one of them is already gone from the API (see the FINDING under Part B). A reader should be able to see why each model was chosen, what it costs, and whether it was the best option.*
+
+**Decisions (2026-10-06):**
+- Only models that work with the user's Groq key are considered (today: `openai/gpt-oss-20b`, `openai/gpt-oss-120b`, `qwen/qwen3.8-27b`, plus others on the key's model list that fit the job).
+- **Planner, param fixer and replanner stay unchanged.** They drive accuracy, and changing them would shift the frozen baseline. They are inventoried, priced and justified, but not swapped. Better alternatives are noted for V3.
+- **Answer generator is the only component that may change.** It is just the final text-writing step, and its current model is unavailable.
+
+| # | Change | Why |
+|---|---|---|
+| M1 | **Inventory:** a table of every LLM call in the system (planner, param fixer, replanner, answer generator, and the Part D code-gen baseline). For each: model, job, settings (temperature, reasoning effort, JSON mode), and tokens per call (from B1c) | Shows exactly where LLMs are used |
+| M2 | **Availability and price check:** for each model, whether the key can use it, price per 1M input/output tokens, rate limits and context size, with the date checked | Prices and availability change; one model is already missing |
+| M3 | **Answer-generator comparison:** on a small fixed pilot (about 10-12 queries), compare the available candidates for this job on answer correctness (using the B2 number check), cost and latency | Turns "I picked it" into "I measured it" |
+| M4 | **Decision per job:** keep or change, with the reason. Planner, fixer and replanner: keep (frozen for the baseline). Answer generator: pick the best available candidate | Keeps the baseline stable while fixing what is broken |
+| M5 | **Document it:** one "Model audit" table (job x model x why x price x result) in this file, copied into `docs/architecture.md`, and `docs/others/groq-model-details.md` refreshed. No new markdown files | Visible proof of the thinking |
+
+**Cost gate:** the pilot is very cheap, but the estimate is shown and approved before it runs.
+**Exit rule:** the answer-generator model must be settled here, before any full eval re-run (Part D). M3 depends on the B2 number check, so B2 comes first.
+
+---
+
 ## Part C — Failure-cause breakdown
 
 *Why: this is bar item 2, and the most direct hit on "evaluation separated by failure type".*
@@ -150,7 +172,7 @@ trade-off is a stronger signal than claiming a win.
 
 ## Order and effort
 
-**A → B → C → D → E → F**, roughly **2–3 weeks** part-time.
+**A → B → M → C → D → E → F** (B2 before M, since M3 uses the number check), roughly **2–3 weeks** part-time.
 
 - Part D (baseline) is the largest single piece.
 - Parts B and D both require several eval re-runs, so Groq rate limits will drive the schedule.
