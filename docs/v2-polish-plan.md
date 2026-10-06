@@ -157,7 +157,7 @@ Method: one tiny real call per model (plain text and JSON mode) on the user's ke
 |---|---|---|---|---|---|---|---|
 | `openai/gpt-oss-20b` | ✅ | $0.075 / $0.30 | 131,072 / 65,536 | 8,000 tokens/min, 1,000 requests/day (+200K tokens/day per 2026-06-20 notes) | Yes (hidden reasoning, no `<think>` in the text) | ✅ | **Candidate** — already used by 3 jobs, cheapest |
 | `openai/gpt-oss-120b` | ✅ | $0.15 / $0.60 | 131,072 / 65,536 | 8,000 tokens/min, 1,000 requests/day | Yes | ✅ | **Candidate** — bigger, 2× price, likely overkill |
-| `qwen/qwen3.8-27b` | ✅ | $0.80 / $4.00 | 131,072 / 16,384 | 8,000 tokens/min, 1,000 requests/day | No reasoning field, no `<think>` in the test | ✅ | **Candidate** — closest to the old "plain, non-reasoning" choice; ~10× the price |
+| `qwen/qwen3.8-27b` | ✅ | $0.80 / $4.00 | 131,072 / 16,384 | 8,000 tokens/min, 1,000 requests/day | No reasoning field, no `<think>` in the test | ✅ | **Candidate, but Preview status** (may be discontinued at short notice) — closest to the old "plain, non-reasoning" choice; ~10× the price |
 | `allam-2-7b` | ✅ | not listed on the docs page | not listed | 6,000 tokens/min, 7,000 requests/day | No | ✅ | Weak candidate — Arabic-focused, price unknown |
 | `openai/gpt-oss-safeguard-20b` | ✅ | $0.075 / $0.30 | 131,072 / 65,536 | 2,000 tokens/min | Yes | ✅ | Excluded — a safety-policy classifier, not a text writer |
 | `llama-3.1-8b-instant` (current answer model) | ❌ 404 `model_not_found` (confirmed again) | — | — | — | — | — | Gone from this key |
@@ -170,6 +170,28 @@ Method: one tiny real call per model (plain text and JSON mode) on the user's ke
 3. **Cost per answer call is negligible for every candidate** (about 230 input + 150 output tokens): gpt-oss-20b ≈ $0.00006, gpt-oss-120b ≈ $0.00013, qwen3.8-27b ≈ $0.0008. Price should not decide this; answer correctness (B2 check) and robustness should.
 4. The model list on the key changed since `groq-model-details.md` was written (16 models then, 11 now). M5 refreshes that file.
 5. **The missing models were deprecated by Groq, not hidden by tier.** Direct calls to `llama-3.3-70b-versatile`, `llama-4-scout`, `qwen3-32b`, `groq/compound(-mini)` and `kimi-k2` all return 404. Groq's deprecations page (checked 2026-10-06) lists `llama-3.1-8b-instant` as deprecated on 2026-08-16 with **`openai/gpt-oss-20b` as the recommended replacement**; `llama-3.3-70b-versatile` (2026-08-16), `llama-4-scout` and `qwen3-32b` (2026-07-17) and `groq/compound` (2026-09-21) are deprecated too. So the 11-model list is the current catalog, and Groq's own recommendation supports `gpt-oss-20b` as the answer-model candidate to beat in M3. (`kimi-k2` is not on the page I fetched; reason unknown.)
+
+**Full Groq catalog cross-check (2026-10-06).** Sources: `console.groq.com/docs/models` (fetched twice, plus a web search), `/docs/deprecations`, and the live key. This is every model Groq lists, and whether the key can use it:
+
+| Groq's status | Model | Price per 1M (in / out) | Context / max out | Docs rate limit (Developer plan) | On this key? | Usable as answer writer? |
+|---|---|---|---|---|---|---|
+| Production | `openai/gpt-oss-20b` | $0.075 / $0.30 | 131,072 / 65,536 | 250K TPM / 1K RPM | ✅ | ✅ candidate |
+| Production | `openai/gpt-oss-120b` | $0.15 / $0.60 | 131,072 / 65,536 | 250K TPM / 1K RPM | ✅ | ✅ candidate |
+| Production (Enterprise) | `llama-3.1-8b-instant` | Contact Sales | 131,072 / 131,072 | Contact Sales | ❌ 404 | ❌ (old answer model) |
+| Production (Enterprise) | `llama-3.3-70b-versatile` | Contact Sales | 131,072 / 32,768 | Contact Sales | ❌ 404 | ❌ |
+| Production | `whisper-large-v3`, `whisper-large-v3-turbo` | $0.111 / $0.04 per hour | audio | 200K / 400K ASH | ✅ listed | ❌ speech-to-text |
+| Preview | `qwen/qwen3.8-27b` | $0.80 / $4.00 | 131,072 / 16,384 | 250K TPM / 1K RPM | ✅ | ⚠ candidate, but **Preview** (Groq: may be discontinued at short notice) |
+| Preview | `openai/gpt-oss-safeguard-20b` | $0.075 / $0.30 | 131,072 / 65,536 | 150K TPM / 1K RPM | ✅ | ❌ safety classifier |
+| Preview | `minimaxai/minimax-m2.7` | Contact Sales | 196,608 / 131,072 | Contact Sales | ❌ not on key | ❌ Enterprise only |
+| Preview | `canopylabs/orpheus-v1-english`, `orpheus-arabic-saudi` | $22 / $40 per 1M chars | 4,000 | 50K TPM | ✅ listed | ❌ text-to-speech |
+| Preview | `meta-llama/llama-prompt-guard-2-22m`, `-86m` | $0.03 / $0.04 | 512 | 30K TPM | ✅ listed | ❌ safety filters |
+| not on Groq's page | `allam-2-7b` | not documented | not documented | not documented | ✅ (answers calls) | ❌ undocumented / legacy; not a safe pick |
+
+**Conclusions from the cross-check:**
+- Every non-enterprise model Groq lists is on the key, plus `allam-2-7b` (undocumented). Nothing usable is hidden from us by this key's tier.
+- **Only two Production-status text models are usable: `gpt-oss-20b` and `gpt-oss-120b`.** `qwen3.8-27b` is Preview, so it could disappear and break a frozen baseline; treat it as a comparison point, not the pick, unless it is clearly better.
+- Groq lists `llama-3.1-8b-instant` as Enterprise / Contact Sales on the models page and as deprecated (2026-08-16) on the deprecations page: either way it is not available to this key. (The docs pages also mention `qwen3.6-27b` while the key has `qwen3.8-27b`; the docs are slightly inconsistent.)
+- The "Docs rate limit" column is the paid Developer plan. The key shows 8,000 tokens/min, far lower, so the key is not on that plan today (user checking billing/role).
 
 **Cost gate:** the pilot is very cheap, but the estimate is shown and approved before it runs.
 **Exit rule:** the answer-generator model must be settled here, before any full eval re-run (Part D). M3 depends on the B2 number check, so B2 comes first.
@@ -307,4 +329,8 @@ trade-off is a stronger signal than claiming a win.
 - *Done:* tested every text-capable model on the key with real tiny calls (text and JSON mode), read rate limits from response headers, took prices and context sizes from Groq's models page. Result table and findings in Part M. Answer-generator candidates: `gpt-oss-20b`, `gpt-oss-120b`, `qwen3.8-27b` (weak: `allam-2-7b`); `gpt-oss-safeguard-20b` excluded.
 - *Key findings:* (1) the key's limits look like Groq's free tier (suspected, unconfirmed; user checking billing), which would constrain B3 and Part D run time (open question 1 updated); (2) the missing models (incl. the old answer model) were deprecated by Groq on known dates, and Groq recommends `gpt-oss-20b` as the replacement. Also a reasoning-token truncation risk for gpt-oss as the answer writer (to test in M3).
 - *Verified by:* about 12 real API calls (total cost well under $0.001). No code changes. Probe scripts were scratch files, not committed.
+
+**2026-10-06 — M2 follow-up ✅ full Groq catalog cross-check**
+- *Done:* compared Groq's full model list (models page fetched twice, web search, deprecations page) with the key's list and direct calls. Full table added to Part M. Only `gpt-oss-20b` and `gpt-oss-120b` are Production-status text models usable on the key; `qwen3.8-27b` is Preview (discontinuation risk); `allam-2-7b` is undocumented.
+- *Verified by:* three independent sources agree on the catalog; a web fetch of the docs is a summary and could miss rows, so the key's own model list was used as the second check.
 
