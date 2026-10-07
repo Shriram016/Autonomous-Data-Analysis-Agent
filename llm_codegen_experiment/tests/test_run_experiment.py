@@ -91,3 +91,17 @@ def test_summary_is_labelled_as_the_codegen_system(fake_codegen, tmp_path, capsy
     assert json.loads((run / "manifest.json").read_text(encoding="utf-8"))["system"] == "codegen"
     assert json.loads((run / "results.json").read_text(encoding="utf-8"))["manifest"]["system"] == "codegen"
     capsys.readouterr()
+
+
+def test_a_refusal_scores_like_adaas_refusals_in_the_harness(monkeypatch, tmp_path, capsys):
+    """Q38 has no ground truth (correct = refuse): a REFUSE reply passes; answering it fails; refusing an answerable question fails."""
+    refuse = {"status": "unsolvable", "message": "needs two results", "final_df": None, "answer": None,
+              "plan": [], "trace": [], "events": [], "total_executions": 0, "llm_calls": [dict(PLANNER)]}
+    monkeypatch.setattr(rx, "run_codegen", lambda q, session_id=None: refuse)
+    monkeypatch.setattr(harness, "_ping_llm", lambda: (True, "fake"))
+    out = tmp_path / "res"
+    rx.main(["--yes", "--out-dir", str(out), "--only", "single", "--ids", "Q38,Q01"])
+    recs = {r["id"]: r for r in json.loads((next(out.iterdir()) / "results.json").read_text(encoding="utf-8"))["records"]}
+    assert recs["Q38"]["passed"] is True and recs["Q38"]["expected_behavior"] == "refuse"
+    assert recs["Q01"]["passed"] is False and harness.failure_kind(recs["Q01"]) == "refused_but_answerable"
+    capsys.readouterr()

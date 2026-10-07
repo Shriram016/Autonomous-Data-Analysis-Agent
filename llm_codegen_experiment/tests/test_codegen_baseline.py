@@ -208,3 +208,37 @@ def test_unsafe_query_forms_and_eval_stay_blocked(code):
 def test_an_allowed_query_really_runs_in_the_sandbox(df):
     r = cb.run_sandboxed("result = df.query(\"Category == 'A' and Sales > 1\")", df)
     assert r["status"] == "ok" and r["result"]["Sales"].tolist() == [2.0]
+
+
+# ---------------------------------------------------------------- the REFUSE option (same one-table contract as ADAA)
+def test_prompt_states_the_one_table_contract_and_the_refuse_option():
+    assert "ONE table" in cb.SYSTEM_PROMPT and "REFUSE: <short reason>" in cb.SYSTEM_PROMPT
+
+
+@pytest.mark.parametrize("reply,reason", [
+    ("REFUSE: needs two separate results", "needs two separate results"),
+    ("  refuse :  a total plus a ranking  ", "a total plus a ranking"),
+    ("REFUSE: two breakdowns\nbecause one table cannot hold both", "two breakdowns"),
+    ("REFUSE:", "no reason given"),
+])
+def test_refusal_replies_are_recognised(reply, reason):
+    assert cb.extract_refusal(reply) == reason
+
+
+@pytest.mark.parametrize("reply", [
+    "```python\nresult = 1\n```",
+    "result = df['Sales'].sum()",
+    "Here is the code:\n```python\nresult = 1  # REFUSE: no\n```",   # REFUSE only counts at the start
+    "",
+])
+def test_normal_replies_are_not_refusals(reply):
+    assert cb.extract_refusal(reply) is None
+
+
+def test_run_codegen_records_a_refusal_as_unsolvable_and_runs_no_code(fake_llm):
+    prompts, replies = fake_llm
+    replies.append("REFUSE: the question needs two separate results")
+    out = cb.run_codegen("Show total profit and also which states are most profitable.")
+    assert out["status"] == "unsolvable" and out["message"] == "the question needs two separate results"
+    assert out["final_df"] is None and out["plan"] == [] and out["sandbox_status"] == "refused"
+    assert out["total_executions"] == 0

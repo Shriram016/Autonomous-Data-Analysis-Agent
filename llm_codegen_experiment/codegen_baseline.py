@@ -47,10 +47,11 @@ Rules:
 - `pd` (pandas) and `np` (numpy) are already imported. Do not import anything.
 - The data is the DataFrame `df`. Its columns and types are described in the schema below. Do not read or write files, use the network, or call eval, exec or open.
 - Store the final answer in a variable named `result`: a pandas DataFrame (preferred), a Series, or a single number.
+- The answer must be ONE table (or one number). If the question asks for two or more separate results that cannot form one table (for example, a total plus a separate ranking, or two different breakdowns), do not write code. Reply with exactly one line: REFUSE: <short reason>.
 - If earlier questions are shown, use them to resolve follow-ups such as "what about 2015?".
-- Return only the code, inside one ```python block. No explanation."""
+- Otherwise return only the code, inside one ```python block. No explanation."""
 
-CODEGEN_VERSION = "2026-10-07-v1"
+CODEGEN_VERSION = "2026-10-07-v2"   # v2: adds the one-table contract and the REFUSE option
 HISTORY_WINDOW = 3          # same as ADAA: the last 3 earlier questions
 SANDBOX_TIMEOUT_S = 30.0
 
@@ -224,6 +225,17 @@ def extract_code(text: str) -> str:
     return (m.group(1) if m else (text or "")).strip()
 
 
+_REFUSE = re.compile(r"^\s*REFUSE\s*:\s*(.*)", re.IGNORECASE | re.DOTALL)
+
+
+def extract_refusal(text: str) -> Optional[str]:
+    """If the reply is a refusal (`REFUSE: <reason>` at the start), return the reason; otherwise None."""
+    m = _REFUSE.match(text or "")
+    if not m:
+        return None
+    return (m.group(1).strip().splitlines() or [""])[0].strip() or "no reason given"
+
+
 def build_user_prompt(query: str, schema: Dict[str, Any], previous_questions: Optional[List[str]] = None) -> str:
     """Same information ADAA's planner gets: the question, earlier questions, the condensed schema."""
     from src.prompts.planner_prompt import condense_schema
@@ -298,6 +310,17 @@ def run_codegen(query: str, session_id: Optional[str] = None) -> Dict[str, Any]:
 
     start = time.perf_counter()
     text, err = _call_llm(build_user_prompt(query, schema, previous), run_id)
+    reason = extract_refusal(text) if text else None
+    if reason is not None:       # the model declined: recorded like ADAA's "unsolvable"; no code is run
+        return {
+            "run_id": run_id, "status": "unsolvable", "query": query, "message": reason,
+            "final_df": None, "answer": None, "plan": [],
+            "trace": [{"step": 1, "tool": "generated_code", "status": "refused", "message": reason,
+                       "critic": None, "sandbox_status": "refused",
+                       "duration_s": round(time.perf_counter() - start, 3)}],
+            "events": [], "total_executions": 0, "llm_calls": pop_llm_calls(run_id), "session_id": session_id,
+            "sandbox_status": "refused",
+        }
     code = extract_code(text) if text else ""
     sandbox = ({"status": "error", "result": None, "message": err or "no code returned", "stdout": ""}
                if not code else run_sandboxed(code, df))
