@@ -392,16 +392,17 @@
       "passed": false,
       "labels": [
         {
-          "category": "context_loss",
-          "label": "Context: earlier turn not carried forward",
-          "component": "Session memory / planner",
-          "confidence": "review",
+          "category": "planner_context_misuse",
+          "label": "Planner failure: ignored or misused earlier-turn info",
+          "component": "Planner (LLM)",
+          "confidence": "reviewed",
           "evidence": [
             "4-turn case: the final turn depends on turns beyond the 3-question memory window, but the planner could also simply have chosen the wrong filters",
-            "mismatch: Value[0]: GT=156332.0570, Pipeline=128680.4570, diff=17.69%"
+            "mismatch: Value[0]: GT=156332.0570, Pipeline=128680.4570, diff=17.69%",
+            "user review: The planner saw the earlier turns (it filtered Year == 2014, taken from turn 1) but used the wrong year; turn 2 (2015) was in memory. Not a memory limit. Decided by the user on 2026-10-07."
           ],
           "dimension": "outcome",
-          "source": "auto"
+          "source": "user_review"
         }
       ],
       "guardrail": {
@@ -420,16 +421,17 @@
       "passed": false,
       "labels": [
         {
-          "category": "context_loss",
-          "label": "Context: earlier turn not carried forward",
-          "component": "Session memory / planner",
-          "confidence": "review",
+          "category": "planner_context_misuse",
+          "label": "Planner failure: ignored or misused earlier-turn info",
+          "component": "Planner (LLM)",
+          "confidence": "reviewed",
           "evidence": [
             "4-turn case: the final turn depends on turns beyond the 3-question memory window, but the planner could also simply have chosen the wrong filters",
-            "mismatch: Numeric value count mismatch: GT has 6 value(s), pipeline has 8 value(s). GT shape=(3, 2), pipeline "
+            "mismatch: Numeric value count mismatch: GT has 6 value(s), pipeline has 8 value(s). GT shape=(3, 2), pipeline ",
+            "user review: All three referenced turns (2017, 2016, 2015 sales) were inside the 3-question window, but the planner ignored them and counted orders per year for four years. Decided by the user on 2026-10-07."
           ],
           "dimension": "outcome",
-          "source": "auto"
+          "source": "user_review"
         }
       ],
       "guardrail": {
@@ -530,8 +532,8 @@
       "review": []
     },
     {
-      "category": "Context: earlier turn not carried forward",
-      "component": "Session memory / planner",
+      "category": "Planner failure: ignored or misused earlier-turn info",
+      "component": "Planner (LLM)",
       "count": 2,
       "cases": [
         "MT13",
@@ -539,10 +541,7 @@
       ],
       "caught_by_production_guardrail": 0,
       "guardrail_fired_but_failed": 1,
-      "review": [
-        "MT13",
-        "MT15"
-      ]
+      "review": []
     },
     {
       "category": "Planner: wrong step order",

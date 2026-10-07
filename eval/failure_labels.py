@@ -49,6 +49,7 @@ CATEGORIES: Dict[str, tuple] = {
     "planner_refused_answerable": ("Planner: refused an answerable query", "Planner (LLM)"),
     "planner_answered_should_refuse": ("Planner: answered a query that should be refused", "Planner (LLM)"),
     "context_loss": ("Context: earlier turn not carried forward", "Session memory / planner"),
+    "planner_context_misuse": ("Planner failure: ignored or misused earlier-turn info", "Planner (LLM)"),
     "planner_other_wrong_result": ("Planner: other wrong result", "Planner (LLM)"),
     "answer_wrong_number": ("Answer writer: number in the sentence is not in the table", "Answer generator (LLM)"),
     "infrastructure": ("Infrastructure: API error", "LLM provider / network"),

@@ -3,6 +3,7 @@ check_failure_labels.py — Verifies Part C (eval/failure_labels.py) on the REAL
 
 Labels the failures of the latest eval/results/full_* folder and checks that every known case got
 the expected cause, that nothing was counted as "caught", and that the output files were written.
+It works on a COPY of the records, so it never overwrites the run folder's reviewed labels.
 Run from the project root:
 
     python dev_checks/check_failure_labels.py            # uses the latest full_* folder
@@ -11,9 +12,10 @@ Run from the project root:
 
 import io
 import json
-import os
 from pathlib import Path
+import shutil
 import sys
+import tempfile
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
@@ -29,7 +31,7 @@ if not run or not (run / "records.jsonl").exists():
     print("No full_* run folder with records.jsonl found. Run eval/run_full_eval.py first.")
     sys.exit(2)
 
-# Expected cause per case in the 2026-10-06 baseline run (inspected by hand while building the labeller)
+# Expected AUTOMATIC cause per case in the 2026-10-06 baseline run (inspected by hand while building the labeller)
 EXPECTED = {
     "Q06": "planner_missing_filter", "Q07": "planner_missing_filter",
     "MT03": "planner_missing_filter", "MT04": "planner_missing_filter",
@@ -39,7 +41,7 @@ EXPECTED = {
     "Q41": "planner_answered_should_refuse", "Q42": "planner_answered_should_refuse",
     "Q43": "planner_answered_should_refuse", "Q45": "planner_answered_should_refuse",
     "Q46": "planner_answered_should_refuse",
-    "MT13": "context_loss", "MT15": "context_loss",   # 4-turn cases, flagged for review
+    "MT13": "context_loss", "MT15": "context_loss",   # 4-turn cases: automatic label is context_loss, flagged for review
 }
 ok = True
 
@@ -50,14 +52,22 @@ def check(name, cond, detail=""):
     ok &= bool(cond)
 
 
-text = fl.write_outputs(str(run), overrides={})   # no human overrides: check the automatic labels
-print(text, "\n")
+tmp = Path(tempfile.mkdtemp())
+shutil.copy(run / "records.jsonl", tmp / "records.jsonl")
 
-data = json.loads((run / "failure_labels.json").read_text(encoding="utf-8"))
-outcome = {e["id"]: next(l for l in e["labels"] if l["dimension"] == "outcome")
+
+def labelled(overrides):
+    text = fl.write_outputs(str(tmp), overrides=overrides)
+    data = json.loads((tmp / "failure_labels.json").read_text(encoding="utf-8"))
+    out = {e["id"]: next(l for l in e["labels"] if l["dimension"] == "outcome")
            for e in data["entries"] if any(l["dimension"] == "outcome" for l in e["labels"])}
-answer_ids = sorted(e["id"] for e in data["entries"] if any(l["dimension"] == "answer" for l in e["labels"]))
+    return text, data, out
 
+
+# 1. automatic labels only
+text, data, outcome = labelled({})
+print(text, "\n")
+answer_ids = sorted(e["id"] for e in data["entries"] if any(l["dimension"] == "answer" for l in e["labels"]))
 for qid, cat in EXPECTED.items():
     got = outcome.get(qid, {}).get("category")
     check(f"{qid} -> {cat}", got == cat, f"got {got}")
@@ -67,7 +77,15 @@ check("no failure was caught by a guardrail", not any(e["caught_by_guardrail"] f
 check("MT13 and MT15 flagged for review",
       all(outcome.get(i, {}).get("confidence") == "review" for i in ("MT13", "MT15")))
 for name in ("failure_labels.json", "failure_breakdown.csv", "failure_breakdown.txt"):
-    check(f"{name} written", (run / name).exists())
+    check(f"{name} written", (tmp / name).exists())
 
+# 2. with the human decisions (2026-10-07): MT13 and MT15 are planner failures, not memory failures
+_, _, reviewed = labelled(fl.load_overrides())
+for qid in ("MT13", "MT15"):
+    check(f"{qid} after review -> planner_context_misuse (reviewed)",
+          reviewed.get(qid, {}).get("category") == "planner_context_misuse"
+          and reviewed[qid]["confidence"] == "reviewed")
+
+shutil.rmtree(tmp, ignore_errors=True)
 print("\nALL CHECKS PASSED" if ok else "\nSOME CHECKS FAILED")
 sys.exit(0 if ok else 1)

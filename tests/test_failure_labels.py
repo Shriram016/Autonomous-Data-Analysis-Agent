@@ -147,3 +147,17 @@ def test_earlier_filter_dropped_in_a_four_turn_case_is_context_loss_for_review_n
                   + [{"plan_tools": ["groupby_aggregate"], "status": "success"}])
     lbl = outcome(r)
     assert lbl["category"] == "context_loss" and lbl["confidence"] == "review"
+
+
+def test_override_can_relabel_a_review_case_as_planner_context_misuse():
+    r = rec("MT15", kind="multi", num_turns=4, turns=[{"plan_tools": [], "status": "success"}] * 4)
+    entries = fl.label_run([r], {"MT15": {"category": "planner_context_misuse", "note": "turns were in memory"}})
+    lbl = entries[0]["labels"][0]
+    assert lbl["category"] == "planner_context_misuse" and lbl["component"] == "Planner (LLM)"
+    assert lbl["confidence"] == "reviewed" and lbl["label"].startswith("Planner failure: ignored")
+
+
+def test_the_committed_overrides_file_is_valid():
+    ov = fl.load_overrides()
+    assert set(ov) >= {"MT13", "MT15"}
+    assert all(v["category"] in fl.CATEGORIES and v.get("note") for v in ov.values())

@@ -9,15 +9,12 @@ Planner: answered a query that should be refused               5  Planner (LLM) 
 Planner: missing filter                                        4  Planner (LLM)                 0/4  MT03, MT04, Q06, Q07
 Planner: refused an answerable query                           2  Planner (LLM)                 0/2  Q33, Q36
 Answer writer: number in the sentence is not in the table      2  Answer generator (LLM)        0/2  Q37, Q41
-Context: earlier turn not carried forward                      2  Session memory / planner      0/2  MT13, MT15
+Planner failure: ignored or misused earlier-turn info          2  Planner (LLM)                 0/2  MT13, MT15
 Planner: wrong step order                                      1  Planner (LLM)                 0/1  MT07
 Planner: superset result (extra rows)                          1  Planner (LLM)                 0/1  MT16
 ----------------------------------------------------------------------------------------------------
 'Caught' = an automatic production guardrail (critic, param fixer, replanner) reacted AND the case ended correct. Failures caught: 0/15. A guardrail reacted in 2 failed case(s) but did not save it.
 The answer-sentence label is found only by the eval's number check, which is not part of the production pipeline.
-
-NEEDS YOUR REVIEW (evidence not clear-cut; decide in eval/failure_label_overrides.json):
-  Context: earlier turn not carried forward: MT13, MT15
 
 REPAIRED OR TOUCHED BY A GUARDRAIL (not counted as failures unless also listed above):
   Q23: critic fired ['not_none'], param-fixer calls 1, replans 0 -> final result correct

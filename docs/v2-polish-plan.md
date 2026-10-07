@@ -1,6 +1,6 @@
 # V2 Polish Plan
 
-**Status (2026-10-06):** Part A ✅ done · Part B: B1a/B1b/B1c/B2 ✅ done, B3 moved to after Part M · Part M ✅ done (M1, M2, M4, M5; M3 skipped by decision). Part B ✅ done. Full-run harness ✅ ready. Baseline 63-query run ✅ done. Part C labelled (2 cases awaiting review). **Next: close Part C, then Part D (baseline experiment).** ✅ Rate limits resolved: key now shows Developer-plan limits (250K tokens/min, 500K requests/day, no daily token cap; verified 2026-10-06). Answer-generator 404 blocker ✅ resolved (M4). Then the full 63-query run once, C, D, E, F.
+**Status (2026-10-06):** Part A ✅ done · Part B: B1a/B1b/B1c/B2 ✅ done, B3 moved to after Part M · Part M ✅ done (M1, M2, M4, M5; M3 skipped by decision). Part B ✅ done. Full-run harness ✅ ready. Baseline 63-query run ✅ done. Part C ✅ done. **Next: Part D (baseline experiment).** ✅ Rate limits resolved: key now shows Developer-plan limits (250K tokens/min, 500K requests/day, no daily token cap; verified 2026-10-06). Answer-generator 404 blocker ✅ resolved (M4). Then the full 63-query run once, C, D, E, F.
 **Branch:** `version2`
 **Outcome:** a clean, honest, measured, tagged `v2.0` release that serves as the frozen baseline for V3.
 
@@ -21,7 +21,7 @@
 | B | B3 consistency check: 20 queries × 3 runs | ✅ | Done: 60 runs, 0 API errors; 12 reliable / 4 flaky / 4 broken; findings under Part B. The full 63-query run is separate (before Part C) |
 | B | Full-run harness (`eval/run_full_eval.py`) | ✅ | One command for all 63 cases; crash-safe records, manifest, preflight, resume. Ready for the real run |
 | B | Full 63-query baseline run | ✅ | `eval/results/full_2026_10_06_23_35_25/`: 48/63 right behaviour (76.2%), $0.029, 263 s, nothing lost |
-| C | Failure-cause breakdown | 🔄 | Labeller built and run on the baseline: 0/15 failures caught by a guardrail. 2 cases (MT13, MT15) awaiting your review |
+| C | Failure-cause breakdown | ✅ | Done: 15 failures labelled, 0/15 caught by a guardrail; 14 of 15 are planner failures. MT13 and MT15 reviewed (planner, not memory) |
 | D | Baseline experiment | ⬜ | Code-gen baseline + ablation, reuses the B3 runner |
 | E | Write-up (decisions, README, case study) | ⬜ | |
 | F | Tag `v2.0` | ⬜ | Then `v2.1` simple answer-hallucination fix |
@@ -286,7 +286,7 @@ Method: one tiny real call per model (plain text and JSON mode) on the user's ke
 
 ---
 
-## Part C — Failure-cause breakdown  🔄 (labelled; 2 cases await review)
+## Part C — Failure-cause breakdown  ✅ DONE
 
 *Why: this is bar item 2, and the most direct hit on "evaluation separated by failure type".*
 
@@ -316,19 +316,20 @@ up V3's semantic guardrails.
 | Planner: answered a query that should be refused | 5 | Planner (LLM) | 0/5 | Q41, Q42, Q43, Q45, Q46 |
 | Planner: missing filter | 4 | Planner (LLM) | 0/4 | Q06, Q07, MT03, MT04 |
 | Planner: refused an answerable query | 2 | Planner (LLM) | 0/2 | Q33, Q36 |
-| Context: earlier turn not carried forward (*review*) | 2 | Session memory / planner | 0/2 | MT13, MT15 |
+| Planner failure: ignored or misused earlier-turn info (*reviewed by user*) | 2 | Planner (LLM) | 0/2 | MT13, MT15 |
 | Planner: wrong step order | 1 | Planner (LLM) | 0/1 | MT07 |
 | Planner: superset result (extra rows) | 1 | Planner (LLM) | 0/1 | MT16 |
 | Answer writer: number in the sentence is not in the table (found by the eval's number check only) | 2 | Answer generator (LLM) | n/a (not in production) | Q37 (case passed), Q41 |
 | Infrastructure: API error | 0 | LLM provider | n/a | none |
 
-**Headline (measured, as the plan predicted):** of the 15 failed cases, **0 were caught by an automatic production guardrail**. 14 of the 15 are planner or context failures about meaning (what to filter, whether to answer, which turns matter), not structure. A guardrail reacted in only 2 failed cases (Q42: a tool error repaired by the param fixer, but the case should have been refused anyway; MT15: the critic fired 5 times, the param fixer 4 times and the replanner once, and the case still failed). Its only clean save was Q23 (a tool error fixed by the param fixer on the first try, final result correct). The only answer-writer problems are two small arithmetic slips (Q37 off by $1 on a difference, Q41 off by 2 cents on a total).
+**Headline (measured, as the plan predicted):** of the 15 failed cases, **0 were caught by an automatic production guardrail**. 14 of the 15 are planner failures about meaning (what to filter, whether to answer, how to use earlier turns), not structure; the 15th is none: a memory-limit ("context loss") failure was not observed in this run. A guardrail reacted in only 2 failed cases (Q42: a tool error repaired by the param fixer, but the case should have been refused anyway; MT15: the critic fired 5 times, the param fixer 4 times and the replanner once, and the case still failed). Its only clean save was Q23 (a tool error fixed by the param fixer on the first try, final result correct). The only answer-writer problems are two small arithmetic slips (Q37 off by $1 on a difference, Q41 off by 2 cents on a total).
 
 **How the labels were made.** Automatic, from the saved evidence only (expected behaviour, status, plan tools, result tables, trace, events, number check): missing filter = the question or an earlier SHORT turn names a filter and the final plan has none; superset = more rows than ground truth containing all of its values; wrong step order = a collapsing step runs before a filter and the tool errors on a missing column; the two refusal categories come from the expected behaviour; 4-turn failures that are not supersets are marked `review`. Decisions defaults used (you did not answer these): one category for "answered when it should refuse" with a note on whether the numbers matched the table; repaired tool errors (Q23, Q42, MT15) are listed separately and are not counted as failures. Human decisions go in `eval/failure_label_overrides.json` and always win.
 
-**Awaiting review (evidence not clear-cut):**
-- **MT13** (4 turns; plan `extract_date_part`, two filters, `aggregate_column`; result 17.7% off ground truth): the case notes say turn 1, the anchor, has dropped out of the 3-question window by turn 4. Context loss if the anchor was needed; otherwise a planner filter error.
-- **MT15** (4 turns): the planner counted orders per year (`Order ID_count`) over four years instead of summing sales over the three years discussed. All three referenced turns are still inside the 3-question window, so this looks like a planner synthesis error rather than a window problem, unless the metric was lost.
+**Reviewed by the user (2026-10-07), recorded in `eval/failure_label_overrides.json` (human decisions always win over the automatic label):**
+- **MT13** ("sales in 2014?", "What about 2015?", "Show me just the West region for that.", "And the East region?"): the correct answer is East-region sales in 2015 ($156,332). The planner filtered `Year == 2014`, the year from turn 1, and answered $128,680. It used the conversation but picked the wrong year, with the 2015 turn still in memory. Label: planner failure (misused earlier-turn info), not a memory limit.
+- **MT15** ("sales in 2017?", "2016?", "2015?", "show the 3 years we discussed in a table"): the correct answer is a sales table for 2015-2017. The planner ignored all three turns, which were inside the 3-question window, and counted orders per year for four years. Label: planner failure (ignored earlier-turn info).
+- *Consequence:* no failure in this run was caused by the 3-question memory window itself. The case notes' "anchor drops out of the window" claim for MT13 did not hold: the planner clearly still saw turn 1.
 
 ## Part D — Baseline experiment
 
@@ -485,4 +486,9 @@ trade-off is a stronger signal than claiming a win.
 - *Done:* `eval/failure_labels.py` labels every failed case (and every answer-sentence issue, even on passing cases) with a cause, the responsible component, a confidence level and whether a production guardrail caught it; writes `failure_labels.json`, `failure_breakdown.csv` and `failure_breakdown.txt` into the run folder; human decisions in `eval/failure_label_overrides.json` override the automatic label. Result table and headline under Part C.
 - *Found while building it:* my first rule called MT15 a "missing filter" because earlier turns used filters; the data showed it computed order counts for the wrong years instead. Rule changed so a dropped filter counts as a planner failure only in short conversations; 4-turn cases go to `review` as possible context loss.
 - *Verified by:* `tests/test_failure_labels.py` (16 tests on made-up records, one per rule plus overrides, guardrail logic, table and output files; 180 offline tests pass); `dev_checks/check_failure_labels.py` on the real baseline (every known case got its expected label; no failure was counted as caught).
+
+**2026-10-07 — Part C ✅ closed: MT13 and MT15 reviewed, labels final**
+- *Decision (user):* MT13 and MT15 are planner failures ("ignored or misused earlier-turn info"), not memory failures. Added the category `planner_context_misuse`, recorded both decisions in `eval/failure_label_overrides.json`, regenerated `failure_labels.json`, `failure_breakdown.csv` and `failure_breakdown.txt` in the baseline run folder.
+- *Also fixed:* `dev_checks/check_failure_labels.py` now works on a temporary copy of the records, so it can no longer overwrite the reviewed labels in the run folder; it checks both the automatic labels and the labels after the human decisions.
+- *Verified by:* 182 offline tests (new: override to `planner_context_misuse`, the committed overrides file is valid), the check script (all automatic labels as expected; both reviewed labels applied; run folder untouched).
 
