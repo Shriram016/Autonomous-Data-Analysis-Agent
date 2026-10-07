@@ -16,4 +16,4 @@ jobs:
           cache-dependency-path: requirements-dev.txt
       - run: pip install -r requirements-dev.txt
       - name: Run offline tests (no LLM, no API keys)
-        run: python -m pytest tests -q
+        run: python -m pytest tests llm_codegen_experiment/tests -q

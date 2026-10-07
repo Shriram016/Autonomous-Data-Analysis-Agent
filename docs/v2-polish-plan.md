@@ -1,6 +1,6 @@
 # V2 Polish Plan
 
-**Status (2026-10-06):** Part A ✅ done · Part B: B1a/B1b/B1c/B2 ✅ done, B3 moved to after Part M · Part M ✅ done (M1, M2, M4, M5; M3 skipped by decision). Part B ✅ done. Full-run harness ✅ ready. Baseline 63-query run ✅ done. Part C ✅ done. **Next: Part D (baseline experiment).** ✅ Rate limits resolved: key now shows Developer-plan limits (250K tokens/min, 500K requests/day, no daily token cap; verified 2026-10-06). Answer-generator 404 blocker ✅ resolved (M4). Then the full 63-query run once, C, D, E, F.
+**Status (2026-10-06):** Part A ✅ done · Part B: B1a/B1b/B1c/B2 ✅ done, B3 moved to after Part M · Part M ✅ done (M1, M2, M4, M5; M3 skipped by decision). Part B ✅ done. Full-run harness ✅ ready. Baseline 63-query run ✅ done. Part C ✅ done. Part D started (D1 built). **Next: D2 (ablation switch).** ✅ Rate limits resolved: key now shows Developer-plan limits (250K tokens/min, 500K requests/day, no daily token cap; verified 2026-10-06). Answer-generator 404 blocker ✅ resolved (M4). Then the full 63-query run once, C, D, E, F.
 **Branch:** `version2`
 **Outcome:** a clean, honest, measured, tagged `v2.0` release that serves as the frozen baseline for V3.
 
@@ -22,7 +22,7 @@
 | B | Full-run harness (`eval/run_full_eval.py`) | ✅ | One command for all 63 cases; crash-safe records, manifest, preflight, resume. Ready for the real run |
 | B | Full 63-query baseline run | ✅ | `eval/results/full_2026_10_06_23_35_25/`: 48/63 right behaviour (76.2%), $0.029, 263 s, nothing lost |
 | C | Failure-cause breakdown | ✅ | Done: 15 failures labelled, 0/15 caught by a guardrail; 14 of 15 are planner failures. MT13 and MT15 reviewed (planner, not memory) |
-| D | Baseline experiment | ⬜ | Code-gen baseline + ablation, reuses the B3 runner |
+| D | Baseline experiment (all code in `llm_codegen_experiment/`) | 🔄 | D1 code-writing baseline built and checked offline (no LLM calls yet). Next: D2 ablation, D3 real runs (cost gate), D4 write-up |
 | E | Write-up (decisions, README, case study) | ⬜ | |
 | F | Tag `v2.0` | ⬜ | Then `v2.1` simple answer-hallucination fix |
 
@@ -331,7 +331,7 @@ up V3's semantic guardrails.
 - **MT15** ("sales in 2017?", "2016?", "2015?", "show the 3 years we discussed in a table"): the correct answer is a sales table for 2015-2017. The planner ignored all three turns, which were inside the 3-question window, and counted orders per year for four years. Label: planner failure (ignored earlier-turn info).
 - *Consequence:* no failure in this run was caused by the 3-question memory window itself. The case notes' "anchor drops out of the window" claim for MT13 did not hold: the planner clearly still saw turn 1.
 
-## Part D — Baseline experiment
+## Part D — Baseline experiment  🔄
 
 *Why: this is bar item 3. It turns "I chose constrained tools" into "I measured it".*
 
@@ -342,6 +342,11 @@ Run the same 63 queries through:
 | **ADAA V2** | The current pipeline |
 | **Baseline 1: code generation** | One LLM call writes pandas code, run in a restricted sandbox (the common "chat with CSV" approach) |
 | **Ablation: V2 without critic and fixer** | Shows how much the critic and repair loop actually contribute |
+
+**Part D decisions and layout (2026-10-07).**
+- Three systems on the same 63 queries: ADAA V2 (done: baseline run), the LLM-writes-pandas baseline, and V2 without the critic and fixer. Same model (`gpt-oss-20b`) for a fair comparison; the 10 compound cases (Q38-Q47) are not scored head-to-head (the baseline cannot refuse): the 53 answerable cases are compared and the 10 are reported as behaviour only; multi-turn gets the last 3 earlier questions as text like ADAA; 3 runs of each system on all 63; a small safety demo with about 5 adversarial prompts.
+- **Everything for this experiment lives in one folder, `llm_codegen_experiment/`** (user decision): the baseline code, its pytest tests (`llm_codegen_experiment/tests/`, run by CI together with `tests/`), its check scripts (`llm_codegen_experiment/checks/`, instead of `dev_checks/`) and its results (`llm_codegen_experiment/results/`). The only code outside it is a tiny generic hook in the existing eval harness (a `pipeline_fn` parameter so a different pipeline can be run), with nothing experiment-specific.
+- The baseline is deliberately simple: ONE LLM call writes pandas code (same schema and same model settings as the ADAA planner), a static AST safety check, then a restricted subprocess with a 30 s timeout; no retry, no critic, no answer-writing step. **Security note for the write-up:** this is a restricted `exec`, adequate for an experiment on a public dataset we run ourselves, NOT safe for untrusted users (no memory limit on Windows; Python introspection escapes cannot be ruled out). That gap is exactly what ADAA's fixed tools avoid.
 
 **Compare:** accuracy, failure categories, latency, tokens and cost, and safety (code execution
 or not).
@@ -491,4 +496,8 @@ trade-off is a stronger signal than claiming a win.
 - *Decision (user):* MT13 and MT15 are planner failures ("ignored or misused earlier-turn info"), not memory failures. Added the category `planner_context_misuse`, recorded both decisions in `eval/failure_label_overrides.json`, regenerated `failure_labels.json`, `failure_breakdown.csv` and `failure_breakdown.txt` in the baseline run folder.
 - *Also fixed:* `dev_checks/check_failure_labels.py` now works on a temporary copy of the records, so it can no longer overwrite the reviewed labels in the run folder; it checks both the automatic labels and the labels after the human decisions.
 - *Verified by:* 182 offline tests (new: override to `planner_context_misuse`, the committed overrides file is valid), the check script (all automatic labels as expected; both reviewed labels applied; run folder untouched).
+
+**2026-10-07 — Part D, D1 ✅ code-writing baseline built (`llm_codegen_experiment/`), not yet run on real queries**
+- *Done:* `llm_codegen_experiment/codegen_baseline.py`: prompt (same condensed schema and last-3 earlier questions as the ADAA planner), one LLM call with the planner's model and settings (recorded in the same `llm_calls` log), code extraction, static safety check (rejects imports, classes, dunder or underscore attributes, `eval`/`exec`/`open`/`getattr`/`type`, file read/write and `.query`/`.eval` calls, `os`/`sys`/`io` style module access), a restricted subprocess (whitelisted builtins, only `pd`, `np`, `df` in scope, 30 s timeout), result normalisation, and `run_codegen()` returning a pipeline-shaped dict so the existing eval harness can drive it (the generated code is kept in the record as a `generated_code` step). All experiment code, tests and checks were put in one folder at the user's request.
+- *Verified by:* `llm_codegen_experiment/tests/test_codegen_baseline.py` (41 offline tests incl. 23 attack snippets, an endless loop, no file written, caller's data untouched, prompt window, LLM failure; 223 offline tests pass in total, CI runs both test folders) and `llm_codegen_experiment/checks/check_codegen_baseline.py` (12 hostile snippets through the real sandbox: all blocked or timed out, no file left behind). No LLM calls made. A 3-query live sanity run is available as `--live` (about $0.001), awaiting the user's OK.
 
