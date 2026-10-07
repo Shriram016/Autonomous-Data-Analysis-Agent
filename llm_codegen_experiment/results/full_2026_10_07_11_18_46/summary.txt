@@ -1,0 +1,57 @@
+==============================================================================
+CODEGEN FULL EVAL SUMMARY
+==============================================================================
+Run        : full_2026_10_07_11_18_46  (status: complete)
+Code       : e9bfcc8d6c on version2  (+1 uncommitted file(s))
+Models     : openai/gpt-oss-20b writes the code (one call per question; no planner, critic, fixer or answer writer)
+Repeats    : 1
+
+PASS RATE (right behaviour: correct table, or a correct refusal where no answer exists)
+  All cases                       : 36/63 (57.1%)
+  Single-turn, answer expected    : 20/37 (54.1%)
+  Single-turn, refusal expected   : 2/10 (20.0%)
+  Multi-turn                      : 14/16 (87.5%)
+
+FAILURES BY KIND (27)
+  wrong_result                    18
+  answered_instead_of_refusing    8
+  pipeline_error                  1
+    Q11: wrong_result
+    Q12: wrong_result
+    Q13: wrong_result
+    Q14: wrong_result
+    Q15: wrong_result
+    Q17: wrong_result
+    Q18: wrong_result
+    Q22: pipeline_error
+    Q25: wrong_result
+    Q27: wrong_result
+    Q28: wrong_result
+    Q31: wrong_result
+    Q32: wrong_result
+    Q33: wrong_result
+    Q34: wrong_result
+    Q35: wrong_result
+    Q37: wrong_result
+    Q38: answered_instead_of_refusing
+    Q40: answered_instead_of_refusing
+    Q41: answered_instead_of_refusing
+    Q42: answered_instead_of_refusing
+    Q43: answered_instead_of_refusing
+    Q45: answered_instead_of_refusing
+    Q46: answered_instead_of_refusing
+    Q47: answered_instead_of_refusing
+    MT09: wrong_result
+    MT14: wrong_result
+
+ANSWER NUMBER CHECK (are the answer's numbers in the result table?)
+  n/a: 63
+  answers that were the non-LLM fallback: 0
+
+REPAIR ACTIVITY
+  critic failures: 0   param-fixer calls: 0 (changed params: 0)   replans: 0
+
+COST AND TIME
+  LLM calls: 93   input tokens: 84,528   output tokens: 6,896
+  cost: $0.0084 total, $0.00013 per case (prices as of 2026-10-06)
+  time: 159s total, 2.5s per case

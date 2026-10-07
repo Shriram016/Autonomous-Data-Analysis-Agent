@@ -1,0 +1,120 @@
+{
+  "run_id": "full_2026_10_07_11_18_46",
+  "started_at": "2026-10-07T11:18:47",
+  "command": [
+    "llm_codegen_experiment/run_experiment.py",
+    "--yes",
+    "--repeats",
+    "1"
+  ],
+  "repeats": 1,
+  "only": "both",
+  "turn_delay_s": 0.0,
+  "git": {
+    "commit": "e9bfcc8d6c8f460db99fd4c63d858c758650e97c",
+    "branch": "version2",
+    "uncommitted_tracked_files": [
+      ".claude/settings.local.json"
+    ]
+  },
+  "python": "3.13.3",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "settings": {
+    "PLANNER_MODEL": "openai/gpt-oss-20b",
+    "PLANNER_TEMPERATURE": 0.0,
+    "PLANNER_MAX_TOKENS": 2048,
+    "PARAM_FIXER_MODEL": "openai/gpt-oss-20b",
+    "PARAM_FIXER_TEMPERATURE": 0.0,
+    "PARAM_FIXER_MAX_TOKENS": 2048,
+    "REPLANNER_MODEL": "openai/gpt-oss-20b",
+    "REPLANNER_TEMPERATURE": 0.0,
+    "REPLANNER_MAX_TOKENS": 2048,
+    "ANSWER_MODEL": "openai/gpt-oss-20b",
+    "MAX_RETRIES_PER_STEP": 2
+  },
+  "code_hashes": {
+    "src/core/planner.py": "8c0f042548a5150b",
+    "src/core/param_fixer.py": "376aacc5ecc7dd33",
+    "src/core/replanner.py": "a2b4f061123734e1",
+    "src/core/answer_generator.py": "4e47b41a9bf2f25d",
+    "src/core/nodes.py": "8e63cd27d057d093",
+    "src/core/graph.py": "77d4658819461b89",
+    "src/critics/rule_based_critic.py": "29ca0732a29450d5",
+    "src/config.py": "c5dad32493b61e26",
+    "src/prompts/__init__.py": "e3b0c44298fc1c14",
+    "src/prompts/param_fixer_prompt.py": "f5157c3cb0649b27",
+    "src/prompts/planner_prompt.py": "8e5920747a4e29d5",
+    "src/prompts/replanner_prompt.py": "92abca50f910e4f2"
+  },
+  "dataset": {
+    "path": "data\\Sample - Superstore.csv",
+    "sha256": "58fb59c63089e564d835e4aabe19d371757de1137a5bf1888243ae386c4b7a97"
+  },
+  "prices": {
+    "as_of": "2026-10-06",
+    "usd_per_1m_tokens_in_out_verified": {
+      "openai/gpt-oss-20b": [
+        0.075,
+        0.3,
+        true
+      ],
+      "llama-3.1-8b-instant": [
+        0.05,
+        0.08,
+        false
+      ]
+    }
+  },
+  "plan": {
+    "single_cases": 47,
+    "multi_cases": 16,
+    "runs_expected": 63
+  },
+  "preflight": [
+    {
+      "check": "dataset present",
+      "ok": true,
+      "detail": "E:\\AI Agent Project\\data\\Sample - Superstore.csv"
+    },
+    {
+      "check": "results folder writable",
+      "ok": true,
+      "detail": "E:\\AI Agent Project\\llm_codegen_experiment\\results"
+    },
+    {
+      "check": "code version recorded",
+      "ok": true,
+      "detail": "e9bfcc8d6c, 1 uncommitted file(s)"
+    },
+    {
+      "check": "LLM reachable",
+      "ok": true,
+      "detail": "models reachable: openai/gpt-oss-20b"
+    }
+  ],
+  "events": [
+    {
+      "rebuilt_at": "2026-10-07T11:21:28",
+      "note": "derived fields (answer_is_fallback, answer_check) recomputed from raw evidence with the current checks; no LLM calls"
+    }
+  ],
+  "status": "complete",
+  "wall_clock_s": 161.5,
+  "finished_at": "2026-10-07T11:21:28",
+  "totals": {
+    "records": 63,
+    "passed": 36,
+    "lost_to_api_errors": 0,
+    "missing": 0,
+    "cost_usd": 0.008406
+  },
+  "system": "codegen",
+  "codegen": {
+    "version": "2026-10-07-v2",
+    "history_window": 3,
+    "sandbox_timeout_s": 30.0,
+    "code_sha256_16": "72d5ca48e37e0fde",
+    "system_prompt_sha256_16": "b69fa7dfec8868ae",
+    "note": "one LLM call writes pandas code (planner's model and settings), static check, restricted subprocess; no retry, no critic, no answer-writing step"
+  }
+}
