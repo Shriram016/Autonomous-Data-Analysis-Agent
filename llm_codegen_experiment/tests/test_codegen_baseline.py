@@ -47,7 +47,7 @@ def test_extract_code_takes_the_first_fenced_block_or_the_whole_reply():
     ("np.load('a.npy')", "'load'"),
     ("np.lib.npyio", "'lib'"),
     ("pd.io.common", "'io'"),
-    ("df.query('Sales > 1')", "'query'"),
+    ("df.query('@x')", "'query'"),
     ("pd.eval('1')", "'eval'"),
     ("vars(df)", "'vars'"),
     ("type(df)", "'type'"),
@@ -175,3 +175,36 @@ def test_single_turn_calls_without_a_session_keep_no_history(fake_llm):
     cb.run_codegen("a")
     cb.run_codegen("b")
     assert "Previous questions" not in prompts[1] and cb._HISTORY == {}
+
+
+# ---------------------------------------------------------------- df.query: allowed only for plainly safe strings
+@pytest.mark.parametrize("code", [
+    "result = df.query(\"Category == 'A' and Sales > 1\")",
+    "result = df.query('`Order Date` >= \"2024-01-01\"')",
+    "result = df.query('Sales in (1.0, 4.0)')",
+    "result = df.query('not (Sales > 3) or Category == \"B\"')",
+    "result = df.select_dtypes(include=object)",
+])
+def test_safe_query_strings_and_object_dtype_are_allowed(code):
+    assert cb.check_code(code) is None
+
+
+@pytest.mark.parametrize("code", [
+    "df.query('@x')",                              # variable access
+    "df.query('Sales.abs() > 1')",                 # method access
+    "df.query('abs(Sales) > 1')",                  # function call
+    "df.query(\"__import__('os')\")",              # dunder
+    "df.query(q)",                                 # not a literal string
+    "df.query('Sales > 1', engine='python')",      # extra arguments
+    "f = df.query",                                # query used without a plain call
+    "df.eval('Sales + 1')",                        # eval stays blocked
+    "pd.eval('1 + 1')",
+])
+def test_unsafe_query_forms_and_eval_stay_blocked(code):
+    reason = cb.check_code(code)
+    assert reason and ("'query'" in reason or "'eval'" in reason or "__" in reason or "name" in reason)
+
+
+def test_an_allowed_query_really_runs_in_the_sandbox(df):
+    r = cb.run_sandboxed("result = df.query(\"Category == 'A' and Sales > 1\")", df)
+    assert r["status"] == "ok" and r["result"]["Sales"].tolist() == [2.0]

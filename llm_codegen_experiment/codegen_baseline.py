@@ -61,7 +61,7 @@ SANDBOX_TIMEOUT_S = 30.0
 _DENY_NAMES = {
     "exec", "eval", "compile", "open", "input", "__import__", "globals", "locals", "vars",
     "getattr", "setattr", "delattr", "breakpoint", "help", "exit", "quit", "memoryview",
-    "type", "super", "object", "classmethod", "staticmethod", "property",
+    "type", "super", "classmethod", "staticmethod", "property",
 }
 _DENY_ATTRS = {
     # file / network input and output
@@ -82,12 +82,46 @@ _DENY_NODES = (ast.Import, ast.ImportFrom, ast.ClassDef, ast.Global, ast.Nonloca
                ast.AsyncFunctionDef, ast.Await, ast.AsyncFor, ast.AsyncWith)
 
 
+_QUERY_CHARS = re.compile(r"^[\w\s<>=!&|()~,.+\-*/%\[\]]*$")
+
+
+def safe_query_string(expr: str) -> bool:
+    """
+    `df.query("...")` evaluates its string, so it is only allowed when the string is plainly safe:
+    column names (also in backticks), quoted values, numbers, comparison and boolean operators.
+    No `@` variable access, no dunder names, no attribute/method access, no function calls.
+    """
+    s = re.sub(r"`[^`]*`", " COL ", expr)                     # backticked column names
+    s = re.sub(r"'[^']*'|\"[^\"]*\"", " STR ", s)            # quoted values are data, not code
+    if "@" in s or "__" in s:
+        return False
+    if re.search(r"\.\s*[A-Za-z_]", s):                       # Sales.abs(), a.b
+        return False
+    s = re.sub(r"\b(and|or|not|in)\b", " ~ ", s)             # keywords may be followed by "(" ("~" stops "Year in (" looking like a call)
+    if re.search(r"\w\s*\(", s):                             # a function call such as abs(x)
+        return False
+    return bool(_QUERY_CHARS.match(s))
+
+
+def _approved_query_calls(tree: ast.AST) -> set:
+    """Attribute nodes of `x.query("<safe literal>")` calls with no extra arguments."""
+    approved = set()
+    for node in ast.walk(tree):
+        if (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == "query"
+                and len(node.args) == 1 and not node.keywords
+                and isinstance(node.args[0], ast.Constant) and isinstance(node.args[0].value, str)
+                and safe_query_string(node.args[0].value)):
+            approved.add(id(node.func))
+    return approved
+
+
 def check_code(code: str) -> Optional[str]:
     """Return a reason string if the code must not be run, or None if it passes the static check."""
     try:
         tree = ast.parse(code)
     except SyntaxError as e:
         return f"syntax error: {e.msg} (line {e.lineno})"
+    approved_query = _approved_query_calls(tree)
     for node in ast.walk(tree):
         if isinstance(node, _DENY_NODES):
             return f"not allowed: {type(node).__name__}"
@@ -96,7 +130,7 @@ def check_code(code: str) -> Optional[str]:
         if isinstance(node, ast.Attribute):
             if node.attr.startswith("_"):
                 return f"not allowed: attribute '{node.attr}' (private or dunder)"
-            if node.attr in _DENY_ATTRS:
+            if node.attr in _DENY_ATTRS and id(node) not in approved_query:
                 return f"not allowed: attribute '{node.attr}'"
     return None
 

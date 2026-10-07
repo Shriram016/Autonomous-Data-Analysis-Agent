@@ -50,7 +50,7 @@ from eval.test_cases2 import TEST_CASES_2                             # noqa: E4
 from eval.test_cases3 import TEST_CASES_3                             # noqa: E402
 from eval.pricing import PRICES, PRICES_AS_OF                         # noqa: E402
 from eval.answer_check import check_answer                            # noqa: E402
-from eval.metrics import is_answer_fallback                           # noqa: E402
+from eval.metrics import is_answer_fallback, llm_usage_summary        # noqa: E402
 from eval.stability import _is_infra_failure, compute_stability, render_report  # noqa: E402
 
 _RESULTS_DIR = os.path.join(_EVAL_DIR, "results")
@@ -214,6 +214,7 @@ def recompute_derived(rec: Dict[str, Any]) -> Dict[str, Any]:
     fix to the checks never needs a new (paid) run. The raw evidence itself is never changed.
     """
     calls = rec.get("llm_calls") or []
+    rec.update(llm_usage_summary(calls))   # token / cost / latency totals come from the call log (older skipped records lacked them)
     rec["answer_is_fallback"] = is_answer_fallback(calls)
     data = rec.get("pipeline_data")
     res = check_answer(

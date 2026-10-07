@@ -123,3 +123,14 @@ def test_refusal_is_not_a_fallback_answer():
     assert is_answer_fallback(planner_only) is False
     attempted_but_failed = planner_only + [dict(CALLS[1], error="NotFoundError", total_tokens=None)]
     assert is_answer_fallback(attempted_but_failed) is True
+
+
+def test_a_skipped_multiturn_case_still_carries_its_token_and_cost_totals(monkeypatch):
+    """A context turn that errors skips the case; its LLM calls were still paid for and must be counted."""
+    def failing_pipeline(query, session_id=None):
+        return {"status": "error", "message": "boom", "final_df": None, "plan": [], "llm_calls": fresh_calls()}
+
+    monkeypatch.setattr(mt_mod, "run_pipeline", failing_pipeline)
+    (rec,) = mt_mod.run_multiturn_eval(verbose=False, ids=["MT03"], turn_delay=0)
+    assert rec["outcome"] == "skipped"
+    assert rec["input_tokens"] == 2300 and rec["output_tokens"] == 180 and rec["cost_usd"] > 0

@@ -1,0 +1,202 @@
+==============================================================================
+CODEGEN FULL EVAL SUMMARY
+==============================================================================
+Run        : full_2026_10_07_10_54_12  (status: complete)
+Code       : a9a0b4e8a1 on version2  (+1 uncommitted file(s))
+Models     : openai/gpt-oss-20b writes the code (one call per question; no planner, critic, fixer or answer writer)
+Repeats    : 3
+
+PASS RATE (right behaviour: correct table, or a correct refusal where no answer exists)
+  All cases                       : 102/189 (54.0%)
+  Single-turn, answer expected    : 63/111 (56.8%)
+  Single-turn, refusal expected   : 0/30 (0.0%)
+  Multi-turn                      : 39/48 (81.2%)
+
+FAILURES BY KIND (87)
+  wrong_result                    54
+  answered_instead_of_refusing    30
+  skipped_context_turn            3
+    Q11 r1: wrong_result
+    Q12 r1: wrong_result
+    Q13 r1: wrong_result
+    Q14 r1: wrong_result
+    Q15 r1: wrong_result
+    Q17 r1: wrong_result
+    Q18 r1: wrong_result
+    Q20 r1: wrong_result
+    Q25 r1: wrong_result
+    Q27 r1: wrong_result
+    Q28 r1: wrong_result
+    Q32 r1: wrong_result
+    Q33 r1: wrong_result
+    Q34 r1: wrong_result
+    Q35 r1: wrong_result
+    Q37 r1: wrong_result
+    Q38 r1: answered_instead_of_refusing
+    Q39 r1: answered_instead_of_refusing
+    Q40 r1: answered_instead_of_refusing
+    Q41 r1: answered_instead_of_refusing
+    Q42 r1: answered_instead_of_refusing
+    Q43 r1: answered_instead_of_refusing
+    Q44 r1: answered_instead_of_refusing
+    Q45 r1: answered_instead_of_refusing
+    Q46 r1: answered_instead_of_refusing
+    Q47 r1: answered_instead_of_refusing
+    Q11 r2: wrong_result
+    Q12 r2: wrong_result
+    Q13 r2: wrong_result
+    Q14 r2: wrong_result
+    Q15 r2: wrong_result
+    Q17 r2: wrong_result
+    Q18 r2: wrong_result
+    Q20 r2: wrong_result
+    Q25 r2: wrong_result
+    Q27 r2: wrong_result
+    Q28 r2: wrong_result
+    Q32 r2: wrong_result
+    Q33 r2: wrong_result
+    Q34 r2: wrong_result
+    Q35 r2: wrong_result
+    Q37 r2: wrong_result
+    Q38 r2: answered_instead_of_refusing
+    Q39 r2: answered_instead_of_refusing
+    Q40 r2: answered_instead_of_refusing
+    Q41 r2: answered_instead_of_refusing
+    Q42 r2: answered_instead_of_refusing
+    Q43 r2: answered_instead_of_refusing
+    Q44 r2: answered_instead_of_refusing
+    Q45 r2: answered_instead_of_refusing
+    Q46 r2: answered_instead_of_refusing
+    Q47 r2: answered_instead_of_refusing
+    Q11 r3: wrong_result
+    Q12 r3: wrong_result
+    Q13 r3: wrong_result
+    Q14 r3: wrong_result
+    Q15 r3: wrong_result
+    Q17 r3: wrong_result
+    Q18 r3: wrong_result
+    Q20 r3: wrong_result
+    Q25 r3: wrong_result
+    Q27 r3: wrong_result
+    Q28 r3: wrong_result
+    Q32 r3: wrong_result
+    Q33 r3: wrong_result
+    Q34 r3: wrong_result
+    Q35 r3: wrong_result
+    Q37 r3: wrong_result
+    Q38 r3: answered_instead_of_refusing
+    Q39 r3: answered_instead_of_refusing
+    Q40 r3: answered_instead_of_refusing
+    Q41 r3: answered_instead_of_refusing
+    Q42 r3: answered_instead_of_refusing
+    Q43 r3: answered_instead_of_refusing
+    Q44 r3: answered_instead_of_refusing
+    Q45 r3: answered_instead_of_refusing
+    Q46 r3: answered_instead_of_refusing
+    Q47 r3: answered_instead_of_refusing
+    MT13 r1: skipped_context_turn
+    MT14 r1: wrong_result
+    MT16 r1: wrong_result
+    MT13 r2: skipped_context_turn
+    MT14 r2: wrong_result
+    MT16 r2: wrong_result
+    MT13 r3: skipped_context_turn
+    MT14 r3: wrong_result
+    MT16 r3: wrong_result
+
+ANSWER NUMBER CHECK (are the answer's numbers in the result table?)
+  n/a: 189
+  answers that were the non-LLM fallback: 0
+
+REPAIR ACTIVITY
+  critic failures: 0   param-fixer calls: 0 (changed params: 0)   replans: 0
+
+COST AND TIME
+  LLM calls: 267   input tokens: 225,714   output tokens: 19,876
+  cost: $0.0229 total, $0.00012 per case (prices as of 2026-10-06)
+  time: 445s total, 2.4s per case
+
+==============================================================================
+ADAA Stability Report
+==============================================================================
+63 queries, 189 runs, repeats observed: [1, 2, 3]
+
+id      pass  status     plan same  table same  numbers same  B2 check                 cost $
+------------------------------------------------------------------------------
+MT01  3/3     reliable   yes        yes         n/a           n/a:3                   0.00016
+MT02  3/3     reliable   yes        yes         n/a           n/a:3                   0.00024
+MT03  3/3     reliable   yes        yes         n/a           n/a:3                   0.00015
+MT04  3/3     reliable   yes        yes         n/a           n/a:3                   0.00023
+MT05  3/3     reliable   yes        yes         n/a           n/a:3                   0.00015
+MT06  3/3     reliable   yes        yes         n/a           n/a:3                   0.00023
+MT07  3/3     reliable   yes        yes         n/a           n/a:3                   0.00015
+MT08  3/3     reliable   yes        yes         n/a           n/a:3                   0.00023
+MT09  3/3     reliable   yes        yes         n/a           n/a:3                   0.00017
+MT10  3/3     reliable   yes        yes         n/a           n/a:3                   0.00026
+MT11  3/3     reliable   yes        yes         n/a           n/a:3                   0.00017
+MT12  3/3     reliable   yes        yes         n/a           n/a:3                   0.00026
+MT13  0/3     broken     n/a        n/a         n/a           n/a:3                   0.00000  [same failure each time]
+MT14  0/3     broken     yes        yes         n/a           n/a:3                   0.00033  [same failure each time]
+MT15  3/3     reliable   yes        yes         n/a           n/a:3                   0.00034
+MT16  0/3     broken     yes        yes         n/a           n/a:3                   0.00031  [same failure each time]
+Q01   3/3     reliable   yes        yes         n/a           n/a:3                   0.00007
+Q02   3/3     reliable   yes        yes         n/a           n/a:3                   0.00007
+Q03   3/3     reliable   yes        yes         n/a           n/a:3                   0.00007
+Q04   3/3     reliable   yes        yes         n/a           n/a:3                   0.00007
+Q05   3/3     reliable   yes        yes         n/a           n/a:3                   0.00008
+Q06   3/3     reliable   yes        yes         n/a           n/a:3                   0.00007
+Q07   3/3     reliable   yes        yes         n/a           n/a:3                   0.00007
+Q08   3/3     reliable   yes        yes         n/a           n/a:3                   0.00008
+Q09   3/3     reliable   yes        yes         n/a           n/a:3                   0.00008
+Q10   3/3     reliable   yes        yes         n/a           n/a:3                   0.00008
+Q11   0/3     broken     yes        yes         n/a           n/a:3                   0.00008  [same failure each time]
+Q12   0/3     broken     yes        yes         n/a           n/a:3                   0.00009  [same failure each time]
+Q13   0/3     broken     NO         yes         n/a           n/a:3                   0.00008  [same failure each time]
+Q14   0/3     broken     yes        yes         n/a           n/a:3                   0.00009  [same failure each time]
+Q15   0/3     broken     NO         NO          n/a           n/a:3                   0.00007  [failure differs]
+Q16   3/3     reliable   NO         yes         n/a           n/a:3                   0.00008
+Q17   0/3     broken     yes        yes         n/a           n/a:3                   0.00010  [same failure each time]
+Q18   0/3     broken     yes        yes         n/a           n/a:3                   0.00009  [same failure each time]
+Q19   3/3     reliable   yes        yes         n/a           n/a:3                   0.00009
+Q20   0/3     broken     yes        yes         n/a           n/a:3                   0.00008  [same failure each time]
+Q21   3/3     reliable   yes        yes         n/a           n/a:3                   0.00008
+Q22   3/3     reliable   yes        yes         n/a           n/a:3                   0.00008
+Q23   3/3     reliable   yes        yes         n/a           n/a:3                   0.00009
+Q24   3/3     reliable   yes        yes         n/a           n/a:3                   0.00008
+Q25   0/3     broken     yes        yes         n/a           n/a:3                   0.00009  [same failure each time]
+Q26   3/3     reliable   yes        yes         n/a           n/a:3                   0.00008
+Q27   0/3     broken     NO         NO          n/a           n/a:3                   0.00009  [failure differs]
+Q28   0/3     broken     yes        yes         n/a           n/a:3                   0.00009  [same failure each time]
+Q29   3/3     reliable   yes        yes         n/a           n/a:3                   0.00009
+Q30   3/3     reliable   yes        yes         n/a           n/a:3                   0.00010
+Q31   3/3     reliable   yes        yes         n/a           n/a:3                   0.00009
+Q32   0/3     broken     yes        yes         n/a           n/a:3                   0.00010  [same failure each time]
+Q33   0/3     broken     yes        yes         n/a           n/a:3                   0.00009  [same failure each time]
+Q34   0/3     broken     NO         NO          n/a           n/a:3                   0.00012  [same failure each time]
+Q35   0/3     broken     yes        yes         n/a           n/a:3                   0.00009  [same failure each time]
+Q36   3/3     reliable   yes        yes         n/a           n/a:3                   0.00010
+Q37   0/3     broken     yes        yes         n/a           n/a:3                   0.00007  [same failure each time]
+Q38   0/3     broken     NO         yes         n/a           n/a:3                   0.00008  [correct = refuse]  [same failure each time]
+Q39   0/3     broken     NO         NO          n/a           n/a:3                   0.00009  [correct = refuse]  [same failure each time]
+Q40   0/3     broken     yes        yes         n/a           n/a:3                   0.00009  [correct = refuse]  [same failure each time]
+Q41   0/3     broken     NO         NO          n/a           n/a:3                   0.00016  [correct = refuse]  [same failure each time]
+Q42   0/3     broken     NO         n/a         n/a           n/a:3                   0.00014  [correct = refuse]  [failure differs]
+Q43   0/3     broken     yes        yes         n/a           n/a:3                   0.00008  [correct = refuse]  [same failure each time]
+Q44   0/3     broken     yes        n/a         n/a           n/a:3                   0.00012  [correct = refuse]  [same failure each time]
+Q45   0/3     broken     yes        yes         n/a           n/a:3                   0.00010  [correct = refuse]  [same failure each time]
+Q46   0/3     broken     yes        yes         n/a           n/a:3                   0.00011  [correct = refuse]  [same failure each time]
+Q47   0/3     broken     yes        yes         n/a           n/a:3                   0.00012  [correct = refuse]  [same failure each time]
+------------------------------------------------------------------------------
+Accuracy per repeat : {1: 0.5397, 2: 0.5397, 3: 0.5397}
+Accuracy            : mean 54.0%, range 54.0% to 54.0%, std 0.0%
+Queries             : 34 reliable, 0 flaky, 29 broken, 0 lost to API errors
+Failed runs caused by API errors (not agent weakness): 0
+Identical plan across runs: 85% of queries
+Average per run     : $0.00012, 2.4s total, 0.4s in LLM calls
+
+Notes: 'n/a' means there was nothing to compare (e.g. multi-turn records do not save the result table).
+Plans are compared ignoring column names the plan invents (e.g. Order Month vs OrderMonth); tables are
+compared by their cell values, ignoring column names and column order.
+Answer wording is ignored; only the numbers in the answer text are compared (list numbering ignored,
+rounded to 3 significant digits, and an answer that adds extra numbers still counts as consistent).
+'[correct = refuse]': no ground truth exists for this query; the right behaviour is to answer 'unsolvable'.

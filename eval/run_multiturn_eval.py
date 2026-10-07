@@ -140,6 +140,7 @@ def _run_case(
             "passed": False,
             "session_id": session_id,
             "turns": turn_log,
+            **llm_usage_summary(all_llm_calls),
             "llm_calls": all_llm_calls,
             "pipeline_status": None,
             "value_match": None,

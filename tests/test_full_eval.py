@@ -247,3 +247,11 @@ def test_rebuild_recomputes_derived_fields_without_any_llm_call(fake, tmp_path, 
     raw = {r["id"]: r for r in rfe.load_jsonl(str(path))}
     assert raw["Q41"]["answer_is_fallback"] is True and raw["Q01"]["answer_check"] == "fail"
     capsys.readouterr()
+
+
+def test_recompute_derived_fills_usage_totals_for_old_skipped_records():
+    rec = {"kind": "multi", "id": "MT07", "outcome": "skipped", "final_query": "q", "answer": None,
+           "pipeline_data": None, "llm_calls": [dict(PLANNER), dict(ANSWER)]}   # no token/cost fields, like old runs
+    out = rfe.recompute_derived(rec)
+    assert (out["input_tokens"], out["output_tokens"], out["llm_call_count"]) == (2300, 180, 2)
+    assert out["cost_usd"] > 0
