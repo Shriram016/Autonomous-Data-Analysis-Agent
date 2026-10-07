@@ -504,3 +504,8 @@ trade-off is a stronger signal than claiming a win.
 
 **2026-10-07 — D2 (ablation) skipped; `llm_codegen_experiment/` is for the code-generation experiment only.** Reason: the ablation measures ADAA's own repair loop, which the baseline run already shows (1 of 63 saved), and it is not part of the code-generation comparison. Folder description and Part D text updated; no code involved.
 
+**2026-10-07 — D3 steps 1-2 ✅ runner built, 3-question live check done**
+- *Done:* `llm_codegen_experiment/run_experiment.py` runs the code-writing system through the existing full-eval harness (swaps the pipeline function, restores it afterwards; same records, ground-truth scoring, crash-safe saving, manifest, `--dry-run`, `--resume`; results in `llm_codegen_experiment/results/`; manifest stamped `system: codegen` with code and prompt hashes). Live check on Q01, Q06, Q11 (about $0.0002 total): all three sandbox runs succeeded; Q01 and Q06 match ground truth; about 838 input / 27-70 output tokens, about $0.00007 per query (ADAA: about $0.00046).
+- *Finding:* Q11's code is correct (top 5 states by sales, identical values to ground truth) but the harness marks it wrong, because the `ordered` comparison also requires the column name (`Sales_sum`, the name ADAA's tools produce) and the model wrote `Sales`. Left as is for the real run; the comparison step must re-score both systems ignoring column names (values and order still checked), and report both strict and name-insensitive scores. Applies to the `ordered` cases (Q11-Q15, Q25 and some multi-turn).
+- *Verified by:* `llm_codegen_experiment/tests/test_run_experiment.py` (5 tests; pipeline restored even on a crash), a real `--dry-run`, the live check.
+
