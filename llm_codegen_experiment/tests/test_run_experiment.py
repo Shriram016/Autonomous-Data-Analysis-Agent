@@ -80,3 +80,14 @@ def test_default_results_folder_is_inside_the_experiment_folder(fake_codegen, tm
     assert (tmp_path / "default_res").exists()
     assert rx.RESULTS_DIR.endswith("default_res") and "llm_codegen_experiment" in rx.__file__
     capsys.readouterr()
+
+
+def test_summary_is_labelled_as_the_codegen_system(fake_codegen, tmp_path, capsys):
+    out = tmp_path / "res"
+    rx.main(["--yes", "--out-dir", str(out), "--only", "single", "--ids", "Q01"])
+    run = next(out.iterdir())
+    text = (run / "summary.txt").read_text(encoding="utf-8")
+    assert "CODEGEN FULL EVAL SUMMARY" in text and "writes the code" in text and "ADAA FULL" not in text
+    assert json.loads((run / "manifest.json").read_text(encoding="utf-8"))["system"] == "codegen"
+    assert json.loads((run / "results.json").read_text(encoding="utf-8"))["manifest"]["system"] == "codegen"
+    capsys.readouterr()

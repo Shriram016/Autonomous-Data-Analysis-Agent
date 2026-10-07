@@ -84,7 +84,10 @@ def main(argv: Optional[List[str]] = None) -> int:
         single_mod.run_pipeline, multi_mod.run_pipeline = original
 
     run_dir = args[args.index("--resume") + 1] if resuming else _newest_run_dir(out_dir, before)
-    if run_dir:
+    if run_dir and os.path.exists(os.path.join(run_dir, "results.json")):
+        _stamp_manifest(os.path.abspath(run_dir))
+        harness._rebuild(os.path.abspath(run_dir))   # re-render results/summary now that the system is stamped
+    elif run_dir:
         _stamp_manifest(os.path.abspath(run_dir))
     return code
 

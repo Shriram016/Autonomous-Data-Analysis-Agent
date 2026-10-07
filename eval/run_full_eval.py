@@ -259,14 +259,20 @@ def _activity(rec: Dict[str, Any]) -> Dict[str, int]:
 
 
 def render_summary(records: List[Dict[str, Any]], manifest: Dict[str, Any]) -> str:
-    lines = ["=" * 78, "ADAA FULL EVAL SUMMARY", "=" * 78,
+    system = manifest.get("system", "adaa")
+    models_line = (
+        f"Models     : {manifest['settings'].get('PLANNER_MODEL')} writes the code (one call per question; "
+        "no planner, critic, fixer or answer writer)"
+        if system == "codegen" else
+        f"Models     : planner/fixer/replanner {manifest['settings'].get('PLANNER_MODEL')}, "
+        f"answer {manifest['settings'].get('ANSWER_MODEL')}")
+    lines = ["=" * 78, f"{system.upper()} FULL EVAL SUMMARY", "=" * 78,
              f"Run        : {manifest['run_id']}  (status: {manifest['status']})",
              f"Code       : {manifest['git'].get('commit', '?')[:10] if manifest['git'].get('commit') else '?'} "
              f"on {manifest['git'].get('branch')}"
              + (f"  (+{len(manifest['git']['uncommitted_tracked_files'])} uncommitted file(s))"
                 if manifest["git"].get("uncommitted_tracked_files") else ""),
-             f"Models     : planner/fixer/replanner {manifest['settings'].get('PLANNER_MODEL')}, "
-             f"answer {manifest['settings'].get('ANSWER_MODEL')}",
+             models_line,
              f"Repeats    : {manifest['repeats']}", ""]
 
     def rate(rs: List[Dict[str, Any]]) -> str:
