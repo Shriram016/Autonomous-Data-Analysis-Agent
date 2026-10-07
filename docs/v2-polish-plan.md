@@ -1,6 +1,6 @@
 # V2 Polish Plan
 
-**Status (2026-10-06):** Part A ✅ done · Part B: B1a/B1b/B1c/B2 ✅ done, B3 moved to after Part M · Part M ✅ done (M1, M2, M4, M5; M3 skipped by decision). Part B ✅ done. Full-run harness ✅ ready. Baseline 63-query run ✅ done. Part C ✅ done. Part D started (D1 built, D2 skipped). **Next: D3 (real runs of the code-writing system, cost gate first).** ✅ Rate limits resolved: key now shows Developer-plan limits (250K tokens/min, 500K requests/day, no daily token cap; verified 2026-10-06). Answer-generator 404 blocker ✅ resolved (M4). Then the full 63-query run once, C, D, E, F.
+**Status (2026-10-06):** Part A ✅ done · Part B: B1a/B1b/B1c/B2 ✅ done, B3 moved to after Part M · Part M ✅ done (M1, M2, M4, M5; M3 skipped by decision). Part B ✅ done. Full-run harness ✅ ready. Baseline 63-query run ✅ done. Part C ✅ done. Part D: code-writing run and comparison workbook done. **Next: safety demo, then the Part D write-up.** ✅ Rate limits resolved: key now shows Developer-plan limits (250K tokens/min, 500K requests/day, no daily token cap; verified 2026-10-06). Answer-generator 404 blocker ✅ resolved (M4). Then the full 63-query run once, C, D, E, F.
 **Branch:** `version2`
 **Outcome:** a clean, honest, measured, tagged `v2.0` release that serves as the frozen baseline for V3.
 
@@ -22,7 +22,7 @@
 | B | Full-run harness (`eval/run_full_eval.py`) | ✅ | One command for all 63 cases; crash-safe records, manifest, preflight, resume. Ready for the real run |
 | B | Full 63-query baseline run | ✅ | `eval/results/full_2026_10_06_23_35_25/`: 48/63 right behaviour (76.2%), $0.029, 263 s, nothing lost |
 | C | Failure-cause breakdown | ✅ | Done: 15 failures labelled, 0/15 caught by a guardrail; 14 of 15 are planner failures. MT13 and MT15 reviewed (planner, not memory) |
-| D | Baseline experiment (all code in `llm_codegen_experiment/`) | 🔄 | D1 code-writing baseline built and checked offline (no LLM calls yet). D2 ablation skipped (decision). Next: D3 real runs (cost gate), D4 write-up |
+| D | Baseline experiment (all code in `llm_codegen_experiment/`) | 🔄 | D1 code-writing system built, D2 ablation skipped, D3 run done and the 63-row comparison workbook built (`llm_codegen_experiment/results/comparison_adaa_vs_llm.xlsx`). Next: safety demo (about 5 adversarial prompts), then D4 write-up |
 | E | Write-up (decisions, README, case study) | ⬜ | |
 | F | Tag `v2.0` | ⬜ | Then `v2.1` simple answer-hallucination fix |
 
@@ -525,3 +525,21 @@ trade-off is a stronger signal than claiming a win.
 
 **2026-10-07 — D3: third code-writing run (current), with the REFUSE option**
 - *Run 3* (`llm_codegen_experiment/results/full_2026_10_07_11_18_46/`, prompt `2026-10-07-v2`, sandbox with safe `query`): 63 questions, 1 pass, complete, 0 API errors, $0.0084, 162 s. Strict harness score 36/63 (answer expected 20/37, refusal expected 2/10, multi-turn 14/16). The model refused only 2 of the 10 compound cases even with the REFUSE option. The strict score still penalises column names (see D3 steps 1-2); the fair comparison re-scores both systems ignoring column names.
+
+**2026-10-07 — D3 ✅ comparison workbook built (offline, no LLM calls): `llm_codegen_experiment/results/comparison_adaa_vs_llm.xlsx`**
+- *What:* 63 rows (one per query) x columns: query, category, ground-truth value, ADAA value, code-system value, `gt_vs_adaa` / `gt_vs_llm` (true/false), `adaa_error` / `llm_error` (true/false), error reasons, plus the outcome, strict score, cost and time. **Error and wrong answer are separate:** error = no usable answer (crash, blocked by the sandbox, tool error, skipped); wrong answer = a table that does not match ground truth (error = false); a refusal is neither. ADAA's reasons use the Part C categories. Sheets: `comparison` (filterable by category, frozen header), `summary`, `notes` (definitions, source runs, caveats). Built by `llm_codegen_experiment/compare.py` from ADAA's baseline run `full_2026_10_06_23_35_25` and the code system's run 3 `full_2026_10_07_11_18_46`. Match rule: 1% relative tolerance on values and row order, column names and column order ignored (the strict harness score is kept in extra columns).
+- *Headline (one run each; ADAA varies run to run, so small gaps are not significant):*
+| | ADAA | Code-writing system |
+|---|---|---|
+| Matches ground truth, all 63 | **48** | 41 |
+| Answerable queries (53) | **43** | 39 |
+| Compound queries refused correctly (10) | **5** | 2 |
+| Wrong answers / errors (answerable) | 7 / 1 | 13 / 1 |
+| Refused an answerable query | 2 | 0 |
+| Strict score (names must match) | 48 | 36 |
+| Cost per query | $0.00046 | **$0.00013** |
+| Time per query | 4.2 s | **2.5 s** |
+| Input tokens (63 queries) | 285,439 | **84,528** |
+- *Who is right where:* both correct 32, only ADAA 16, only the code system 9, neither 6. The code system wins on filtering (Q06, Q07 where ADAA dropped the filter), on 5 multi-turn cases (MT03, MT04, MT13, MT15, MT16) and on Q36 (ADAA refused); ADAA wins on time-based, derived, grouping, and especially the pseudo-compound breakdown group (4/5 vs 0/5) and 3 of the 10 compound refusals.
+- *Verified by:* `llm_codegen_experiment/tests/test_compare.py` (12 tests), `llm_codegen_experiment/checks/check_compare.py` on the real runs (19 checks: 63 rows, flags agree with outcomes, every failure has a reason, strict scores equal the manifests' pass counts); 269 offline tests pass; added `openpyxl==3.1.5` to `requirements-dev.txt`.
+
