@@ -543,3 +543,19 @@ trade-off is a stronger signal than claiming a win.
 - *Who is right where:* both correct 32, only ADAA 16, only the code system 9, neither 6. The code system wins on filtering (Q06, Q07 where ADAA dropped the filter), on 5 multi-turn cases (MT03, MT04, MT13, MT15, MT16) and on Q36 (ADAA refused); ADAA wins on time-based, derived, grouping, and especially the pseudo-compound breakdown group (4/5 vs 0/5) and 3 of the 10 compound refusals.
 - *Verified by:* `llm_codegen_experiment/tests/test_compare.py` (12 tests), `llm_codegen_experiment/checks/check_compare.py` on the real runs (19 checks: 63 rows, flags agree with outcomes, every failure has a reason, strict scores equal the manifests' pass counts); 269 offline tests pass; added `openpyxl==3.1.5` to `requirements-dev.txt`.
 
+**2026-10-07 — D3: scoring rule changed to "extra rows allowed" (user decision); workbook rebuilt; supersedes the headline table in the previous workbook entry**
+- *Finding that triggered it:* the code system scored 0/5 on the pseudo-compound breakdown group (Q31-Q35, e.g. "What are total sales? Also break it down by region.") only because it returned the 4 correct region rows plus a correct Total row (5 rows vs ground truth's 4); every value matched. It answered both parts of the question, while ADAA's one-table design returns only the breakdown (and its answer sentence once computed the missing total wrongly, the Q31 $2,316,900.86 error).
+- *Rule (applied to BOTH systems, decided by the user):* a result is correct when every ground-truth row is present (1% relative tolerance), extra rows are allowed, column names and order are ignored; row order must be kept for ranked questions and is free for `value_only` ones; a case the original comparator accepted stays correct. The strict harness score stays in the `*_strict_match` columns, and new `adaa_extra_rows` / `llm_extra_rows` columns show which answers are correct only thanks to extra rows (ADAA: MT16; code system: Q27, Q28, Q31-Q35, Q37). **Caveat:** Q27 and Q28 ("which category has the longest / which ship mode the shortest shipping time") returned the whole sorted list with the right row inside, which the rule counts as correct although the reader must pick the row.
+- *New headline (one run each; ADAA varies run to run, so small gaps are not significant):*
+| | ADAA | Code-writing system |
+|---|---|---|
+| Matches ground truth, all 63 | 49 | 49 |
+| Answerable queries (53) | 44 | **47** |
+| Compound queries refused correctly (10) | **5** | 2 |
+| Strict score (names and row count must match), all 63 | 48 | 36 |
+| Cost per query | $0.00046 | **$0.00013** |
+| Time per query | 4.2 s | **2.5 s** |
+- *Who is right where:* both 40, only ADAA 9 (Q15, Q17, Q18, Q22, Q38, Q40, Q47, MT09, MT14), only the code system 9 (Q06, Q07, Q33, Q36, MT03, MT04, MT07, MT13, MT15), neither 5 (Q41, Q42, Q43, Q45, Q46: the compound cases both answered instead of refusing).
+- *Reading:* on the 53 answerable questions the code-writing system is at least as accurate as ADAA here (47 vs 44, within noise), and ADAA's remaining edge is refusing unanswerable compound questions (5 vs 2) plus safety and traceability, which are not an accuracy result. The safety demo is still to do.
+- *Verified by:* 17 comparison tests (new: 4 correct rows plus a Total row is correct, a missing row or a wrong value among extras is still wrong, ranked order is kept but value-only order is free, the extra-rows column and summary count only correct answers with extras); `check_compare.py` on the real runs (all checks pass); 274 offline tests pass.
+

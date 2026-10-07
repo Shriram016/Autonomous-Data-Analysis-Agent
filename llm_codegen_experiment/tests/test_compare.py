@@ -38,10 +38,12 @@ def test_tolerance_is_one_percent_relative():
     assert cmp.first_difference(GT, far, 0.01) is not None
 
 
-def test_value_only_cases_keep_the_recorded_comparator_result():
+def test_a_case_the_original_comparator_accepted_stays_correct_and_one_it_rejected_is_rechecked_on_rows():
     meta = {**META, "compare_mode": "value_only"}
-    assert cmp.name_insensitive_match(rec(data=[], value_match=True), meta) is True
-    assert cmp.name_insensitive_match(rec(data=GT, value_match=False), meta) is False
+    assert cmp.name_insensitive_match(rec(data=[], value_match=True), meta) is True          # accepted before: stays correct
+    assert cmp.name_insensitive_match(rec(data=GT, value_match=False), meta) is True         # same rows: correct
+    different = [{"a": "x", "b": 1.0}, {"a": "y", "b": 2.0}]
+    assert cmp.name_insensitive_match(rec(data=different, value_match=False), meta) is False
 
 
 def test_render_value_shapes():
@@ -141,3 +143,47 @@ def test_summary_counts_a_wrong_system_correctly():
     assert s["match_answerable"] == {"adaa": 53, "llm": 0}
     assert s["answerable"]["llm"]["wrong_answer"] == 53 and s["answerable"]["llm"]["error"] == 0
     assert s["agreement"]["only ADAA correct"] == 53 and s["agreement"]["both correct"] == 10
+
+
+# ---------------------------------------------------------------- extra rows are allowed (user decision), missing rows are not
+REGIONS = [{"Region": "Central", "Sales_sum": 501239.89}, {"Region": "East", "Sales_sum": 678781.24},
+           {"Region": "South", "Sales_sum": 391721.91}, {"Region": "West", "Sales_sum": 725457.82}]
+VO = {**META, "compare_mode": "value_only"}
+
+
+def test_four_correct_rows_plus_a_total_row_is_correct():
+    answer = [{"R": r["Region"], "Sales": r["Sales_sum"]} for r in REGIONS] + [{"R": "Total", "Sales": 2297200.86}]
+    r = rec(data=answer, gt=REGIONS, value_match=False)                      # the strict comparator said no (5 rows vs 4)
+    assert cmp.name_insensitive_match(r, VO) is True
+    assert cmp.name_insensitive_match(r, META) is True                       # also in an ordered case: GT rows in order, extra row last
+    assert cmp.extra_rows(r) == 1
+
+
+def test_a_missing_ground_truth_row_is_still_wrong():
+    answer = [{"R": r["Region"], "Sales": r["Sales_sum"]} for r in REGIONS[:3]] + [{"R": "Total", "Sales": 2297200.86}]
+    assert cmp.name_insensitive_match(rec(data=answer, gt=REGIONS, value_match=False), VO) is False
+
+
+def test_a_wrong_value_among_extra_rows_is_still_wrong():
+    answer = [{"R": "Central", "Sales": 1.0}] + [{"R": r["Region"], "Sales": r["Sales_sum"]} for r in REGIONS[1:]] + [{"R": "Total", "Sales": 5.0}]
+    assert cmp.name_insensitive_match(rec(data=answer, gt=REGIONS, value_match=False), VO) is False
+
+
+def test_row_order_is_kept_for_ranked_questions_but_free_for_value_only():
+    shuffled = [{"a": r["Region"], "b": r["Sales_sum"]} for r in reversed(REGIONS)]
+    r = rec(data=shuffled, gt=REGIONS, value_match=False)
+    assert cmp.name_insensitive_match(r, META) is False                      # ordered: reversed ranking is wrong
+    assert cmp.name_insensitive_match(r, VO) is True                         # value_only: order does not matter
+
+
+def test_the_extra_rows_column_and_summary_count_only_correct_answers_with_extras():
+    adaa, llm = _synthetic_runs(True), _synthetic_runs(True)
+    for r in llm:                                                            # give the code system one extra row on every answerable query
+        if r["expected_behavior"] == "answer":
+            r["gt_data"] = [{"v": 1.0}]
+            r["pipeline_data"] = [{"x": 1.0}, {"x": 2.0}]
+            r["value_match"] = False
+    rows = cmp.build_rows(adaa, llm)
+    assert all(r["gt_vs_llm"] for r in rows) and sum(r["llm_extra_rows"] > 0 for r in rows) == 53
+    assert all(r["adaa_extra_rows"] == 0 for r in rows)
+    assert cmp.build_summary(rows, adaa, llm)["correct_thanks_to_extra_rows"] == {"adaa": 0, "llm": 53}

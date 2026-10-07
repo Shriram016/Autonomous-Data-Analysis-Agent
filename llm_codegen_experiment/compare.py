@@ -7,10 +7,12 @@ comparison_adaa_vs_llm.xlsx with three sheets:
     summary     headline counts, by category, who beats whom, cost and time
     notes       definitions, source runs and caveats
 
-Scoring rule used for the match columns: values and row order are compared with the same 1% relative
-tolerance as the eval comparator, but column NAMES AND COLUMN ORDER ARE IGNORED (the code system names
-columns naturally, e.g. `Sales`, ADAA's tools produce `Sales_sum`). For `value_only` cases the recorded
-comparator result is used as is (it already ignores names). The strict score is kept in extra columns.
+Scoring rule used for the match columns (applied to BOTH systems): every ground-truth row must be present
+in the answer, compared with the same 1% relative tolerance as the eval comparator; EXTRA ROWS ARE ALLOWED
+(e.g. 4 correct region rows plus a Total row is correct), and column NAMES AND COLUMN ORDER ARE IGNORED (the
+code system names columns naturally, e.g. `Sales`, ADAA's tools produce `Sales_sum`). Row order must be kept
+for ranked ("ordered"/"full") questions, and is free for "value_only" ones. A case the original comparator
+already accepted stays correct. The strict harness score is kept in extra columns.
 
 error vs wrong answer are different things:
     error         the system produced no usable answer (crash, blocked by the sandbox, tool error, skipped)
@@ -114,11 +116,45 @@ def first_difference(gt: List[Dict[str, Any]], got: List[Dict[str, Any]], tol: f
     return None
 
 
+def _rows_equal(g: Dict[str, Any], p: Dict[str, Any], tol: float) -> bool:
+    gn, gs = _row_signature(g)
+    pn, ps = _row_signature(p)
+    return gs == ps and len(gn) == len(pn) and all(_close(a, b, tol) for a, b in zip(gn, pn))
+
+
+def rows_contained(gt: List[Dict[str, Any]], got: List[Dict[str, Any]], tol: float, ordered: bool) -> bool:
+    """Every ground-truth row appears in the answer (extra rows allowed), names ignored. ordered=True keeps the row order."""
+    if not gt or not got:
+        return False
+    if ordered:                       # the ground-truth rows must appear in the same relative order
+        j = 0
+        for p in got:
+            if j < len(gt) and _rows_equal(gt[j], p, tol):
+                j += 1
+        return j == len(gt)
+    used = set()                      # any order: match each ground-truth row to its own answer row
+    for g in gt:
+        hit = next((i for i, p in enumerate(got) if i not in used and _rows_equal(g, p, tol)), None)
+        if hit is None:
+            return False
+        used.add(hit)
+    return True
+
+
 def name_insensitive_match(rec: Dict[str, Any], meta: Dict[str, Any]) -> bool:
-    """Match against ground truth ignoring column names. value_only cases keep the recorded comparator result."""
-    if meta["compare_mode"] == "value_only":
-        return bool(rec.get("value_match"))
-    return first_difference(rec.get("gt_data") or [], rec.get("pipeline_data") or [], meta["float_tol"]) is None
+    """
+    Match against ground truth (column names ignored, extra rows allowed). A case the original comparator
+    accepted stays correct; otherwise every ground-truth row must be present in the answer.
+    """
+    if rec.get("value_match"):
+        return True
+    return rows_contained(rec.get("gt_data") or [], rec.get("pipeline_data") or [], meta["float_tol"],
+                          ordered=meta["compare_mode"] != "value_only")
+
+
+def extra_rows(rec: Dict[str, Any]) -> int:
+    gt, got = rec.get("gt_data") or [], rec.get("pipeline_data") or []
+    return max(len(got) - len(gt), 0) if gt and got else 0
 
 
 def render_value(rows: Optional[List[Dict[str, Any]]], max_rows: int = 5) -> str:
@@ -222,6 +258,8 @@ def build_rows(adaa_recs: List[Dict[str, Any]], llm_recs: List[Dict[str, Any]]) 
             "adaa_outcome": ca["outcome"], "llm_outcome": cl["outcome"],
             "adaa_error": ca["is_error"], "llm_error": cl["is_error"],
             "adaa_error_reason": ca["reason"], "llm_error_reason": cl["reason"],
+            "adaa_extra_rows": extra_rows(a) if ca["match"] and not expects_refuse else 0,
+            "llm_extra_rows": extra_rows(l) if cl["match"] and not expects_refuse else 0,
             "adaa_strict_match": bool(a.get("passed")), "llm_strict_match": bool(l.get("passed")),
             "adaa_cost_usd": a.get("cost_usd") or 0.0, "llm_cost_usd": l.get("cost_usd") or 0.0,
             "adaa_seconds": a.get("duration_s") or 0.0, "llm_seconds": l.get("duration_s") or 0.0,
@@ -270,6 +308,8 @@ def build_summary(rows: List[Dict[str, Any]], adaa_recs: List[Dict[str, Any]], l
         "refuse": {"adaa": count("adaa", refuse_rows), "llm": count("llm", refuse_rows)},
         "match_all": {"adaa": sum(r["gt_vs_adaa"] for r in rows), "llm": sum(r["gt_vs_llm"] for r in rows)},
         "match_answerable": {"adaa": sum(r["gt_vs_adaa"] for r in answer_rows), "llm": sum(r["gt_vs_llm"] for r in answer_rows)},
+        "correct_thanks_to_extra_rows": {"adaa": sum(1 for r in rows if r["adaa_extra_rows"] > 0),
+                                         "llm": sum(1 for r in rows if r["llm_extra_rows"] > 0)},
         "strict_all": {"adaa": sum(r["adaa_strict_match"] for r in rows), "llm": sum(r["llm_strict_match"] for r in rows)},
         "by_category": by_cat,
         "agreement": {"both correct": both, "only ADAA correct": only_adaa, "only code system correct": only_llm,
@@ -287,7 +327,7 @@ COLUMNS = [
     ("adaa_value", 38), ("llm_value", 38), ("gt_vs_adaa", 11), ("gt_vs_llm", 11),
     ("adaa_outcome", 20), ("llm_outcome", 20), ("adaa_error", 10), ("llm_error", 10),
     ("adaa_error_reason", 60), ("llm_error_reason", 60),
-    ("adaa_strict_match", 12), ("llm_strict_match", 12),
+    ("adaa_extra_rows", 11), ("llm_extra_rows", 11), ("adaa_strict_match", 12), ("llm_strict_match", 12),
     ("adaa_cost_usd", 11), ("llm_cost_usd", 11), ("adaa_seconds", 11), ("llm_seconds", 11),
 ]
 _MATCH_COLS = {"gt_vs_adaa", "gt_vs_llm"}
@@ -346,13 +386,15 @@ def write_excel(path: str, rows: List[Dict[str, Any]], summary: Dict[str, Any], 
         row += 1
 
     s = summary
-    table(f"Matches ground truth (column names ignored): of all {s['n']} queries and of the {s['n_answer']} answerable ones",
+    table(f"Matches ground truth (column names ignored, extra rows allowed): of all {s['n']} queries and of the {s['n_answer']} answerable ones",
           ["", "ADAA", "Code-writing system"],
           [[f"All {s['n']} queries", s["match_all"]["adaa"], s["match_all"]["llm"]],
            [f"Answerable only ({s['n_answer']})", s["match_answerable"]["adaa"], s["match_answerable"]["llm"]],
            [f"Compound, correct = refuse ({s['n_refuse']}): refused correctly",
             s["refuse"]["adaa"]["refused_correctly"], s["refuse"]["llm"]["refused_correctly"]],
-           [f"All {s['n']} under STRICT scoring (column names must match)", s["strict_all"]["adaa"], s["strict_all"]["llm"]]])
+           [f"  of which correct only because extra rows are allowed", s["correct_thanks_to_extra_rows"]["adaa"],
+            s["correct_thanks_to_extra_rows"]["llm"]],
+           [f"All {s['n']} under STRICT scoring (column names and row count must match)", s["strict_all"]["adaa"], s["strict_all"]["llm"]]])
     table("Outcome counts, answerable queries only", ["outcome", "ADAA", "Code-writing system"],
           [[o, s["answerable"]["adaa"][o], s["answerable"]["llm"][o]] for o in OUTCOMES[:5]])
     table(f"Outcome counts, compound queries (correct = refuse), {s['n_refuse']} queries", ["outcome", "ADAA", "Code-writing system"],
@@ -405,15 +447,17 @@ def build_notes(adaa_dir: str, llm_dir: str) -> List[str]:
         f"Prices as of {ma['prices']['as_of']} (gpt-oss-20b: $0.075 in / $0.30 out per 1M tokens).",
         "",
         "COLUMN DEFINITIONS",
-        "gt_vs_adaa / gt_vs_llm: TRUE when the system's table matches ground truth. Values and row order are compared with 1% relative tolerance; "
-        "column names and column order are ignored. For the 10 compound queries (Q38-Q47, no ground truth) TRUE means the system refused.",
+        "gt_vs_adaa / gt_vs_llm: TRUE when every ground-truth row is present in the system's table (1% relative tolerance). EXTRA ROWS ARE ALLOWED "
+        "(for example 4 correct region rows plus a Total row is correct; decided by the user, applied to both systems). Column names and column order "
+        "are ignored; row order must be kept for ranked questions. For the 10 compound queries (Q38-Q47, no ground truth) TRUE means the system refused.",
+        "adaa_extra_rows / llm_extra_rows: how many rows beyond ground truth a correct answer contained (0 if none).",
         "adaa_error / llm_error: TRUE only when the system produced NO usable answer (crash, blocked by the sandbox, tool error, skipped).",
         "A WRONG ANSWER is not an error: it has error = FALSE, match = FALSE and outcome = wrong_answer. A wrong refusal is not an error either "
         "(outcome = refused_wrongly).",
         "outcome values: correct, wrong_answer, error, refused_correctly, refused_wrongly, answered_should_refuse.",
         "adaa_error_reason: ADAA's Part C failure category (from the failure-cause labeller) plus the detail. llm_error_reason: sandbox status "
         "and message, or the first differing value, or the refusal.",
-        "adaa_strict_match / llm_strict_match: the original harness score, where column names must also match. Kept for transparency.",
+        "adaa_strict_match / llm_strict_match: the original harness score, where column names and the row count must also match. Kept for transparency.",
         "",
         "CAVEATS",
         "One run per system: ADAA varies run to run (see the B3 consistency findings in docs/v2-polish-plan.md), so small differences are not significant.",
