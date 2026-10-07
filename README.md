@@ -62,6 +62,27 @@ Tested across **63 queries** in 4 categories on the Sample Superstore dataset:
 
 ---
 
+## Why Not Just Let the LLM Write the Code?
+
+We tried it. A baseline asks the same model (`gpt-oss-20b`) to write pandas code, runs it in a restricted sandbox, and answers the same 63 questions.
+
+**Pros**
+- The code-writing approach was about as accurate as ADAA on our 63 questions (49 correct for both), although with one run each the small gaps are within noise.
+- It never dropped a filter, which was the most common failure in ADAA.
+- It was about 3.5 times cheaper and 1.7 times faster ($0.00013 versus $0.00046 per query).
+- It is flexible, because it can answer multi-part questions that ADAA's tools cannot return as a single table.
+
+**Cons**
+- It can give wrong answers without any error, for example when outdated pandas syntax made it pick the wrong month.
+- It can crash on a wrong operation, such as a misplaced `int()`, and our baseline had no retry to recover.
+- It can lose context in follow-up questions, as when it kept the old metric after the user had switched to a new one.
+- It needs a sandbox to run LLM-written code, and ours is only a restricted `exec` with a blocklist, which is fine for an experiment but not safe for untrusted users and once blocked a legitimate `df.query()`.
+- It gives you no plan to inspect and no step-by-step checks, so a wrong answer is harder to trace.
+
+**What we decided:** ADAA stays. Not because it is more accurate (on this data it is not), but because fixed tools can only do what we allow, every step is visible and checked, and it refuses what it cannot do. For a trusted analyst on clean data, direct code generation with a sandbox and a retry is a reasonable choice. Caveat: one run each on a clean dataset; messier data (V3) may favour fixed tools more. Details: [docs/v2-polish-plan.md](docs/v2-polish-plan.md) (Part D).
+
+---
+
 ## Key Features
 
 - **LangGraph orchestration** — The pipeline is built on LangGraph with structured state management, conditional edges, and retry/replan logic implemented as graph nodes.
