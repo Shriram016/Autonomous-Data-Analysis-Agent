@@ -1,0 +1,603 @@
+{
+  "entries": [
+    {
+      "id": "Q06",
+      "kind": "single",
+      "repeat": 1,
+      "passed": false,
+      "labels": [
+        {
+          "category": "planner_missing_filter",
+          "label": "Planner: missing filter",
+          "component": "Planner (LLM)",
+          "confidence": "high",
+          "evidence": [
+            "the question names a filter, the plan has no filter step",
+            "plan: ['aggregate_column']",
+            "mismatch: Value[0]: GT=836154.0330, Pipeline=2297200.8603, diff=174.73%"
+          ],
+          "dimension": "outcome",
+          "source": "auto"
+        }
+      ],
+      "guardrail": {
+        "critic_fired": [],
+        "param_fix_calls": 0,
+        "replans": 0,
+        "any_fired": false,
+        "traced": true
+      },
+      "caught_by_guardrail": false
+    },
+    {
+      "id": "Q07",
+      "kind": "single",
+      "repeat": 1,
+      "passed": false,
+      "labels": [
+        {
+          "category": "planner_missing_filter",
+          "label": "Planner: missing filter",
+          "component": "Planner (LLM)",
+          "confidence": "high",
+          "evidence": [
+            "the question names a filter, the plan has no filter step",
+            "plan: ['aggregate_column']",
+            "mismatch: Value[0]: GT=108418.4489, Pipeline=286397.0217, diff=164.16%"
+          ],
+          "dimension": "outcome",
+          "source": "auto"
+        }
+      ],
+      "guardrail": {
+        "critic_fired": [],
+        "param_fix_calls": 0,
+        "replans": 0,
+        "any_fired": false,
+        "traced": true
+      },
+      "caught_by_guardrail": false
+    },
+    {
+      "id": "Q33",
+      "kind": "single",
+      "repeat": 1,
+      "passed": false,
+      "labels": [
+        {
+          "category": "planner_refused_answerable",
+          "label": "Planner: refused an answerable query",
+          "component": "Planner (LLM)",
+          "confidence": "high",
+          "evidence": [
+            "expected an answer, planner said unsolvable: Query cannot be answered with available tools: The query requests both an overall average and a per-category average. Ac"
+          ],
+          "dimension": "outcome",
+          "source": "auto"
+        }
+      ],
+      "guardrail": {
+        "critic_fired": [],
+        "param_fix_calls": 0,
+        "replans": 0,
+        "any_fired": false,
+        "traced": true
+      },
+      "caught_by_guardrail": false
+    },
+    {
+      "id": "Q36",
+      "kind": "single",
+      "repeat": 1,
+      "passed": false,
+      "labels": [
+        {
+          "category": "planner_refused_answerable",
+          "label": "Planner: refused an answerable query",
+          "component": "Planner (LLM)",
+          "confidence": "high",
+          "evidence": [
+            "expected an answer, planner said unsolvable: Query cannot be answered with available tools: Cannot filter for two distinct years with a single filter_by_condition st"
+          ],
+          "dimension": "outcome",
+          "source": "auto"
+        }
+      ],
+      "guardrail": {
+        "critic_fired": [],
+        "param_fix_calls": 0,
+        "replans": 0,
+        "any_fired": false,
+        "traced": true
+      },
+      "caught_by_guardrail": false
+    },
+    {
+      "id": "Q37",
+      "kind": "single",
+      "repeat": 1,
+      "passed": true,
+      "labels": [
+        {
+          "category": "answer_wrong_number",
+          "label": "Answer writer: number in the sentence is not in the table",
+          "component": "Answer generator (LLM)",
+          "confidence": "high",
+          "evidence": [
+            "numbers not found in the result table or derivable from it: ['$455,255.98']",
+            "the table itself was correct"
+          ],
+          "dimension": "answer",
+          "source": "auto"
+        }
+      ],
+      "guardrail": {
+        "critic_fired": [],
+        "param_fix_calls": 0,
+        "replans": 0,
+        "any_fired": false,
+        "traced": true
+      },
+      "caught_by_guardrail": false
+    },
+    {
+      "id": "Q41",
+      "kind": "single",
+      "repeat": 1,
+      "passed": false,
+      "labels": [
+        {
+          "category": "planner_answered_should_refuse",
+          "label": "Planner: answered a query that should be refused",
+          "component": "Planner (LLM)",
+          "confidence": "high",
+          "evidence": [
+            "no ground truth exists (correct behaviour is to refuse) but the pipeline answered",
+            "plan: ['groupby_aggregate', 'sort']",
+            "answer-number check: fail"
+          ],
+          "dimension": "outcome",
+          "source": "auto"
+        },
+        {
+          "category": "answer_wrong_number",
+          "label": "Answer writer: number in the sentence is not in the table",
+          "component": "Answer generator (LLM)",
+          "confidence": "high",
+          "evidence": [
+            "numbers not found in the result table or derivable from it: ['$286,397.04']",
+            "the table itself was not the expected one"
+          ],
+          "dimension": "answer",
+          "source": "auto"
+        }
+      ],
+      "guardrail": {
+        "critic_fired": [],
+        "param_fix_calls": 0,
+        "replans": 0,
+        "any_fired": false,
+        "traced": true
+      },
+      "caught_by_guardrail": false
+    },
+    {
+      "id": "Q42",
+      "kind": "single",
+      "repeat": 1,
+      "passed": false,
+      "labels": [
+        {
+          "category": "planner_answered_should_refuse",
+          "label": "Planner: answered a query that should be refused",
+          "component": "Planner (LLM)",
+          "confidence": "high",
+          "evidence": [
+            "no ground truth exists (correct behaviour is to refuse) but the pipeline answered",
+            "plan: ['groupby_aggregate', 'groupby_aggregate']",
+            "answer numbers were faithful to its table"
+          ],
+          "dimension": "outcome",
+          "source": "auto"
+        }
+      ],
+      "guardrail": {
+        "critic_fired": [
+          "not_none"
+        ],
+        "param_fix_calls": 1,
+        "replans": 0,
+        "any_fired": true,
+        "traced": true
+      },
+      "caught_by_guardrail": false
+    },
+    {
+      "id": "Q43",
+      "kind": "single",
+      "repeat": 1,
+      "passed": false,
+      "labels": [
+        {
+          "category": "planner_answered_should_refuse",
+          "label": "Planner: answered a query that should be refused",
+          "component": "Planner (LLM)",
+          "confidence": "high",
+          "evidence": [
+            "no ground truth exists (correct behaviour is to refuse) but the pipeline answered",
+            "plan: ['groupby_aggregate']",
+            "answer numbers were faithful to its table"
+          ],
+          "dimension": "outcome",
+          "source": "auto"
+        }
+      ],
+      "guardrail": {
+        "critic_fired": [],
+        "param_fix_calls": 0,
+        "replans": 0,
+        "any_fired": false,
+        "traced": true
+      },
+      "caught_by_guardrail": false
+    },
+    {
+      "id": "Q45",
+      "kind": "single",
+      "repeat": 1,
+      "passed": false,
+      "labels": [
+        {
+          "category": "planner_answered_should_refuse",
+          "label": "Planner: answered a query that should be refused",
+          "component": "Planner (LLM)",
+          "confidence": "high",
+          "evidence": [
+            "no ground truth exists (correct behaviour is to refuse) but the pipeline answered",
+            "plan: ['filter_by_condition', 'groupby_aggregate']",
+            "answer numbers were faithful to its table"
+          ],
+          "dimension": "outcome",
+          "source": "auto"
+        }
+      ],
+      "guardrail": {
+        "critic_fired": [],
+        "param_fix_calls": 0,
+        "replans": 0,
+        "any_fired": false,
+        "traced": true
+      },
+      "caught_by_guardrail": false
+    },
+    {
+      "id": "Q46",
+      "kind": "single",
+      "repeat": 1,
+      "passed": false,
+      "labels": [
+        {
+          "category": "planner_answered_should_refuse",
+          "label": "Planner: answered a query that should be refused",
+          "component": "Planner (LLM)",
+          "confidence": "high",
+          "evidence": [
+            "no ground truth exists (correct behaviour is to refuse) but the pipeline answered",
+            "plan: ['filter_by_condition', 'groupby_aggregate', 'select_columns']",
+            "answer numbers were faithful to its table"
+          ],
+          "dimension": "outcome",
+          "source": "auto"
+        }
+      ],
+      "guardrail": {
+        "critic_fired": [],
+        "param_fix_calls": 0,
+        "replans": 0,
+        "any_fired": false,
+        "traced": true
+      },
+      "caught_by_guardrail": false
+    },
+    {
+      "id": "MT03",
+      "kind": "multi",
+      "repeat": 1,
+      "passed": false,
+      "labels": [
+        {
+          "category": "planner_missing_filter",
+          "label": "Planner: missing filter",
+          "component": "Planner (LLM)",
+          "confidence": "high",
+          "evidence": [
+            "an earlier turn filtered, the final plan has no filter step",
+            "plan: ['aggregate_column']",
+            "mismatch: Value[0]: GT=145454.9481, Pipeline=286397.0217, diff=96.90%"
+          ],
+          "dimension": "outcome",
+          "source": "auto"
+        }
+      ],
+      "guardrail": {
+        "critic_fired": [],
+        "param_fix_calls": 0,
+        "replans": 0,
+        "any_fired": false,
+        "traced": true
+      },
+      "caught_by_guardrail": false
+    },
+    {
+      "id": "MT04",
+      "kind": "multi",
+      "repeat": 1,
+      "passed": false,
+      "labels": [
+        {
+          "category": "planner_missing_filter",
+          "label": "Planner: missing filter",
+          "component": "Planner (LLM)",
+          "confidence": "high",
+          "evidence": [
+            "an earlier turn filtered, the final plan has no filter step",
+            "plan: ['aggregate_column']",
+            "mismatch: Value[0]: GT=122490.8008, Pipeline=286397.0217, diff=133.81%"
+          ],
+          "dimension": "outcome",
+          "source": "auto"
+        }
+      ],
+      "guardrail": {
+        "critic_fired": [],
+        "param_fix_calls": 0,
+        "replans": 0,
+        "any_fired": false,
+        "traced": true
+      },
+      "caught_by_guardrail": false
+    },
+    {
+      "id": "MT07",
+      "kind": "multi",
+      "repeat": 1,
+      "passed": false,
+      "labels": [
+        {
+          "category": "planner_wrong_step_order",
+          "label": "Planner: wrong step order",
+          "component": "Planner (LLM)",
+          "confidence": "high",
+          "evidence": [
+            "plan ['aggregate_column', 'filter_by_condition'] runs a collapsing step before a filter",
+            "tool error: Column 'Segment' not found in DataFrame. Available columns: ['Sales_sum']"
+          ],
+          "dimension": "outcome",
+          "source": "auto"
+        }
+      ],
+      "guardrail": {
+        "critic_fired": [],
+        "param_fix_calls": 0,
+        "replans": 0,
+        "any_fired": false,
+        "traced": false
+      },
+      "caught_by_guardrail": false
+    },
+    {
+      "id": "MT13",
+      "kind": "multi",
+      "repeat": 1,
+      "passed": false,
+      "labels": [
+        {
+          "category": "context_loss",
+          "label": "Context: earlier turn not carried forward",
+          "component": "Session memory / planner",
+          "confidence": "review",
+          "evidence": [
+            "4-turn case: the final turn depends on turns beyond the 3-question memory window, but the planner could also simply have chosen the wrong filters",
+            "mismatch: Value[0]: GT=156332.0570, Pipeline=128680.4570, diff=17.69%"
+          ],
+          "dimension": "outcome",
+          "source": "auto"
+        }
+      ],
+      "guardrail": {
+        "critic_fired": [],
+        "param_fix_calls": 0,
+        "replans": 0,
+        "any_fired": false,
+        "traced": true
+      },
+      "caught_by_guardrail": false
+    },
+    {
+      "id": "MT15",
+      "kind": "multi",
+      "repeat": 1,
+      "passed": false,
+      "labels": [
+        {
+          "category": "context_loss",
+          "label": "Context: earlier turn not carried forward",
+          "component": "Session memory / planner",
+          "confidence": "review",
+          "evidence": [
+            "4-turn case: the final turn depends on turns beyond the 3-question memory window, but the planner could also simply have chosen the wrong filters",
+            "mismatch: Numeric value count mismatch: GT has 6 value(s), pipeline has 8 value(s). GT shape=(3, 2), pipeline "
+          ],
+          "dimension": "outcome",
+          "source": "auto"
+        }
+      ],
+      "guardrail": {
+        "critic_fired": [
+          "not_none",
+          "not_none",
+          "not_none",
+          "not_none",
+          "not_none"
+        ],
+        "param_fix_calls": 4,
+        "replans": 1,
+        "any_fired": true,
+        "traced": true
+      },
+      "caught_by_guardrail": false
+    },
+    {
+      "id": "MT16",
+      "kind": "multi",
+      "repeat": 1,
+      "passed": false,
+      "labels": [
+        {
+          "category": "planner_superset_result",
+          "label": "Planner: superset result (extra rows)",
+          "component": "Planner (LLM)",
+          "confidence": "high",
+          "evidence": [
+            "pipeline returned 4 rows, ground truth 3; all ground-truth values are present plus extras"
+          ],
+          "dimension": "outcome",
+          "source": "auto"
+        }
+      ],
+      "guardrail": {
+        "critic_fired": [],
+        "param_fix_calls": 0,
+        "replans": 0,
+        "any_fired": false,
+        "traced": true
+      },
+      "caught_by_guardrail": false
+    }
+  ],
+  "table": [
+    {
+      "category": "Planner: answered a query that should be refused",
+      "component": "Planner (LLM)",
+      "count": 5,
+      "cases": [
+        "Q41",
+        "Q42",
+        "Q43",
+        "Q45",
+        "Q46"
+      ],
+      "caught_by_production_guardrail": 0,
+      "guardrail_fired_but_failed": 1,
+      "review": []
+    },
+    {
+      "category": "Planner: missing filter",
+      "component": "Planner (LLM)",
+      "count": 4,
+      "cases": [
+        "MT03",
+        "MT04",
+        "Q06",
+        "Q07"
+      ],
+      "caught_by_production_guardrail": 0,
+      "guardrail_fired_but_failed": 0,
+      "review": []
+    },
+    {
+      "category": "Planner: refused an answerable query",
+      "component": "Planner (LLM)",
+      "count": 2,
+      "cases": [
+        "Q33",
+        "Q36"
+      ],
+      "caught_by_production_guardrail": 0,
+      "guardrail_fired_but_failed": 0,
+      "review": []
+    },
+    {
+      "category": "Answer writer: number in the sentence is not in the table",
+      "component": "Answer generator (LLM)",
+      "count": 2,
+      "cases": [
+        "Q37",
+        "Q41"
+      ],
+      "caught_by_production_guardrail": 0,
+      "guardrail_fired_but_failed": 0,
+      "review": []
+    },
+    {
+      "category": "Context: earlier turn not carried forward",
+      "component": "Session memory / planner",
+      "count": 2,
+      "cases": [
+        "MT13",
+        "MT15"
+      ],
+      "caught_by_production_guardrail": 0,
+      "guardrail_fired_but_failed": 1,
+      "review": [
+        "MT13",
+        "MT15"
+      ]
+    },
+    {
+      "category": "Planner: wrong step order",
+      "component": "Planner (LLM)",
+      "count": 1,
+      "cases": [
+        "MT07"
+      ],
+      "caught_by_production_guardrail": 0,
+      "guardrail_fired_but_failed": 0,
+      "review": []
+    },
+    {
+      "category": "Planner: superset result (extra rows)",
+      "component": "Planner (LLM)",
+      "count": 1,
+      "cases": [
+        "MT16"
+      ],
+      "caught_by_production_guardrail": 0,
+      "guardrail_fired_but_failed": 0,
+      "review": []
+    }
+  ],
+  "repaired": [
+    {
+      "id": "Q23",
+      "passed": true,
+      "critic_fired": [
+        "not_none"
+      ],
+      "param_fix_calls": 1,
+      "replans": 0
+    },
+    {
+      "id": "Q42",
+      "passed": false,
+      "critic_fired": [
+        "not_none"
+      ],
+      "param_fix_calls": 1,
+      "replans": 0
+    },
+    {
+      "id": "MT15",
+      "passed": false,
+      "critic_fired": [
+        "not_none",
+        "not_none",
+        "not_none",
+        "not_none",
+        "not_none"
+      ],
+      "param_fix_calls": 4,
+      "replans": 1
+    }
+  ]
+}
