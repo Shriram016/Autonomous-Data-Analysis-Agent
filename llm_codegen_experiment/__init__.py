@@ -1,1 +1,1 @@
-"""Part D experiment: LLM-written pandas code vs ADAA (baseline, ablation, comparison). Not part of the agent in src/."""
+"""LLM code-generation experiment: LLM-written pandas code vs ADAA's fixed tools. Not part of the agent in src/."""
