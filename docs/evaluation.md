@@ -1,11 +1,81 @@
 # ADAA Evaluation Report
 
-> **Note:** these are the earlier evaluation rounds. The current 63-question baseline run, its failure-cause breakdown and the comparison with LLM-written code are in the [README](../README.md) and [v2-polish-plan.md](v2-polish-plan.md).
+> **Note:** the first section is the current 63-question baseline run. Everything after "Earlier Rounds" is the June 2026 evaluation, kept for history (it used a different answer model). The full record of the V2 evaluation work is in [v2-polish-plan.md](v2-polish-plan.md); the summary is in the [README](../README.md).
 
 **Pipeline:** V2 LangGraph (schema_gen → planner → execute_step loop → answer_gen)  
 **Planner model:** `openai/gpt-oss-20b` with `reasoning_effort: low`  
 **Dataset:** Sample Superstore — 9,994 rows × 21 columns (2014–2017)  
 ---
+
+## Current Results — 63-Question Baseline Run
+
+**Run:** 2026-10-06, code commit `195229a`, one full run. `openai/gpt-oss-20b` does every LLM job (planner, param fixer, replanner, answer generator).
+**Cost and time:** $0.029 in total, 263 seconds, 183 LLM calls (285,439 input and 25,975 output tokens). About $0.0005 and 4 seconds per question. No API errors.
+**Files:** `eval/results/full_2026_10_06_23_35_25/` (`manifest.json` records the code, prompt, dataset and model hashes; `records.jsonl` has every case; `summary.txt`, `results.csv`, `results.json`, `console.log`).
+
+### How it is scored
+- Ground truth for every question is computed independently with pandas.
+- **Right behaviour** means a correct table, or a correct refusal for the 10 compound questions (Q38–Q47) that have no single-table answer.
+- Numbers are compared with 1% relative tolerance. This report uses the original exact-match score (the "ordered" comparison also requires column names). Counting an answer as correct when it contains all expected rows plus extras (used in the comparison with LLM-written code) gives 49/63 instead of 48/63.
+
+### Results
+
+| Question type | Correct |
+|---|---|
+| **All 63 questions** | **48 / 63 (76.2%)** |
+| Single-turn, single-table answer (Q01–Q37) | 33 / 37 (89.2%) |
+| Multi-turn follow-ups (MT01–MT16) | 10 / 16 (62.5%) |
+| Compound questions, correct = refuse (Q38–Q47) | 5 / 10 correctly refused |
+
+| Category | Correct |
+|---|---|
+| Simple aggregation (Q01–Q05) | 5 / 5 |
+| Filtering (Q06–Q10) | 3 / 5 |
+| Grouping and ranking (Q11–Q15) | 5 / 5 |
+| Time-based (Q16–Q20) | 5 / 5 |
+| Multi-condition (Q21–Q25) | 5 / 5 |
+| Derived calculations (Q26–Q30) | 5 / 5 |
+| "Total plus breakdown" (Q31–Q35) | 4 / 5 |
+| Comparison (Q36–Q37) | 1 / 2 |
+| Compound, correctly refused: two scalars / scalar plus ranked list / two grouped outputs / filter plus two aggregates | 3/3 · 0/1 · 1/3 · 1/3 |
+| Multi-turn, 2 / 3 / 4 turns | 4/6 · 5/6 · 1/4 |
+
+### The 15 failures and their causes
+
+| Cause | Cases | Detail |
+|---|---|---|
+| Answered a question that should have been refused | 5 | Q41 (total profit and most profitable states), Q42 (most profitable states and categories), Q43 (sales by region and by ship mode), Q45 (Technology sales and average discount), Q46 (West orders and total profit) |
+| Dropped a filter, returned the whole-dataset total | 4 | Q06 (Technology sales), Q07 (West profit), MT03 ("What about Technology?"), MT04 ("And Office Supplies?") |
+| Refused a question that was answerable | 2 | Q33 (average order value per category and overall), Q36 (2016 vs 2017) |
+| Ignored or misused earlier turns | 2 | MT13 (filtered the year from turn 1 instead of turn 2), MT15 (counted orders per year instead of summing sales for the three years discussed) |
+| Wrong step order | 1 | MT07 (aggregated before filtering, so the filter column no longer existed) |
+| Returned extra rows | 1 | MT16 (4 regions instead of the 3 discussed) |
+
+Causes are assigned by `eval/failure_labels.py` from the saved evidence; MT13 and MT15 were reviewed by hand (planner failures, not memory failures, because the earlier turns were still in memory).
+
+**The rule-based critic caught none of the 15 failures.** It reacted in only 3 cases (Q23, Q42 and MT15): 6 param-fixer calls (5 changed parameters) and 1 replan. Q23 was repaired and passed. The failures are about meaning (what to filter, whether to answer, which turn matters), which a structural check cannot see.
+
+### Answer-number check
+Every number in the answer sentence is checked against the result table: 53 answers passed, 8 had nothing to check (refusals), and 2 had a small slip: Q37 (a difference off by $1) and Q41 (a total off by 2 cents). No invented values, and no answer fell back to the plain non-LLM sentence.
+
+### Consistency
+20 representative questions (17 single-turn and 3 multi-turn) were each run 3 times (60 runs, about $0.03, no API errors): 12 were reliable (3/3), 4 flaky and 4 broken. The plan was identical across runs for 78% of questions. Flaky means the planner made different calls on the same question (Q05 refused once and answered twice; MT03 dropped the filter once). Treat any single run's numbers as approximate.
+
+### Compared with LLM-written code
+The same model writing pandas code in a restricted sandbox, same 63 questions: 49 vs 49 correct (47 vs 44 on the 53 answerable ones, 2 vs 5 correct refusals), about $0.00013 vs $0.00046 per question, 2.5 vs 4.2 seconds. Its failures were outdated pandas syntax (a silent wrong answer), a crash, lost context and the wrong aggregation level. Details: [README](../README.md), [decisions.md](decisions.md), `llm_codegen_experiment/results/comparison_adaa_vs_llm.xlsx`.
+
+### Reproduce
+```bash
+python eval/run_full_eval.py --dry-run   # checks everything, no LLM calls, no cost
+python eval/run_full_eval.py             # all 63 questions, about $0.03 and 5 minutes
+python eval/failure_labels.py eval/results/full_<timestamp>   # label the failures (free)
+```
+
+---
+
+# Earlier Rounds (June 2026, previous answer model)
+
+The sections below are the original evaluation, kept for history. They used a different answer model, so some findings (for example the answer-generator arithmetic errors) did not reproduce with `gpt-oss-20b`.
 
 ## Overview
 
@@ -20,9 +90,9 @@ Four evaluation categories covering 63 total test cases across single-turn, comp
 
 ### Key Findings
 
-- **Single-turn queries are highly reliable** — 96.7% accuracy across all query types, with only one model planning fluke (Q06).
+- **Single-turn queries are highly reliable** — 96.7% accuracy across all query types, with only one model planning fluke (Q06). *(June run; the 63-question baseline run above scored 28/30 on the same questions, with Q06 and Q07 dropping a filter.)*
 - **Prompt engineering has high leverage** — a two-line prompt addition fixed 4/5 unsolvable errors in pseudo-compound queries.
-- **Answer generator hallucinates arithmetic** — when the pipeline returns a multi-row DataFrame and the answer generator must sum/re-aggregate values, it produces wrong numbers (Q41: $763K vs actual $286K).
+- **Answer generator hallucinates arithmetic** — when the pipeline returns a multi-row DataFrame and the answer generator must sum/re-aggregate values, it produces wrong numbers (Q41: $763K vs actual $286K). *(Earlier answer model; this did not reproduce with `gpt-oss-20b`. The baseline run's answer slips were small: $1 and 2 cents.)*
 - **Multi-turn context works for simple swaps** — 2-turn and 3-turn follow-ups pass consistently. 4-turn cases with multi-hop context resolution still fail.
 - **Superset DataFrames are a recurring pattern** — the planner prefers `groupby_aggregate` over `filter → groupby_aggregate`, returning extra rows. The answer generator compensates correctly in most cases.
 
