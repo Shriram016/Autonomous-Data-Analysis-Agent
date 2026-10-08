@@ -23,7 +23,7 @@
 | B | Full 63-query baseline run | ✅ | `eval/results/full_2026_10_06_23_35_25/`: 48/63 right behaviour (76.2%), $0.029, 263 s, nothing lost |
 | C | Failure-cause breakdown | ✅ | Done: 15 failures labelled, 0/15 caught by a guardrail; 14 of 15 are planner failures. MT13 and MT15 reviewed (planner, not memory) |
 | D | Baseline experiment (all code in `llm_codegen_experiment/`) | 🔄 | D1 code-writing system built, D2 ablation skipped, D3 run done and the 63-row comparison workbook built (`llm_codegen_experiment/results/comparison_adaa_vs_llm.xlsx`). Next: safety demo (about 5 adversarial prompts), then D4 write-up |
-| E | Write-up (decisions, README, case study) | 🔄 | E2 ✅ critic description fixed in the docs; E3 ✅ README rewritten (demo screenshot or GIF still to add); E1 ✅ `docs/decisions.md`; E4 `docs/case-study.md` pending |
+| E | Write-up (decisions, README, case study) | 🔄 | E2 ✅ critic description fixed in the docs; E3 ✅ README rewritten (demo screenshot or GIF still to add); E1 ✅ `docs/decisions.md`; E4 case study skipped (user decision). Left: demo screenshot or GIF (user) and older numbers inside `evaluation.md` / `failure-modes.md` |
 | F | Tag `v2.0` | ⬜ | Then `v2.1` simple answer-hallucination fix |
 
 Each item, when completed, gets a dated entry in the **Completion log** at the bottom of this file.
@@ -582,3 +582,5 @@ trade-off is a stronger signal than claiming a win.
 - *Still open in Part E:* E1 `docs/decisions.md`, E4 `docs/case-study.md` (both need the user's OK to create), a demo screenshot or GIF for the README (the user must capture it), and the older numbers inside `evaluation.md` and the Known Limitations table of `failure-modes.md`, which still quote earlier runs.
 
 **2026-10-08 — E1 ✅ `docs/decisions.md` created** (user approved the draft): six decisions, each with what was chosen, what was considered, why, and the evidence: fixed tools vs LLM-written code (49 vs 49, the trade-offs), rule-based vs LLM critic (0 of 15 caught, LLM critic untested), one model for every job (and its single-point-of-failure risk), LangGraph vs a plain loop (a design choice, not measured), session memory of 3 questions (window size was not the cause of the 4-turn failures reviewed), and one table per answer (limits what ADAA can answer). Linked from the README Documentation section and from CLAUDE.md.
+
+**2026-10-08 — E4 (case study) skipped by the user.** A short "what we learned" summary was drafted and also declined; the README, `docs/decisions.md` and this plan carry the findings.
