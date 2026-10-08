@@ -1,6 +1,6 @@
 # V2 Polish Plan
 
-**Status (2026-10-06):** Part A ✅ done · Part B: B1a/B1b/B1c/B2 ✅ done, B3 moved to after Part M · Part M ✅ done (M1, M2, M4, M5; M3 skipped by decision). Part B ✅ done. Full-run harness ✅ ready. Baseline 63-query run ✅ done. Part C ✅ done. Part D: code-writing run and comparison workbook done. **Next: safety demo, then the Part D write-up.** ✅ Rate limits resolved: key now shows Developer-plan limits (250K tokens/min, 500K requests/day, no daily token cap; verified 2026-10-06). Answer-generator 404 blocker ✅ resolved (M4). Then the full 63-query run once, C, D, E, F.
+**Status (2026-10-08): ✅ V2 polish complete. `v2.0` tagged and pushed.** Parts A, B, C, D, E, F and M are all done. Optional follow-ups: check the GitHub Actions run (fix if red); audit the README line "no login, rate limiting or multi-user handling" against the Streamlit app; add a short design-notes index to `docs/others/` (Q5); a possible `v2.1` for the small number slips in answer sentences.
 **Branch:** `version2`
 **Outcome:** a clean, honest, measured, tagged `v2.0` release that serves as the frozen baseline for V3.
 
