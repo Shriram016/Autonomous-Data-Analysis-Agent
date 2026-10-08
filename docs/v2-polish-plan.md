@@ -24,7 +24,7 @@
 | C | Failure-cause breakdown | ✅ | Done: 15 failures labelled, 0/15 caught by a guardrail; 14 of 15 are planner failures. MT13 and MT15 reviewed (planner, not memory) |
 | D | Baseline experiment (all code in `llm_codegen_experiment/`) | 🔄 | D1 code-writing system built, D2 ablation skipped, D3 run done and the 63-row comparison workbook built (`llm_codegen_experiment/results/comparison_adaa_vs_llm.xlsx`). Next: safety demo (about 5 adversarial prompts), then D4 write-up |
 | E | Write-up (decisions, README, case study) | 🔄 | E2 ✅ critic description fixed in the docs; E3 ✅ README rewritten (demo screenshot or GIF still to add); E1 ✅ `docs/decisions.md`; E4 case study skipped (user decision). Left: demo screenshot or GIF (user) and older numbers inside `evaluation.md` / `failure-modes.md` |
-| F | Tag `v2.0` | ⬜ | Then `v2.1` simple answer-hallucination fix |
+| F | Tag `v2.0` | ✅ | Annotated tag `v2.0` on commit `6b87cf4`, pushed with the `version2` branch. `v2.1` (simple answer-hallucination fix) is optional |
 
 Each item, when completed, gets a dated entry in the **Completion log** at the bottom of this file.
 
@@ -584,3 +584,7 @@ trade-off is a stronger signal than claiming a win.
 **2026-10-08 — E1 ✅ `docs/decisions.md` created** (user approved the draft): six decisions, each with what was chosen, what was considered, why, and the evidence: fixed tools vs LLM-written code (49 vs 49, the trade-offs), rule-based vs LLM critic (0 of 15 caught, LLM critic untested), one model for every job (and its single-point-of-failure risk), LangGraph vs a plain loop (a design choice, not measured), session memory of 3 questions (window size was not the cause of the 4-turn failures reviewed), and one table per answer (limits what ADAA can answer). Linked from the README Documentation section and from CLAUDE.md.
 
 **2026-10-08 — E4 (case study) skipped by the user.** A short "what we learned" summary was drafted and also declined; the README, `docs/decisions.md` and this plan carry the findings.
+
+**2026-10-08 — Part F ✅ released `v2.0`**
+- *Done:* final checks (291 offline tests pass, no secrets in the 207 tracked files, `.env`, CLAUDE.md and PROJECT_GUIDE.md not tracked); pushed the `version2` branch (48 commits, `4c870f4..6b87cf4`); created the annotated tag `v2.0` on `6b87cf4` with release notes (what is in V2, headline results, known limits, how to reproduce) and pushed it. The tag is a permanent pointer to the exact code, docs and results behind the README numbers; the user decided on it as a named release for the portfolio, not as a V3 baseline (V3 is a different problem on different data).
+- *Left over from V2 polish:* a demo screenshot or GIF for the README (user), older figures inside `docs/evaluation.md` and the Known Limitations table of `docs/failure-modes.md`, and the optional `v2.1` fix for small number slips in the answer sentence.
