@@ -1,5 +1,7 @@
 # ADAA Evaluation Report
 
+> **Note:** these are the earlier evaluation rounds. The current 63-question baseline run, its failure-cause breakdown and the comparison with LLM-written code are in the [README](../README.md) and [v2-polish-plan.md](v2-polish-plan.md).
+
 **Pipeline:** V2 LangGraph (schema_gen → planner → execute_step loop → answer_gen)  
 **Planner model:** `openai/gpt-oss-20b` with `reasoning_effort: low`  
 **Dataset:** Sample Superstore — 9,994 rows × 21 columns (2014–2017)  

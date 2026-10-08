@@ -6,7 +6,7 @@ These are caught and recovered by the pipeline automatically.
 
 | Failure | How Triggered | What Happens |
 |---|---|---|
-| Wrong column name in plan | Ambiguous query maps to wrong column | Rule-based critic catches; Param Fixer (LLM) corrects parameters and step is retried |
+| Wrong column name in plan | Ambiguous query maps to wrong column | The tool rejects the unknown column (tool error); Param Fixer (LLM) corrects parameters and the step is retried |
 | Empty result after filter | Over-specific filter removes all rows | Critic catches empty df; step retried with corrected parameters |
 | Ambiguous time reference | "recent sales" with no date anchor | Planner uses dataset max date as `end_date` — safe default, no hallucination |
 | Max retries exceeded | Repeatedly wrong parameters | Replanner (LLM) generates a new plan from scratch; if that also fails, pipeline returns partial trace + explanation |
@@ -14,6 +14,7 @@ These are caught and recovered by the pipeline automatically.
 | Answer Generator failure | LLM narration fails or times out | Pipeline returns DataFrame regardless — narration is non-critical. A deterministic fallback string is built from `final_df` instead of returning `None`. |
 | Planner API failure | Groq API error or timeout | Planner retries once; returns `{"status": "error"}` if retry also fails |
 | Pydantic validation failure | LLM returns malformed plan JSON | Planner retries once with the validation error injected into the prompt |
+| Plan fails the plan check | Unknown tool, wrong parameters, or a broken step chain | Planner retries once with the reason; if it still fails, the run ends with an error |
 
 ---
 
@@ -34,7 +35,7 @@ These are caught and recovered by the pipeline automatically.
 ## Retry + Replan Flow
 
 ```
-Step fails (critic returns "fail")
+Step fails (tool error or critic fail)
     ↓
 Param Fixer (LLM) — receives failed step, error, critic check, query, schema
     ↓
@@ -54,7 +55,7 @@ Replanner (LLM) — generates a completely new plan from original_df
 [new plan fails]    → return partial trace + explanation
 ```
 
-Per-step cap: 3 total attempts (1 original + 2 retries). Max replan attempts: 1. Global cap: `len(plan) × 2` total executions across all steps.
+Per-step cap: 3 total attempts (1 original + 2 retries). Global cap: `len(plan) × 2` total step runs (recomputed for a new plan, the count keeps going). Replans are limited only by this cap; the `MAX_REPLAN_ATTEMPTS` setting exists in `src/config.py` but the graph does not use it.
 
 ---
 
@@ -67,11 +68,12 @@ When the critic fails a step, it returns one of these `check` values:
 | `not_none` | Tool returned None — silent crash |
 | `not_empty` | Result DataFrame has 0 rows |
 | `no_fully_empty_columns` | At least one column has all nulls |
-| `expected_columns_present` | A required column is missing from the result |
+| `expected_columns` | A required column is missing from the result |
 | `groupby_row_count` | Row count ≠ number of unique group values |
-| `top_n_row_count` | Result has more rows than N |
+| `top_n_rows` | Result has more rows than N |
 | `date_filter_range` | At least one date falls outside the requested range |
 | `numeric_agg_columns` | Aggregated column is not numeric |
+| `critic_crash` | The critic itself raised an error (reported as a failure instead of crashing the run) |
 
 ---
 
@@ -82,4 +84,6 @@ When the critic fails a step, it returns one of these `check` values:
 - **Incorrect grouping key** — grouping by the wrong column produces a valid DataFrame and passes all checks.
 - **Superset results** — returning all groups instead of filtering to the requested subset (e.g. all 4 regions instead of the 2 being compared) passes the critic. The answer generator usually compensates correctly.
 
-These cases rely entirely on Planner quality (model temperature=0.0, precise system prompt).
+These cases rely entirely on Planner quality (model temperature=0.0, precise system prompt), and the planner is not fully repeatable (identical plans for 78% of questions in our 20 × 3 test).
+
+**Measured:** in the 63-question baseline run, none of the 15 failed cases were caught by the critic (for example the dropped filters in Q06, Q07, MT03 and MT04). Almost every failure was about meaning, not structure.
