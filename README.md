@@ -252,6 +252,7 @@ python llm_codegen_experiment/compare.py                      # builds the Excel
 
 **How it works**
 - [Architecture](docs/architecture.md): pipeline flow, components, state, design decisions, and the model audit
+- [Design decisions](docs/decisions.md): what we chose, what we considered, and the evidence
 - [Tools](docs/tools.md): all 10 tools with parameters, examples and ordering rules
 - [Groq model notes](docs/others/groq-model-details.md): the models available, prices, limits and why we use one
 
