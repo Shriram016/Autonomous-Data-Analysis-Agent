@@ -143,4 +143,4 @@ in the design phase):
 2. **Latency targets:** are the per-route p50/p95 targets reasonable for a business manager?
 3. **Cost target:** set a number now (e.g. < $0.01 per question), or after first measurements?
 4. **Role-based access (S-5):** core scope or stretch?
-5. **Load-test environment:** local machine vs deployed environment (ties to deferred D8).
+5. **Load-test environment:** local machine vs deployed environment. A minimal deployment is core (D8), so the final load test runs against the deployed service.

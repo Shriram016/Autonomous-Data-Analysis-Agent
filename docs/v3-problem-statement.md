@@ -1,7 +1,8 @@
 # V3 Problem Statement
 
 **Status:** 🔒 **Plan locked.** Problem definition complete. High-level decisions D1–D7 locked (sections 11–17);
-D8 (deployment) deferred until V3 is built. Next: data profiling, then detailed technical design.
+D8: a minimal deployment is **core** (hosting and cost details decided in design). D9 (plan-first vs bounded agent loop) is open.
+Next: data profiling, then detailed technical design.
 
 > ⚠️ **Before designing or building V3, read [v3-requirements.md](v3-requirements.md)** — the
 > non-functional requirements (load, latency, cost, availability, security, rate limits,
@@ -118,7 +119,7 @@ availability, etc.) are in [v3-requirements.md](v3-requirements.md).**
 | **Service-shaped** | Usable as a service, with the UI as one client of it |
 | **Improves from use** | User feedback captured and convertible into new eval cases |
 
-Deployment target (cloud, hosting, cost) is **deliberately deferred** until V3 is built.
+A minimal deployment is core (D8). The hosting choice and its cost are decided in the design phase.
 
 ---
 
@@ -142,7 +143,7 @@ Deployment target (cloud, hosting, cost) is **deliberately deferred** until V3 i
 - Write operations of any kind (no inserts, updates, deletes).
 - Free-form code or SQL generation as the product's execution method.
 - Features added for their own sake that don't serve the success criteria.
-- Deployment and hosting decisions (deferred until V3 is built).
+- Hosting and cost details (decided in design). A minimal deployment itself is in scope (D8).
 - Employer-related work (e.g. invoice extraction) stays entirely separate from this project.
 
 ---
@@ -158,7 +159,8 @@ Deployment target (cloud, hosting, cost) is **deliberately deferred** until V3 i
 | D5 | **Router design** (how a question is classified as SQL / RAG / hybrid) | ✅ **Locked: separate router step before planning** — see section 15 |
 | D6 | **Tool layer for multi-table queries** (how constrained tools extend to joins) | ✅ **Locked: semantic (business) layer; text-to-SQL as core baseline** — see section 16 |
 | D7 | **Eval design** (question set, ground truth, per-path metrics) | ✅ **Locked** — see section 17 |
-| D8 | **Deployment** | Deferred until V3 is built |
+| D8 | **Deployment** | ✅ **Minimal deployment is core** (needed to verify load, latency and availability targets). Hosting choice and cost details: decided in design |
+| D9 | **Plan-first vs bounded agent loop** (and human approval) | **Open.** V3 inherits plan-first from V1/V2; D5 rejected a free-roaming loop by reasoning, not by test. Candidates: plan-first, bounded loop (step cap), plan-then-adapt, or route by question type. Decide by a comparison test on the same questions (accuracy, cost, latency). **Note:** V3 is read-only, so the approval step needs a real trigger, e.g. confirming an assumption on a vague question, an expensive query, or an export containing personal data |
 | — | **Non-functional requirements** | Draft in [v3-requirements.md](v3-requirements.md) — review before design |
 
 ---
@@ -555,7 +557,7 @@ Status: ✅ covered · ⚠️ partial · ❌ not started
 | 10 | Failure handling | Timeouts, retries, fallback model/provider, provider abstraction, graceful degradation | Core | ⚠️ | Targets in NFRs (A1–A4), not yet designed. **Design idea (to explore in M0/M4):** ports-and-adapters LLM layer, like an ORM for models: pipeline code calls one owned interface (`llm.complete(job, ...)`), one adapter per vendor (Groq / Gemini / Claude / OpenAI, or LiteLLM behind it), vendor SDK imports only inside the adapters, per-job model config, fallback chain; the eval harness is the swap safety net because behaviour (not just syntax) differs across models. V2 has the coupling (4 modules call `Groq(...)` directly), which hid the deprecated-model 404 |
 | 11 | Testing beyond evals | Unit, integration, end-to-end tests | Core | ❌ | Design phase |
 | 12 | LLMOps | Prompt and model versioning; a model or prompt change must pass evals before release | Core | ❌ | Design phase |
-| 13 | DevOps | Docker Compose, CI/CD, secrets management, environments | Core | ⚠️ | Docker required (D3); deployment deferred (D8) |
+| 13 | DevOps | Docker Compose, CI/CD, secrets management, environments | Core | ⚠️ | Docker required (D3); minimal deployment is core (D8) |
 | 14 | "Why not multi-agent?" decision record | Reasoned explanation of why a single planned pipeline beats multi-agent here | Core (writing only) | ❌ | Add as a decision section |
 | 15 | Showcase for recruiters | README, architecture diagram, demo video, eval dashboard/results, technical write-up, **business-impact framing** (e.g. "trusted answer in ~10s instead of waiting a day for an analyst") | Core | ❌ | End of V3 |
 | 16 | Prioritisation | Core vs stretch scoping (this checklist) | Core | ✅ | This section |
@@ -571,10 +573,11 @@ Status: ✅ covered · ⚠️ partial · ❌ not started
 | 26 | MCP server | Expose the agent's tools as an MCP server | Stretch | ❌ | Carried over from V2 plan |
 | 27 | Router comparison test | Separate router vs single implicit planner | Stretch | ❌ | D5 (low priority) |
 | 28 | Real-user contact | A few real users try the deployed system; failures logged and fed into evals (research-bar criterion 4) | Stretch | ❌ | Depends on deployment (#29) |
-| 29 | Deployment | Cloud/hosting choice, cost | Deferred | — | D8, after V3 is built |
+| 29 | Deployment | Minimal deployment of the service (Docker, hosted), tracing and latency tracking on it, load test against the NFRs. Hosting choice and cost: decided in design | Core | ❌ | D8. Moved from Deferred to Core |
+| 33 | Agent loop with human approval | Decide plan-first vs bounded loop (step cap) by a comparison test; add a human-approval step with a real trigger in a read-only system | Core (decide in design) | ❌ | D9. Related to #10 and #30 |
 | 30 | Large conversation state | Long chats and big state: context budget per prompt, trimming or summarising history, keep large query results out of the LLM context and out of the checkpoint (store references, not data), state size and retention limits | Core (decide in design) | ❌ | Related to #9 and #19. V2 starting point: questions-only sliding window of 3 plus full state in a SQLite checkpoint |
 | 31 | Resumable / recoverable flows | Design to resume a failed or interrupted run: durable per-step state, idempotent steps, resume from the last good step instead of restarting, retry and dead-letter handling, user-visible run status | Core (decide in design) | ❌ | Related to #10 and NFR A1–A4. V2 starting point: LangGraph `SqliteSaver` checkpointing (crash/resume check: `dev_checks/check_checkpointer.py`) |
-| 32 | Query-type and eval-metric coverage | Cover more query types than V2's 8 (add ambiguous, off-topic, "why", forecast / what-if, metadata questions) and add metrics beyond answer correctness: per-step tool and parameter accuracy, LLM-as-judge for fuzzy answers, refusal precision and recall, consistency over repeated runs, injection resistance | Core (decide in design) | ❌ | Related to #4 and #7. V2 covered: aggregation, filtering, grouping and ranking, time-based, comparison, derived, compound and follow-up questions, plus a little unanswerable and adversarial; and scored answer correctness, refusal, multi-turn, consistency, number faithfulness, cost, latency and a small safety test. Reference evals to check (names and metrics to verify): Ragas agent metrics, DeepEval, LangSmith trajectory evals, tau-bench, Spider / BIRD |
+| 32 | Query-type and eval-metric coverage | Cover more query types than V2's 8 (add ambiguous, off-topic, "why", forecast / what-if, metadata questions) and add metrics beyond answer correctness: per-step tool and parameter accuracy, LLM-as-judge for fuzzy answers, refusal precision and recall, consistency over repeated runs (**pass^k**: succeeds on every one of k repeated attempts), injection resistance | Core (decide in design) | ❌ | Related to #4 and #7. V2 covered: aggregation, filtering, grouping and ranking, time-based, comparison, derived, compound and follow-up questions, plus a little unanswerable and adversarial; and scored answer correctness, refusal, multi-turn, consistency, number faithfulness, cost, latency and a small safety test. Reference evals to check (names and metrics to verify): Ragas agent metrics, DeepEval, LangSmith trajectory evals, tau-bench, Spider / BIRD |
 
 **Deliberately excluded:** bias/ethics review (low relevance for business analytics on anonymized
 data), fine-tuning (semantic layer + evals is the stronger story), multi-agent (covered as a
@@ -595,7 +598,7 @@ starts. Numbers in brackets are §18 checklist rows.
 6. **M5 — Proof:** full held-out eval, text-to-SQL baseline, load test against NFRs (#4, #5).
 7. **M6 — Showcase:** README, diagram, demo video, write-ups (#15, #21).
 
-Then stretch items (#23–#28), then deployment (#29).
+Minimal deployment (#29) and the agent-loop decision (#33, D9) are core. Their milestone placement is decided when milestones are planned. Then stretch items (#23–#28).
 
 ---
 
