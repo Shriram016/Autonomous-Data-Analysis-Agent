@@ -1,6 +1,8 @@
 # V3 Non-Functional Requirements (NFRs)
 
-**Status:** Draft. All numbers are **proposed targets**, to be reviewed before the V3 design phase.
+**Status:** Superseded (2026-10-11) by the locked Level 1 requirements in
+[v3-problem-statement.md §0](v3-problem-statement.md#0-clean-slate-design-started-2026-10-11).
+Kept as reference (capacity estimate, verification plan).
 **Related:** [v3-problem-statement.md](v3-problem-statement.md) — defines *what* V3 does (functional
 requirements and decisions D1–D8). This file defines *how well* it must do it.
 

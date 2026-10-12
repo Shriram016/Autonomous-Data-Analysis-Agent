@@ -11,6 +11,520 @@ Next: data profiling, then detailed technical design.
 
 ---
 
+## 0. Clean-slate design (started 2026-10-11)
+
+V3 is being re-designed top-down (Level 0 → Level 1 → Level 2), one decision at a time, asking
+"why this, why not that". **Sections 1–20 below are now a reference checklist, not locked
+decisions** — each is re-decided here and only then counts as locked.
+
+### Level 0 — Problem statement (🔒 locked)
+
+> An AI agent that answers natural-language questions over a company's internal data, covering both
+> structured records (tables) and unstructured text (such as customer reviews). It shows how it got
+> each answer, asks when a question is unclear, and refuses when the data can't answer it. It runs
+> as a deployed, multi-user service.
+
+### Level 0 — Primary user (🔒 locked)
+
+**A business manager with no SQL knowledge.** Asks in plain English and **cannot verify the
+answer**, so trust is the central requirement: explain how each answer was computed, ask when
+unclear, refuse rather than guess (a confident wrong number is worse than "I can't answer").
+Rejected: data analyst (checks the SQL themselves, so trust behaviours become optional), executive
+(summaries only, too narrow).
+
+### Level 0 — Pain and value (🔒 locked)
+
+Today a manager waits hours or days for an analyst to answer a routine data question, and
+dashboards only answer questions someone predicted in advance. The agent gives a **trusted answer
+to an unplanned question in seconds**. Value metric: **time to a trusted answer**. A change that
+is faster but less trustworthy does not serve this pain.
+
+### Level 0 — Read-only vs actions (🔒 locked, after dataset and question types)
+
+**Business data is read-only.** One write action — flag a seller or create a task — saved only in
+the agent's own tables, with manager approval first, logged, and undoable. Report export: later.
+Details: [ADR 0002](adr/0002-read-only-business-data-one-approved-action.md).
+
+### Level 1 — Dataset criteria (🔒 locked)
+
+Must-have: (1) real company data, not synthetic/teaching; (2) several related tables needing
+joins; (3) real mess (missing values, duplicates, lookup codes); (4) customer text from the same
+business, linked to the records. Preferred: (5) questions a manager would really ask; (6) workable
+size (laptop, free/cheap API tiers); (7) license allows a public portfolio repo; (8) room for
+actions the agent could plausibly take.
+
+### Level 1 — Dataset (🔒 locked)
+
+**Olist Brazilian E-Commerce.** Only candidate meeting all must-haves; reviews linked to orders.
+Details, rejected alternatives and consequences: [ADR 0001](adr/0001-olist-dataset.md).
+
+### Level 1 — Question types (🔒 locked)
+
+Two independent axes. **Context:** (A) standalone; (B) follow-up — rewritten into a standalone
+question using earlier turns, then handled as usual.
+
+**Need** (all checked against Olist):
+
+| # | Type | Example | Expected behaviour | Scope |
+|---|---|---|---|---|
+| 1 | Numbers | "Late-delivery rate by seller in 2017?" | Query tables, answer, explain computation | Core |
+| 2 | Review text | "What do customers complain about?" | Search reviews, summarise, cite | Core |
+| 3 | Hybrid | "Worst categories for late delivery, and what do those customers say?" | Numbers → reviews filtered by that result → one answer | Core |
+| 4 | Ambiguous | "Who are our best customers?" | Ask or state the assumption | Core |
+| 5 | Unknown business term | "What's our GMV?" | Map to a defined metric or ask | Core |
+| 6 | Unanswerable (incl. false premise) | "What's our profit?" (no cost data) / "Why did sales drop in 2019?" | Refuse naming the missing data, or correct the premise | Core |
+| 7 | Off-topic | "Write me a poem" | Decline, say what it can do | Core |
+| 8 | Metadata | "What date range is the data?" | Describe data and capabilities | Core |
+| 9 | Personal data request | "List customer IDs and zip codes" | Refuse (Olist is anonymised, but IDs/zip prefixes are quasi-identifiers) | Core |
+| 10 | "Why" / forecast | "Why did reviews drop in March?" | Decide after core works (can show associations, not prove causes) | Later |
+
+Prompt injection is a safety concern, not a question type — handled separately.
+
+### Level 0 — Success criteria (🔒 locked)
+
+Broad goals; each gets one or more eval metrics (formula, test questions, pass mark) in the eval
+design step. Every failure is labelled with its **cause** (e.g. routing, retrieval), not blended
+into one pass rate.
+
+| # | Criterion | Measured as (detail in eval design) |
+|---|---|---|
+| S1 | Correct numbers | % of number questions answered correctly |
+| S2 | Correct review answers | Right reviews found; summary says only what they say |
+| S3 | Right source chosen | % routed correctly to numbers / reviews / both |
+| S4 | Asks when unclear | Asks on ambiguous questions, not on clear ones |
+| S5 | Refuses when it should | Refuses unanswerable / off-topic / personal-data, not answerable ones |
+| S6 | Never silently wrong on messy data | No wrong numbers on known data traps |
+| S7 | Explains every answer | Every answer has "how this was computed" |
+| S8 | Safe actions | No action runs without approval |
+| S9 | Production targets met | Latency, cost, load targets (set in the requirements step) |
+
+### Level 0 — Non-goals (🔒 locked)
+
+- A general "chat with any database" product — one realistic company dataset, done properly.
+- Editing business data ([ADR 0002](adr/0002-read-only-business-data-one-approved-action.md)).
+- Interface languages other than English (Portuguese reviews are handled internally).
+- Live/streaming data — Olist is a snapshot; at most a simulated daily refresh.
+- Fine-tuning models.
+- Anything from the builder's employer work.
+
+Whether the LLM may write SQL is **not** a Level 0 rule — it is a Level 1 architecture decision.
+
+**Level 0 complete.**
+
+### Level 1 — Usage scenario (🔒 locked, may be revisited during design)
+
+Olist's internal analytics assistant: **500** registered managers; **~20** concurrent normally;
+**~100** at peak (Monday reporting) — the design point, where speed targets must hold; **200**
+spike — survive only (queue or polite "busy", never crash or wrong answers, speed not required).
+~1 question/min per active user at peak → **~1.7 questions/s**, **~5–7 LLM calls/s**. Free LLM
+tiers can't sustain that — deliberately, so caching, cheaper models and queuing become design work.
+
+### Level 1 — Speed targets (🔒 locked)
+
+Targets hold at the **100-user peak**. p50 = half of answers faster; p95 = 19 of 20 faster.
+
+| Measure | p50 | p95 |
+|---|---|---|
+| **Time to first feedback** (any progress shown, e.g. "Searching reviews…") | < 1s | < 2s |
+| **Total time** — clarify / refuse / off-topic / metadata | < 2s | < 4s |
+| **Total time** — numbers | < 5s | < 10s |
+| **Total time** — review text | < 6s | < 12s |
+| **Total time** — hybrid | < 10s | < 20s |
+
+**Tracked, no target (diagnostics):** time to first answer token (TTFT), output speed (tokens/s),
+per-step time (router, planner, database, review search, each LLM call), queue wait, p99.
+**Why first feedback, not TTFT:** the agent routes, plans and queries before writing, so the first
+answer token arrives late; progress messages are what the manager sees first. Implies streaming
+progress to the UI.
+
+### Level 1 — Cost target (🔒 locked as a soft baseline)
+
+**Baseline: < $0.01 per question on average** (~55k questions/month → ~$550/month). A soft
+baseline, not a fixed limit — reviewed after first measurements. Cost tracked per question type
+(hybrid will cost more). Business framing: an analyst answering the same question costs dollars.
+
+### Level 1 — Failure behaviour and uptime (🔒 locked)
+
+| Failure | Required behaviour |
+|---|---|
+| LLM provider down / rate-limited | Switch to a backup model or provider; else a clear error — **never a made-up answer** |
+| Database down | Clear error; never a partial or old answer presented as current |
+| Anything slow | Every external call has a time limit; each question has an overall time cap |
+| Uptime | 99.5% during business hours (≈40 min/month), measured in load tests and the demo period |
+
+Rule: an honest error beats a confident guess. The backup-provider requirement implies LLMs are
+called through one owned interface, not tied to a vendor (V2's single-vendor coupling hid a
+deprecated-model failure).
+
+### Level 1 — Security and privacy (🔒 locked)
+
+Core:
+1. Every manager logs in; every request is tied to a person (audit, per-user limits, approvals).
+2. Least privilege in the database: read-only on business data; narrow write only to agent-owned
+   tables ([ADR 0002](adr/0002-read-only-business-data-one-approved-action.md)).
+3. No personal data in answers or logs beyond what's needed (customer IDs, zip codes masked).
+4. Prompt-injection resistance, including instructions hidden inside review text — reviews are
+   untrusted input entering prompts; needs a written threat model and defences.
+
+Parked (stretch): role-based data access (e.g. regional manager sees only their region).
+
+### Level 1 — Overload and abuse controls (🔒 locked)
+
+1. **Per-manager quota** — start at 30 questions/hour.
+2. **Global concurrency limit** — at most N questions in progress; the rest queue.
+3. **Provider rate limits enforced centrally** — one place counts LLM calls/min and holds back
+   before the provider's limit (most common way LLM apps fail under load).
+4. **Polite rejection** — "hourly limit reached, try in 12 min" / "busy, you're #3 in queue".
+
+Numbers are starting values, tuned during load testing.
+
+### Level 1 — Data requirements (🔒 locked)
+
+1. **Daily freshness** — new orders and reviews loaded, translated and searchable within 24h
+   (simulated by replaying the snapshot day by day): an ingestion pipeline, not a one-off script.
+2. **Growth headroom** — speed targets hold at 10× today's data (synthetic scale-up, test only).
+3. **Consistent data rules** — messy-data handling defined once, applied to every answer (protects S6).
+
+### Level 1 — Observability (🔒 locked)
+
+1. **Every question traced end to end** — route, each step, reviews retrieved, every LLM call
+   (prompt, tokens, cost, time), outcome.
+2. **Dashboard** — p50/p95 per question type, error rate, cost per question, question-type mix,
+   cache hit rate, quota rejections.
+3. **Alert conditions defined** — e.g. p95 above target for 10 min, error rate > 2%, cost per
+   question > 2× baseline.
+4. **Manager feedback** — 👍/👎 per answer, linked to its trace; bad answers become new test questions.
+
+**Non-functional requirements complete** (scenario → observability above). These supersede the
+draft in [v3-requirements.md](v3-requirements.md).
+
+### Level 1 — How numbers are computed (🔒 locked)
+
+**Semantic layer.** We define metrics, dimensions, joins and messy-data rules once; the LLM only
+fills a structured request, which code validates and compiles to SQL. Text-to-SQL is built as the
+comparison baseline. Details: [ADR 0003](adr/0003-semantic-layer-for-numbers.md).
+
+### Level 1 — Database (🔒 locked)
+
+**PostgreSQL** — the database enforces least privilege and query time limits; handles 100
+concurrent users. Rejected DuckDB (no permissions) and SQLite. [ADR 0004](adr/0004-postgresql.md).
+
+### Level 1 — Portuguese reviews (🔒 locked)
+
+**Translate once at load time** (part of the ingestion pipeline, never at question time); store
+both versions; search the English. Direct-Portuguese-search comparison: nice-to-have (stretch).
+[ADR 0005](adr/0005-translate-reviews-at-load-time.md).
+
+### Level 1 — Review search (🔒 locked)
+
+**Hybrid search** (PostgreSQL full-text + vector similarity), vectors in **pgvector** — chosen on
+its own merits: filtering by order data in one query, scale fit, no sync, one security boundary.
+[ADR 0006](adr/0006-hybrid-review-search-in-pgvector.md).
+
+### Level 1 — Agent shape (🔒 locked)
+
+**Bounded loop:** pick an allowed tool → see result → next step, with a hard step limit, allowed
+tools only, and a check after each step; pauses for approval before actions. Plan-first built as a
+comparison. [ADR 0007](adr/0007-bounded-agent-loop.md).
+
+### Level 1 — Routing (🔒 locked)
+
+Follow-up rewrite → **separate router** → (early exit for clarify / refuse / off-topic / metadata)
+or bounded loop with only that route's tools. Classifier type: Level 2.
+[ADR 0008](adr/0008-separate-router.md).
+
+### Level 1 — LLM interface (🔒 locked)
+
+All code calls one owned `llm.complete(job, ...)`; **LiteLLM** behind it (providers, fallback, cost).
+Model per job + fallback chain in config, chosen by evals.
+[ADR 0009](adr/0009-llm-interface-litellm-behind-owned-port.md).
+
+### Level 1 — Service shape (🔒 locked)
+
+**Backend API + durable job queue + workers; UI is a client** with streamed progress. Why:
+approval pauses, durability across restarts, spike handling, one place for login/quotas/tracing;
+plus the learning goal. [ADR 0010](adr/0010-backend-service-with-job-queue.md).
+
+### Level 1 — Agent framework (🔒 locked)
+
+**LangGraph**, checkpoints in PostgreSQL (approval pause, resume after restart, step limits).
+**No RAG framework** — review search is plain SQL. [ADR 0011](adr/0011-langgraph-no-rag-framework.md).
+
+### Level 1 — Guardrails (🔒 locked)
+
+One separate layer, three points: **before** (off-topic, personal data, injection), **during**
+(validate structured request; review text marked untrusted), **after** (every number must appear
+in the query result, quotes must match reviews, personal data masked — else block/retry). Code
+first, LLM judge only where needed. [ADR 0012](adr/0012-guardrails-layer-three-points.md).
+
+### Level 1 — Short-term memory (🔒 locked)
+
+Last ~5 turns as question + structured request + one-line summary; big results stored and
+referenced by ID; older-turn summary only if tests show a need.
+[ADR 0013](adr/0013-short-term-memory-compact-turns.md).
+
+### Level 1 — Long-term memory (🔒 locked, core)
+
+Only **preferences the manager explicitly asks to save**; per manager, viewable and deletable;
+any preference used is stated in the answer's explanation. No automatic memory.
+[ADR 0014](adr/0014-long-term-memory-explicit-preferences.md).
+
+### Level 1 — Observability tools (🔒 locked)
+
+**Langfuse Cloud** (LLM traces, cost, prompt versions; not self-hosted — too heavy for one VM) + **Grafana Cloud** (hosted Prometheus-style metrics) (system metrics,
+dashboard, alerts), both fed via **OpenTelemetry**. [ADR 0015](adr/0015-langfuse-plus-prometheus-grafana.md).
+
+### Level 1 — Caching (🔒 locked)
+
+**(a) Result cache** keyed on the structured request (different phrasings → same request → same
+hit) + **(b) exact-question cache**. All caches cleared at each daily data refresh. Rejected for
+core: similar-meaning (semantic) cache — "revenue in SP" ≈ "revenue in RJ" can return a wrong
+answer; stretch only, behind a strict check.
+
+### Level 1 — UI (🔒 locked)
+
+**React single-page app (Vite + TypeScript)**, thin client of the backend; login and per-manager
+screens. [ADR 0016](adr/0016-react-ui.md).
+
+### Level 1 — Deployment (🔒 locked, provisional)
+
+**AWS EC2** for now — one VM running the same Docker Compose as local. Better options (managed
+services, CI/CD, Terraform) explored after development is complete. Known weakness: one machine
+is a single point of failure — documented, with a scale-up path.
+
+**Running mode (locked for now, revisit after development): wake on demand.** The React UI is
+hosted as static files on free hosting (always on). While the backend sleeps, the page shows
+"Demo is asleep — wake it up (~2–3 min)" plus demo video and screenshots. The wake button calls a
+small serverless function (AWS Lambda) that starts the EC2 server; the UI polls a health endpoint
+and shows startup progress; the server auto-stops after ~30 min idle. Guards: wake-up limit per
+day + bot check, guaranteed auto-stop, AWS budget alarm. Wake comes before login (Keycloak is on
+the server). Cost ≈ server hours + ~$3–5/month disk/IP. Alternatives for later: Oracle Cloud
+always-free ARM (24 GB, $0, not AWS), Hetzner (~€7–10/month), serverless redesign.
+Consequence for containers: the proxy no longer serves the UI files, only `/api` and `/auth`.
+
+### Level 1 — Eval structure (🔒 locked)
+
+- **~150 test questions**, builder-written across all 9 types + follow-ups + attacks (LLM drafts
+  allowed, every one human-reviewed); written incrementally as each part is built.
+- **Ground truth:** numbers = hand-written SQL independent of the semantic layer; reviews =
+  hand-labelled relevant reviews; clarify/refuse = expected route.
+- **60/40 dev / held-out split** — tune on dev, report held-out only.
+- **3 runs per question** — report mean and "passes all 3" (pass^k).
+- **Failure-cause label** per failure (router, request, retrieval, guardrail, answer, …).
+- **CI gate:** fast subset on every code/prompt change; full set before releases.
+- Eval tool (own harness / DeepEval / Ragas / Langfuse datasets): decided later.
+
+### Level 1 — LLMOps (🔒 locked, all mandatory)
+
+- **Prompts versioned in git** (source of truth; Langfuse may display them); every trace records
+  prompt version + model.
+- **Model-per-job config** in a versioned file, never hard-coded.
+- **Release rule:** a prompt or model change merges only if the CI eval subset passes within a set
+  tolerance; full eval before a release.
+- **Side-by-side comparison** old vs new, per question type, incl. cost.
+
+### Level 1 — Testing beyond evals (🔒 locked)
+
+| Level | Checks | LLM | When |
+|---|---|---|---|
+| Unit | One piece alone (SQL compilation, number-check guardrail) | No | Every change |
+| Integration | Real PostgreSQL/Redis in Docker (read-only role can't write, job survives restart, approval resumes) | Faked | Every change |
+| End-to-end | Key flows through the API (login → ask → stream → answer) | A few | Before release |
+| Failure injection | LLM timeout → backup; DB down → clear error | No | Before release |
+| Load test | Speed at 100 users, survival at 200 (Locust/k6) | Yes | Before release |
+
+### Level 1 — Single agent (🔒 locked, revisit if needed)
+
+**One agent** (router + bounded loop with route-specific tools), not multi-agent. Revisit if the
+task grows much broader. [ADR 0017](adr/0017-single-agent-not-multi-agent.md).
+
+### Level 1 — Login (🔒 locked)
+
+**Self-hosted Keycloak (OIDC)**; backend only verifies JWTs. No cloud/vendor lock-in; accounts in
+our own database. [ADR 0018](adr/0018-keycloak-self-hosted-login.md).
+
+### Level 1 — Data sent to LLM providers (🔒 locked, gap G1)
+
+**Approved providers only** (no training on our data; fallbacks too); **send the minimum**
+(definitions + summarised results); **masking function inside `llm.complete`** — one door, also
+cleans logs/traces; personal/confidential list in a versioned config.
+[ADR 0019](adr/0019-llm-data-sharing-approved-providers-masking.md).
+
+### Level 1 — Answer format (🔒 locked, gap G2)
+
+Plain-English answer + **table + chart**. **Code chooses the chart by rules** from the structured
+request (time dimension → line, category → bar, single number → stat card); the manager may
+override from a **fixed list** only; the chart is always drawn from the actual query result. The
+LLM never writes chart code. Rejected: text only (poor for trends); LLM-written chart code (breaks
+"no free-form code", can plot wrong data).
+
+### Level 1 — Backup and recovery (🔒 locked, gap G3: design core, implementation stretch)
+
+**Design:** nightly `pg_dump` of all PostgreSQL data (business tables, translations + embeddings,
+agent tables, preferences, conversations/checkpoints, feedback, Keycloak, Langfuse) to encrypted
+S3; retention 7 daily + 4 weekly; **RPO 24h, RTO < 1h** (incl. vector index rebuild); restore
+drill on the test list. Not backed up: Prometheus metrics, Redis queue/caches (temporary); code,
+prompts, semantic layer, config, eval sets are in git. Upgrade path: managed DB with
+point-in-time recovery (RDS). Building it is a stretch goal.
+
+**Data inventory:** Olist tables · translations + embeddings · agent tables (flags, tasks, audit
+log) · saved preferences · conversations (checkpoints, turn records, stored results) · feedback ·
+Keycloak accounts · Langfuse traces · Prometheus metrics · Redis queue/caches · git-held config.
+
+### Level 1 — Retention (🔒 locked, gap G3b; starting values)
+
+| Data | Retention |
+|---|---|
+| Conversations (turns, stored results) | 90 days, then auto-deleted |
+| Paused approvals never confirmed | Expire after 7 days (safety: stale actions never run) |
+| Traces (Langfuse) | 30 days |
+| Traces linked to 👎 feedback | Kept (masked) until reviewed / turned into eval cases |
+| Audit log of actions | 1 year |
+| Manager deletes a conversation | Removed immediately (audit log excepted) |
+
+Enforced by a scheduled cleanup job; stated in the README.
+
+### Level 1 — Daily data validation (🔒 locked, gap G4)
+
+**Validate, then publish.** New data lands in staging; checks run (expected columns, row counts in
+normal range, no duplicate IDs, valid dates, valid joins, non-empty translations); only a fully
+passing batch is published to live tables. On failure: batch held, alert fires, answers keep using
+yesterday's good data. **Answers show data freshness** ("data as of 12 Oct"). Rules come from data
+profiling. Check tool (plain SQL / Great Expectations / Pandera): Level 2. Rejected: load-and-hope;
+load-then-flag (suspicious data still reaches answers).
+
+### Level 1 — Environments and secrets (🔒 locked for now, gap G5)
+
+**Environments:** local (Docker Compose) + production (EC2); staging documented as the next step.
+**Secrets:** git-ignored `.env` for now. A secrets manager (e.g. AWS SSM Parameter Store, behind
+one small function) and a CI secret scan are revisited with the other deployment decisions.
+
+### Level 1 — Semantic-layer versioning (🔒 locked, gap G6)
+
+Git keeps the history; the **running system** must also know the version. The semantic layer
+carries a version (number or automatic content hash); every answer records which version computed
+it; a version change **clears the result cache** and CI **flags eval questions** using changed
+metrics for review. Definition changes go through the same CI gate as prompt changes. Rejected:
+just editing the file (stale caches, misleading evals, unexplainable old answers).
+
+### Level 1 — Escalation to an analyst (🔒 locked, core, gap G7)
+
+On a refusal or 👎, the manager can **"Send to analyst"**: creates a **task** (existing action
+type, [ADR 0002](adr/0002-read-only-business-data-one-approved-action.md)) holding the question,
+what the agent tried and why it stopped. Escalations double as a to-do list for extending the
+semantic layer and a source of new eval questions. Real Slack/Jira/email integration: stretch.
+
+### Level 1 — MCP (🔒 locked, stretch)
+
+An MCP server would be another thin client of the backend API (agent / semantic-layer tools usable
+from Claude Desktop, IDEs). No core design change. Shown as a future client; built after core.
+
+> **Gap check (2026-10-11)** against wider production-AI-agent topics found: G1 data sent to LLM
+> providers ✅; G2 answer format (charts/tables) ✅; G3 backup and recovery ✅; G3b conversation retention ✅; G4 validating each day's
+> new data ✅; G5 environments and secrets ✅; G6 semantic-layer changes (cache/evals/preferences) ✅;
+> G7 escalation to a human analyst ✅. **All gaps closed — Level 1 decisions complete.** **Parked for Level 2:** streaming protocol, ingestion
+> scheduler, relative-date resolution against 2016–18 data, LLM-judge vs human check, API
+> versioning, runbooks.
+
+### Level 1 — Containers (🔒 locked for now)
+
+On the EC2 server (8 GB instance; ~4.5–5.5 GB in use):
+
+| # | Container | Role | Runs |
+|---|---|---|---|
+| 1 | proxy (Caddy/Nginx) | HTTPS, routes `/api` → api, `/auth` → keycloak (React UI is on free static hosting) | Always |
+| 2 | api (FastAPI) | Token check, quotas, queue jobs, stream progress, approvals, feedback | Always |
+| 3 | worker ×2+ | LangGraph agent (same image as api, different start command) | Always |
+| 4 | postgres + pgvector | business / agent / conversation / staging schemas + Keycloak's own database | Always |
+| 5 | redis | Job queue, progress pub/sub, caches, rate-limit counters | Always |
+| 6 | keycloak | Login (OIDC) | Always |
+| 7 | otel-collector | Pushes metrics/traces to Grafana Cloud and Langfuse Cloud | Always |
+| 8 | ingestion | Daily replay → validate → translate → embed → publish; exits | Daily |
+| 9 | housekeeping (optional) | Nightly backup → S3, retention cleanup; build decided later | Scheduled |
+
+Outside the server: React UI (free static hosting), wake-up function (AWS Lambda), Langfuse Cloud,
+Grafana Cloud, LLM providers (via LiteLLM), S3, GitHub Actions.
+
+### Level 1 — Architecture views (Views 1–2 ✅ reviewed; View 3 flows pending)
+
+Notes from review: scheduled housekeeping jobs (nightly backup, retention cleanup) are **part of
+the design; whether to implement them is decided later**. Router and loop internals: Level 2.
+Progress reaches the UI as a stream of events (submit → job ID → event stream; likely SSE, Level 2).
+
+> **Next steps (in order, as of 2026-10-12):**
+> 1. **View 3 — flows:** walk each route through the components, one at a time: numbers →
+>    reviews → hybrid → clarify/refuse/off-topic → follow-up → action with approval. Then check
+>    every locked requirement has a home in the picture.
+> 2. **Scope and time check → milestone plan** (old §19 is reference only; it lacks Keycloak,
+>    queue/workers, React, wake-on-demand, etc.). Decide weeks available and the smallest
+>    impressive version.
+> 3. **Repo and codebase plan:** reuse V2 code or fresh; folder layout (backend / frontend /
+>    infra); tooling (Python version, package manager).
+> 4. **Start M0 with data profiling** (also verifies Olist license and review-text counts).
+>
+> Session style: one question at a time, recommendation + options, lock, record here (+ ADR when
+> hard to reverse, surprising, and a real trade-off), terms in [GLOSSARY.md](../GLOSSARY.md).
+
+**View 1 — Big picture (who and what the system touches)**
+
+```mermaid
+flowchart LR
+    M([Manager]) -- questions, approvals, feedback --> S[ADAA V3]
+    S -- answers, charts, explanations --> M
+    S -- masked prompts --> L[(Approved LLM providers)]
+    D[(Olist data, daily replay)] --> S
+    S -- escalation tasks --> A([Analyst])
+    B([Builder / operator]) -- dashboards, alerts, traces --> S
+    F([Future: MCP clients]) -.-> S
+```
+
+**View 2 — Components inside**
+
+```mermaid
+flowchart TB
+    UI[React UI] -- login redirect --> KC[Keycloak]
+    UI -- REST + progress stream, JWT --> API[Backend API<br/>token check · quotas · concurrency limit<br/>approvals · feedback]
+    API -- verify token --> KC
+    API -- enqueue job / read progress / caches --> R[(Redis<br/>job queue · progress pub/sub<br/>result + exact-question caches<br/>rate-limit counters)]
+    R --> W
+
+    subgraph W[Workers — LangGraph agent]
+        FR[Follow-up rewrite] --> GI[Guardrails: before]
+        GI --> RT[Router]
+        RT -- clarify / refuse / off-topic / metadata --> ANS
+        RT -- numbers / reviews / hybrid --> LP[Bounded loop<br/>route tools only · step limit]
+        LP -- structured request --> SL[Semantic layer<br/>validate + compile SQL]
+        LP --> RS[Review search<br/>full-text + pgvector]
+        LP -- proposed action --> AP[Approval pause]
+        LP --> GO[Guardrails: after<br/>numbers · quotes · masking]
+        GO --> ANS[Answer + chart spec + explanation]
+    end
+
+    W -- all LLM calls --> LLM[llm.complete<br/>masking · rate limiter · LiteLLM · fallback]
+    LLM --> EXT[(LLM providers)]
+    SL -- read-only role --> PG
+    RS -- read-only role --> PG
+    AP -- agent-write role --> PG
+    W -- checkpoints, turns, stored results --> PG
+
+    subgraph PG[PostgreSQL + pgvector]
+        BIZ[business schema<br/>Olist tables · reviews + translations + embeddings]
+        AG[agent schema<br/>flags · tasks · audit · preferences · feedback]
+        CONV[conversation state<br/>checkpoints · turns · stored results]
+        STG[staging schema]
+    end
+
+    ING[Ingestion pipeline — daily<br/>replay → staging → validate → translate → embed → publish<br/>clears caches] --> STG
+    ING -- translate / embed calls --> LLM
+    ING --> BIZ
+
+    W & API -. OpenTelemetry .-> OBS[Langfuse — LLM traces<br/>Prometheus + Grafana — metrics, alerts]
+    JOBS[Scheduled jobs<br/>nightly backup → S3 · retention cleanup] --> PG
+    CI[CI: unit + integration tests · eval subset gate] -.-> W
+```
+
+---
+
 ## 1. Why V3 exists
 
 V1 and V2 answer questions about **one clean CSV** (Sample Superstore). The engineering is solid
