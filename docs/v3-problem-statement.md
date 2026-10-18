@@ -534,9 +534,23 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 > **Next steps (in order, as of 2026-10-12):**
 > 1. ~~**View 3 — flows**~~ ✅ done 2026-10-16 (routes, follow-up, DB access, failures and edges;
 >    requirement check found only the failure-path gap, now closed).
-> 2. **Scope and time check → milestone plan** (old §19 is reference only; it lacks Keycloak,
->    queue/workers, React, wake-on-demand, etc.). Decide weeks available and the smallest
->    impressive version.
+> 2. **Scope and time check → milestone plan** (old §19 is reference only). Time budget parked
+>    (to be estimated from real pace after M0–M1). **Draft plan (accepted 2026-10-18, order not
+>    yet locked) — walking skeleton first, then deepen:** M0 setup + data profiling (Compose,
+>    Olist loaded, profiling report, semantic-layer draft) → M1 walking skeleton (one numbers
+>    question end to end: React → FastAPI → queue → worker → LangGraph → semantic layer → SQL →
+>    streamed answer; `llm.complete` with structured output; ~20-question eval harness) → M2
+>    numbers done properly (full semantic layer, quick routes, number guardrail, text-to-SQL
+>    baseline) → M3 reviews + hybrid (ingestion: translate → tag → embed → publish; hybrid
+>    search; quote guardrail) → M4 conversation (follow-ups, memory, preferences, caching) → M5
+>    actions + safety (approval, audit, masking, threat model + attack evals) → M6 production
+>    hardening (Keycloak, isolation, quotas, failure handling, Langfuse + Grafana, load + chaos
+>    tests) → M7 deploy + demo (EC2, wake-on-demand, guest access, video, write-up) → **M8
+>    mandatory cross-examination** + stretch. Smallest impressive version: M0–M3 + simple deploy.
+>
+>    **Visual summary:** [v3-blueprint.html](v3-blueprint.html) (source) — published as the
+>    "ADAA V3 Blueprint" artifact (https://claude.ai/artifact/6KH9Q1fuB8NpGPH8rKjSae); update
+>    it when the design changes.
 > 3. **Repo and codebase plan:** reuse V2 code or fresh; folder layout (backend / frontend /
 >    infra); tooling (Python version, package manager).
 > 4. **Start M0 with data profiling** (also verifies Olist license and review-text counts).

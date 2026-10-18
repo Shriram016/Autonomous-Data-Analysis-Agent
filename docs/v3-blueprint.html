@@ -1,0 +1,613 @@
+<title>ADAA V3 Blueprint</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a blueprint sheet — sticky tab bar, one centred column of diagram "plates", each with a short label strip */
+:root {
+  --bg: #f3f5f8;
+  --sheet: #ffffff;
+  --ink: #18212f;
+  --muted: #5a6577;
+  --line: #d6dce5;
+  --accent: #1d5fd1;
+  --accent-soft: #e4ecfb;
+  --warn: #b35c00;
+  --warn-soft: #fbeedd;
+  --ok: #19794a;
+  --ok-soft: #e0f2e8;
+  --bad: #b3261e;
+  --bad-soft: #fbe3e1;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f141c; --sheet: #161d28; --ink: #e6ebf2; --muted: #9aa6b8; --line: #2a3443;
+    --accent: #7aa7ff; --accent-soft: #1c2a44; --warn: #f0a85a; --warn-soft: #3a2a17;
+    --ok: #5fcf95; --ok-soft: #17322a; --bad: #ff8a80; --bad-soft: #3d1d1b;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f141c; --sheet: #161d28; --ink: #e6ebf2; --muted: #9aa6b8; --line: #2a3443;
+  --accent: #7aa7ff; --accent-soft: #1c2a44; --warn: #f0a85a; --warn-soft: #3a2a17;
+  --ok: #5fcf95; --ok-soft: #17322a; --bad: #ff8a80; --bad-soft: #3d1d1b;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--sheet); }
+.wrap { max-width: 1080px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+header.top { background: var(--sheet); border-bottom: 1px solid var(--line); }
+header.top .wrap { padding-block: 28px 0; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font-family: var(--display); font-weight: 800; font-size: clamp(28px, 5vw, 44px); line-height: 1.05; margin: 6px 0 10px; text-wrap: balance; letter-spacing: -.01em; }
+.thesis { max-width: 64ch; color: var(--muted); font-size: 16px; margin: 0 0 18px; }
+.thesis b { color: var(--ink); font-weight: 600; }
+
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--sheet); border-bottom: 1px solid var(--line); }
+nav.tabs .wrap { display: flex; gap: 4px; }
+nav.tabs button { font: 600 15px var(--body); color: var(--muted); background: none; border: 0; border-bottom: 3px solid transparent; padding: 12px 14px; cursor: pointer; }
+nav.tabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+nav.tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+main { position: relative; }
+.panel { padding-block: 24px 64px; display: grid; gap: 22px; }
+.panel.offstage { position: absolute; left: -200vw; top: 0; width: min(1080px, 100vw); visibility: hidden; }
+
+section.plate { background: var(--sheet); border: 1px solid var(--line); border-radius: 10px; padding: 20px; min-width: 0; }
+.plate > .tag { font-family: var(--mono); font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h2 { font-family: var(--display); font-weight: 600; font-size: 22px; line-height: 1.2; margin: 4px 0 6px; text-wrap: balance; }
+h3 { font-size: 15px; font-weight: 600; margin: 14px 0 6px; }
+.lede { color: var(--muted); margin: 0 0 12px; max-width: 70ch; }
+.diagram { overflow-x: auto; padding: 8px 0; }
+.diagram pre.mermaid { margin: 0 auto; background: none; text-align: center; }
+
+.grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.grid.three { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.cell { border: 1px solid var(--line); border-radius: 8px; padding: 12px; min-width: 0; }
+.cell .k { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.cell .v { font-weight: 600; }
+.cell p { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
+.route { display: grid; gap: 4px; }
+.route .name { font-family: var(--mono); font-weight: 500; font-size: 13px; padding: 2px 8px; border-radius: 99px; justify-self: start; }
+.loop .name { background: var(--accent-soft); color: var(--accent); }
+.quick .name { background: var(--ok-soft); color: var(--ok); }
+.act .name { background: var(--warn-soft); color: var(--warn); }
+.route q { font-style: italic; font-size: 14px; }
+.route q::before, .route q::after { content: '"'; }
+
+.stats { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.stat { border-left: 3px solid var(--accent); padding: 4px 12px; }
+.stat .n { font-family: var(--display); font-weight: 800; font-size: 26px; font-variant-numeric: tabular-nums; }
+.stat .l { color: var(--muted); font-size: 13px; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 13px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 99px; background: var(--bg); }
+.chip b { font-family: var(--mono); font-weight: 500; color: var(--accent); margin-right: 4px; }
+.chip.no { text-decoration: line-through; color: var(--muted); }
+
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--mono); font-size: 12px; font-weight: 500; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+td.num, th.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+code, .mono { font-family: var(--mono); font-size: 13px; }
+.pill { font-family: var(--mono); font-size: 12px; padding: 1px 7px; border-radius: 99px; white-space: nowrap; }
+.pill.ok { background: var(--ok-soft); color: var(--ok); }
+.pill.warn { background: var(--warn-soft); color: var(--warn); }
+.pill.bad { background: var(--bad-soft); color: var(--bad); }
+
+.two { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.two > * { min-width: 0; }
+.note { font-size: 13px; color: var(--muted); }
+.milestones { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); counter-reset: m; }
+.ms { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+.ms .id { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+.ms .t { font-weight: 600; }
+.ms p { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+.ms.core { border-color: var(--accent); }
+.ms.must { border-color: var(--warn); background: var(--warn-soft); }
+footer { color: var(--muted); font-size: 13px; padding-block: 0 40px; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="eyebrow">Autonomous Data Analysis Agent · Version 3 · design locked 2026-10-18</div>
+    <h1>Ask the company's data a question. Get an answer you can trust.</h1>
+    <p class="thesis">An AI agent that answers a <b>manager's plain-English questions</b> over a company's <b>tables and customer reviews</b>. It <b>shows how it got each answer</b>, <b>asks when a question is unclear</b>, and <b>refuses when the data can't answer</b>. It runs as a deployed, multi-user service.</p>
+  </div>
+</header>
+
+<nav class="tabs" aria-label="Views">
+  <div class="wrap" role="tablist">
+    <button role="tab" id="tab-overview" aria-controls="overview" aria-selected="true">Overview</button>
+    <button role="tab" id="tab-deep" aria-controls="deep" aria-selected="false">Deep dive</button>
+  </div>
+</nav>
+
+<main>
+<!-- ===================== OVERVIEW ===================== -->
+<div class="panel wrap" id="overview" role="tabpanel" aria-labelledby="tab-overview">
+
+  <section class="plate">
+    <div class="tag">The problem</div>
+    <h2>Managers wait days for answers they can't check</h2>
+    <div class="diagram"><pre class="mermaid">
+flowchart LR
+  subgraph TODAY["Today"]
+    direction LR
+    M1["Manager&lt;br/&gt;no SQL"] --> A1["Analyst queue&lt;br/&gt;hours to days"] --> R1["Spreadsheet&lt;br/&gt;can't verify it"]
+  end
+  subgraph ADAA["With ADAA"]
+    direction LR
+    M2["Manager&lt;br/&gt;plain English"] --> A2["Agent&lt;br/&gt;seconds"] --> R2["Answer + chart&lt;br/&gt;+ how I got this"]
+  end
+    </pre></div>
+    <div class="grid three">
+      <div class="cell"><div class="k">user</div><div class="v">Business manager</div><p>No SQL. Cannot verify numbers alone.</p></div>
+      <div class="cell"><div class="k">value</div><div class="v">Time to a trusted answer</div><p>Fast, and every answer shows its working.</p></div>
+      <div class="cell"><div class="k">rule</div><div class="v">Honest error beats a confident guess</div><p>Asks, refuses or fails openly. Never makes things up.</p></div>
+    </div>
+  </section>
+
+  <section class="plate">
+    <div class="tag">Big picture</div>
+    <h2>Who and what the system touches</h2>
+    <div class="diagram"><pre class="mermaid">
+flowchart LR
+  M(["Manager"]) -- "questions, approvals, feedback" --> S["ADAA V3"]
+  S -- "answers, charts, explanations" --> M
+  S -- "masked prompts" --> L[("Approved LLM providers")]
+  D[("Olist data&lt;br/&gt;daily replay")] --> S
+  S -- "escalations" --> A(["Analyst"])
+  B(["Builder / operator"]) -- "dashboards, alerts, traces" --> S
+    </pre></div>
+  </section>
+
+  <section class="plate">
+    <div class="tag">The data</div>
+    <h2>Olist: a real Brazilian marketplace, ~100k orders, 2016–2018</h2>
+    <p class="lede">Small shops sell through one platform, like Amazon's third-party sellers. Real and messy, with numbers and review text linked by order.</p>
+    <div class="diagram"><pre class="mermaid">
+flowchart LR
+  C["customers&lt;br/&gt;99k"] --> O["orders&lt;br/&gt;99k · dates, status"]
+  O --> I["order_items&lt;br/&gt;113k · price, freight"]
+  I --> P["products&lt;br/&gt;33k · category"]
+  P --> T["category_translation&lt;br/&gt;PT → EN"]
+  I --> SE["sellers&lt;br/&gt;3k"]
+  O --> PA["payments&lt;br/&gt;104k"]
+  O --> RV["reviews&lt;br/&gt;99k · score + Portuguese text"]
+    </pre></div>
+    <h3>Traps the agent must not fall into</h3>
+    <div class="chips">
+      <span class="chip">Revenue: price + freight, or payment value?</span>
+      <span class="chip">customer_id is per order; a person is customer_unique_id</span>
+      <span class="chip">Reviews belong to orders, not sellers</span>
+      <span class="chip">~40% of reviews have text</span>
+      <span class="chip">Missing delivery dates</span>
+      <span class="chip">Typos in column names</span>
+    </div>
+    <h3>Can't answer (refuses)</h3>
+    <div class="chips">
+      <span class="chip no">profit / cost</span><span class="chip no">marketing spend</span><span class="chip no">stock</span><span class="chip no">returns</span><span class="chip no">age / gender</span><span class="chip no">after 2018</span>
+    </div>
+  </section>
+
+  <section class="plate">
+    <div class="tag">8 routes</div>
+    <h2>Every question gets one route</h2>
+    <div class="grid">
+      <div class="cell route loop"><span class="name">numbers</span><q>Late-delivery rate by state in 2017?</q></div>
+      <div class="cell route loop"><span class="name">reviews</span><q>What do customers complain about?</q></div>
+      <div class="cell route loop"><span class="name">hybrid</span><q>Worst categories for late delivery, and what do those customers say?</q></div>
+      <div class="cell route quick"><span class="name">clarify</span><q>Who are our best customers?</q></div>
+      <div class="cell route quick"><span class="name">refuse</span><q>What's our profit?</q></div>
+      <div class="cell route quick"><span class="name">off-topic</span><q>Write me a poem</q></div>
+      <div class="cell route quick"><span class="name">metadata</span><q>How did you calculate that?</q></div>
+      <div class="cell route act"><span class="name">action</span><q>Flag seller 3442 for late deliveries</q></div>
+    </div>
+    <p class="note">Blue: work routes (agent loop, a few seconds) · Green: quick replies (under 2 s) · Amber: needs approval. Follow-ups ("what about RJ?") are rewritten first, then routed.</p>
+  </section>
+
+  <section class="plate">
+    <div class="tag">How an answer is made</div>
+    <h2>From question to checked answer</h2>
+    <div class="diagram"><pre class="mermaid">
+flowchart LR
+  Q["Question"] --> RW["Rewrite&lt;br/&gt;if follow-up"] --> G1["Safety check"] --> R{"Router"}
+  R -- "numbers" --> SL["Semantic layer&lt;br/&gt;builds SQL"]
+  R -- "reviews" --> RS["Review search&lt;br/&gt;keyword + meaning"]
+  R -- "hybrid" --> SL
+  SL -. "hybrid: result filters search" .-> RS
+  R -- "clarify / refuse /&lt;br/&gt;off-topic / metadata" --> QR["Quick reply"]
+  R -- "action" --> AP["Manager approves"]
+  SL --> CK["Check: every number&lt;br/&gt;and quote is real"]
+  RS --> CK
+  CK --> ANS["Answer + chart&lt;br/&gt;+ how I got this"]
+    </pre></div>
+  </section>
+
+  <section class="plate">
+    <div class="tag">Key choices</div>
+    <h2>The six decisions that shape everything</h2>
+    <div class="grid three">
+      <div class="cell"><div class="v">Semantic layer, not free SQL</div><p>Metrics and data rules defined once. The LLM fills a form; code builds the SQL.</p></div>
+      <div class="cell"><div class="v">Do the heavy work at load time</div><p>Reviews translated, topic-tagged and embedded once a day, not per question.</p></div>
+      <div class="cell"><div class="v">Hybrid review search</div><p>Keyword + meaning search in Postgres (pgvector), filtered by order data.</p></div>
+      <div class="cell"><div class="v">Router + bounded agent loop</div><p>Single agent on LangGraph. Step limit, route-only tools, check after each step.</p></div>
+      <div class="cell"><div class="v">Read-only, actions need approval</div><p>Business data is never changed. Flags and tasks wait for the manager's click.</p></div>
+      <div class="cell"><div class="v">Built like a real service</div><p>API + job queue + workers, login, quotas, tracing, failure handling, evals.</p></div>
+    </div>
+  </section>
+
+  <section class="plate">
+    <div class="tag">Success criteria</div>
+    <h2>What "working" means</h2>
+    <div class="chips">
+      <span class="chip"><b>S1</b>Correct numbers</span>
+      <span class="chip"><b>S2</b>Correct review answers</span>
+      <span class="chip"><b>S3</b>Right route</span>
+      <span class="chip"><b>S4</b>Asks when unclear</span>
+      <span class="chip"><b>S5</b>Refuses when it should</span>
+      <span class="chip"><b>S6</b>Never silently wrong on messy data</span>
+      <span class="chip"><b>S7</b>Explains every answer</span>
+      <span class="chip"><b>S8</b>No action without approval</span>
+      <span class="chip"><b>S9</b>Speed, cost, load targets met</span>
+    </div>
+    <h3>Not in scope</h3>
+    <div class="chips">
+      <span class="chip no">chat with any database</span><span class="chip no">editing business data</span><span class="chip no">non-English UI</span><span class="chip no">live streaming data</span><span class="chip no">fine-tuning</span>
+    </div>
+  </section>
+</div>
+
+<!-- ===================== DEEP DIVE ===================== -->
+<div class="panel wrap offstage" id="deep" role="tabpanel" aria-labelledby="tab-deep" aria-hidden="true">
+
+  <section class="plate">
+    <div class="tag">Requirements</div>
+    <h2>Designed for a Monday-morning peak</h2>
+    <div class="stats">
+      <div class="stat"><div class="n">500</div><div class="l">registered managers</div></div>
+      <div class="stat"><div class="n">100</div><div class="l">peak users (targets hold)</div></div>
+      <div class="stat"><div class="n">200</div><div class="l">spike (survive, queue politely)</div></div>
+      <div class="stat"><div class="n">1.7/s</div><div class="l">questions at peak</div></div>
+      <div class="stat"><div class="n">&lt;$0.01</div><div class="l">avg cost per question</div></div>
+      <div class="stat"><div class="n">99.5%</div><div class="l">uptime, business hours</div></div>
+    </div>
+    <h3>Speed targets at 100 users</h3>
+    <div class="tablewrap"><table>
+      <tr><th>Measure</th><th class="num">p50</th><th class="num">p95</th></tr>
+      <tr><td>First feedback ("Searching reviews…")</td><td class="num">&lt; 1 s</td><td class="num">&lt; 2 s</td></tr>
+      <tr><td>Quick routes, total</td><td class="num">&lt; 2 s</td><td class="num">&lt; 4 s</td></tr>
+      <tr><td>Numbers, total</td><td class="num">&lt; 5 s</td><td class="num">&lt; 10 s</td></tr>
+      <tr><td>Reviews, total</td><td class="num">&lt; 6 s</td><td class="num">&lt; 12 s</td></tr>
+      <tr><td>Hybrid, total</td><td class="num">&lt; 10 s</td><td class="num">&lt; 20 s</td></tr>
+    </table></div>
+  </section>
+
+  <section class="plate">
+    <div class="tag">Components</div>
+    <h2>What's inside</h2>
+    <div class="diagram"><pre class="mermaid">
+flowchart TB
+  UI["React UI"] -- "login" --> KC["Keycloak"]
+  UI -- "REST + progress stream (JWT)" --> API["FastAPI&lt;br/&gt;token · quota · approvals · feedback"]
+  API --> R[("Redis&lt;br/&gt;queue · progress · caches · limits")]
+  R --> W
+  subgraph W["Workers: LangGraph agent"]
+    FR["Follow-up rewrite"] --> GI["Guardrails: before"] --> RT["Router"]
+    RT --> LP["Bounded loop"]
+    RT -- "action" --> AP["Approval pause"]
+    LP --> SL["Semantic layer"]
+    LP --> RS["Review search"]
+    LP --> GO["Guardrails: after"] --> ANS["Answer + chart spec"]
+    RT -- "quick routes" --> ANS
+  end
+  W -- "every LLM call" --> LLM["llm.complete&lt;br/&gt;schema · masking · limiter · fallback"]
+  LLM --> EXT[("LLM providers")]
+  SL & RS -- "adaa_reader" --> PG[("Postgres + pgvector")]
+  AP -- "adaa_agent" --> PG
+  ING["Daily ingestion"] --> PG
+  W & API -. "OpenTelemetry" .-> OBS["Langfuse Cloud · Grafana Cloud"]
+    </pre></div>
+    <h3>Containers on one 8 GB server</h3>
+    <div class="chips">
+      <span class="chip">proxy</span><span class="chip">api</span><span class="chip">worker ×2+</span><span class="chip">postgres + pgvector</span><span class="chip">redis</span><span class="chip">keycloak</span><span class="chip">otel-collector</span><span class="chip">ingestion (daily)</span><span class="chip">housekeeping (optional)</span>
+    </div>
+    <p class="note">Outside the server: React UI (free static hosting), wake-up Lambda, Langfuse Cloud, Grafana Cloud, LLM providers, S3, GitHub Actions.</p>
+  </section>
+
+  <section class="plate">
+    <div class="tag">Flow · numbers</div>
+    <h2>"What was revenue by state in 2017?"</h2>
+    <div class="diagram"><pre class="mermaid">
+sequenceDiagram
+  participant UI as React UI
+  participant API
+  participant Q as Redis
+  participant W as Worker
+  participant L as llm.complete
+  participant DB as Postgres
+  UI->>API: question + token
+  API->>API: token, quota, exact-question cache
+  API->>Q: queue job
+  API-->>UI: job ID, open progress stream
+  W->>Q: pick job
+  W->>L: rewrite + route = numbers
+  W-->>UI: "Understanding…"
+  W->>L: fill structured request
+  W->>W: semantic layer validates, builds SQL
+  W->>DB: run as adaa_reader (5 s cap)
+  W-->>UI: "Running query…"
+  W->>W: every number must be in the result
+  W->>L: write answer
+  W-->>UI: answer + chart + how I got this
+    </pre></div>
+    <p class="note">Progress travels worker → Redis → API → UI as server-sent events. A cache hit at the API replies at once.</p>
+  </section>
+
+  <section class="plate">
+    <div class="tag">Flow · reviews and hybrid</div>
+    <h2>Quotes come from search, counts come from tags</h2>
+    <div class="two">
+      <div>
+        <h3>Reviews: "What do customers complain about?"</h3>
+        <div class="diagram"><pre class="mermaid">
+flowchart TB
+  A["LLM fills search request&lt;br/&gt;text, score, period, topic"] --> B["Keyword + vector search&lt;br/&gt;on English translations"]
+  B --> C["Merge → top ~30&lt;br/&gt;treated as untrusted text"]
+  A --> D["'How often?' →&lt;br/&gt;count topic tags"]
+  C --> E["Themes + real quotes"]
+  D --> E
+  E --> F["Every quote matches&lt;br/&gt;a stored review"]
+        </pre></div>
+      </div>
+      <div>
+        <h3>Hybrid: numbers, then reviews filtered by them</h3>
+        <div class="diagram"><pre class="mermaid">
+flowchart TB
+  A["Step A: numbers&lt;br/&gt;top 5 late categories"] --> S[("Stored result&lt;br/&gt;result ID")]
+  S -- "code fills exact values" --> B["Step B: review search&lt;br/&gt;those 5 categories, late orders"]
+  B --> C["One answer:&lt;br/&gt;table + quotes per row"]
+        </pre></div>
+        <p class="note">The LLM decides what to filter by. Code copies the values, so nothing gets mistyped.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="plate">
+    <div class="tag">Flow · quick routes and follow-ups</div>
+    <h2>Ask, assume, or rewrite</h2>
+    <div class="two">
+      <div>
+        <h3>Ask vs assume ("best customers")</h3>
+        <div class="diagram"><pre class="mermaid">
+flowchart TB
+  Q["Ambiguous term"] --> D{"Default defined&lt;br/&gt;in semantic layer?"}
+  D -- "yes" --> N["Answer, state assumption&lt;br/&gt;'best = highest spend. Switch?'"]
+  D -- "no" --> C["Ask with 2–3 buttons"]
+        </pre></div>
+      </div>
+      <div>
+        <h3>Follow-up ("What about 2018?")</h3>
+        <div class="diagram"><pre class="mermaid">
+flowchart TB
+  H["Last ~5 turns&lt;br/&gt;question · request · summary · result ID"] --> RW["Rewrite to standalone&lt;br/&gt;'Revenue by state in 2018?'"]
+  RW --> SH["Shown: 'Understood as…'"]
+  RW --> RT["Router → normal route"]
+        </pre></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="plate">
+    <div class="tag">Flow · action</div>
+    <h2>"Flag seller 3442": nothing is written without a click</h2>
+    <div class="diagram"><pre class="mermaid">
+flowchart LR
+  R["Router: action"] --> F["LLM fills&lt;br/&gt;type · target · reason"] --> V["Code checks&lt;br/&gt;allowed? exists? quota?"]
+  V --> P["Pause + checkpoint&lt;br/&gt;worker freed"] --> PV["Exact preview&lt;br/&gt;Approve / Reject"]
+  PV -- "approve" --> WR["Write as adaa_agent&lt;br/&gt;+ audit log, one transaction"]
+  PV -- "reject" --> LG["Nothing written, logged"]
+  PV -- "no click in 24 h" --> EX["Expired, logged"]
+    </pre></div>
+    <p class="note">Saving a preference skips approval (it only affects the manager's own answers) and shows Undo.</p>
+  </section>
+
+  <section class="plate">
+    <div class="tag">Data pipeline</div>
+    <h2>Daily ingestion: validate, then publish in one instant</h2>
+    <div class="diagram"><pre class="mermaid">
+flowchart LR
+  RP["Replay next day"] --> ST["Staging"] --> VA{"Valid?"}
+  VA -- "no" --> AL["Stop + alert&lt;br/&gt;yesterday stays live"]
+  VA -- "yes" --> TR["Translate PT → EN"] --> TG["Tag topics"] --> EM["Embed"] --> PB["Atomic publish&lt;br/&gt;data version +1"] --> CC["Clear caches"]
+    </pre></div>
+    <p class="note">Each question records the data version at start; if a publish lands mid-question, it reruns once. Every answer shows "Data as of…".</p>
+  </section>
+
+  <section class="plate">
+    <div class="tag">Safety</div>
+    <h2>Guardrails at three points, plus hard limits</h2>
+    <div class="diagram"><pre class="mermaid">
+flowchart LR
+  B["Before&lt;br/&gt;input check, injection,&lt;br/&gt;personal-data asks"] --> D["During&lt;br/&gt;schema validation,&lt;br/&gt;reviews = untrusted data"] --> A["After&lt;br/&gt;numbers in result, quotes match,&lt;br/&gt;masking"]
+    </pre></div>
+    <div class="tablewrap"><table>
+      <tr><th>Attacker wants to…</th><th>Hard limit</th></tr>
+      <tr><td>Leak personal data</td><td>Masking in code inside <code>llm.complete</code></td></tr>
+      <tr><td>Run an action</td><td>Human approval with exact preview</td></tr>
+      <tr><td>Change data</td><td>Read-only database role</td></tr>
+      <tr><td>Run arbitrary SQL</td><td>Semantic layer compiles all SQL</td></tr>
+      <tr><td>Run up cost</td><td>Quotas, time cap, output-token caps</td></tr>
+      <tr><td>Plant lasting instructions</td><td>Preferences are fixed keys, never free text</td></tr>
+    </table></div>
+    <h3>Database roles and isolation</h3>
+    <div class="chips">
+      <span class="chip"><b>adaa_reader</b>SELECT only, 5 s cap</span>
+      <span class="chip"><b>adaa_agent</b>agent tables only</span>
+      <span class="chip"><b>adaa_conversation</b>turns + checkpoints</span>
+      <span class="chip"><b>adaa_ingest</b>staging + publish</span>
+      <span class="chip"><b>owner check</b>every endpoint, UUIDs</span>
+    </div>
+  </section>
+
+  <section class="plate">
+    <div class="tag">Failures · LLM</div>
+    <h2>When an LLM call fails</h2>
+    <div class="diagram"><pre class="mermaid">
+flowchart TB
+  C["LLM call&lt;br/&gt;per-job timeout 3–10 s"] --> E{"Error?"}
+  E -- "none" --> OK["Validated schema output"]
+  E -- "429" --> W1["Wait Retry-After&lt;br/&gt;or backoff + jitter"] --> C
+  E -- "5xx / timeout" --> W2["Retry ≤ 2&lt;br/&gt;backoff + jitter"] --> FB
+  E -- "bad schema" --> W3["Retry once&lt;br/&gt;with the error"] --> FB
+  E -- "400 / 401" --> X["Fail + alert&lt;br/&gt;our bug or key"]
+  FB["Fallback model&lt;br/&gt;different provider"] --> E2{"Works?"}
+  E2 -- "yes" --> OK2["Answer + 'backup model' note"]
+  E2 -- "no" --> HE["Honest error + Retry&lt;br/&gt;resumes from checkpoint"]
+    </pre></div>
+    <div class="two">
+      <div>
+        <h3>Circuit breaker (shared in Redis)</h3>
+        <div class="diagram"><pre class="mermaid">
+stateDiagram-v2
+  [*] --> Closed
+  Closed --> Open: ≥5 failures in 30 s
+  Open --> HalfOpen: after ~30 s
+  HalfOpen --> Closed: test call works
+  HalfOpen --> Open: test call fails
+        </pre></div>
+      </div>
+      <div>
+        <h3>Prevention and budgets</h3>
+        <div class="chips">
+          <span class="chip">Rate limiter: token bucket per provider, ~85% of limit</span>
+          <span class="chip">Bucket empty: wait ≤ 2 s, then fallback, then "busy"</span>
+          <span class="chip">Question cap ~30 s; no retry that can't fit</span>
+          <span class="chip">Fallback must pass the same evals</span>
+          <span class="chip">Tested with a fake failing adapter</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="plate">
+    <div class="tag">Failures · everything else</div>
+    <h2>Each part fails honestly</h2>
+    <div class="tablewrap"><table>
+      <tr><th>What breaks</th><th>What happens</th><th>Manager sees</th></tr>
+      <tr><td>DB connection blip</td><td>Retry once with jitter</td><td><span class="pill ok">nothing</span></td></tr>
+      <tr><td>Query too big</td><td>Size estimated before running; not run</td><td>"~10M rows. Try by state?"</td></tr>
+      <tr><td>Query timeout (5 s)</td><td>No retry</td><td>"Try a narrower range"</td></tr>
+      <tr><td>Postgres down</td><td>Auto-restart, breaker, health = degraded</td><td><span class="pill bad">Data unavailable · Retry</span></td></tr>
+      <tr><td>Connection pool busy</td><td>Wait ~2 s</td><td><span class="pill warn">Busy, try shortly</span></td></tr>
+      <tr><td>Turn save fails</td><td>Answer still delivered</td><td>"Not saved to history"</td></tr>
+      <tr><td>Redis down</td><td>New questions refused; running ones finish</td><td><span class="pill bad">Unavailable, try in a minute</span></td></tr>
+      <tr><td>Keycloak down</td><td>Logged-in users continue (15-min tokens)</td><td>New logins fail</td></tr>
+      <tr><td>Worker crash</td><td>Job redelivered, resumes from checkpoint</td><td><span class="pill ok">nothing</span></td></tr>
+      <tr><td>Wi-Fi drops</td><td>Job keeps running; SSE replays missed events</td><td><span class="pill ok">catches up</span></td></tr>
+      <tr><td>Too many questions</td><td>Quota 30/h; queue position; queue full at ~200</td><td>"You're #3" / "limit reached"</td></tr>
+    </table></div>
+  </section>
+
+  <section class="plate">
+    <div class="tag">Memory, caching, observability</div>
+    <h2>What's remembered, reused and watched</h2>
+    <div class="grid three">
+      <div class="cell"><div class="v">Short-term memory</div><p>Last ~5 turns: question, structured request, one-line summary, result ID.</p></div>
+      <div class="cell"><div class="v">Long-term memory</div><p>Only preferences the manager asks to save, as fixed keys. Stated in answers.</p></div>
+      <div class="cell"><div class="v">Caching</div><p>Result cache by structured request; exact-question cache keyed with preferences. Cleared at publish.</p></div>
+    </div>
+    <div class="diagram"><pre class="mermaid">
+flowchart LR
+  W["API + workers"] -- "OpenTelemetry" --> OC["otel-collector"]
+  OC --> LF["Langfuse Cloud&lt;br/&gt;every LLM call, prompt, tokens, cost"]
+  OC --> GF["Grafana Cloud&lt;br/&gt;p50/p95, errors, cost, breaker, queue"]
+  GF --> AL["Alerts"]
+  UI["👍 / 👎"] --> LF
+  LF --> EV["👎 → new eval questions"]
+    </pre></div>
+  </section>
+
+  <section class="plate">
+    <div class="tag">Deployment</div>
+    <h2>Cheap to run: the server sleeps until someone visits</h2>
+    <div class="diagram"><pre class="mermaid">
+flowchart LR
+  V["Visitor opens UI&lt;br/&gt;free static hosting"] --> S{"Server awake?"}
+  S -- "no" --> WK["Wake button → Lambda&lt;br/&gt;starts EC2 ~2–3 min&lt;br/&gt;demo video meanwhile"]
+  S -- "yes" --> G["Try as guest"]
+  WK --> G
+  G --> GA["Temporary account, 24 h&lt;br/&gt;10 questions, simulated actions"]
+  GA --> ST["Auto-stop after ~30 min idle"]
+    </pre></div>
+    <div class="chips">
+      <span class="chip">Daily guest spend cap (~$2)</span>
+      <span class="chip">Wake-up limit + bot check</span>
+      <span class="chip">AWS budget alarm</span>
+      <span class="chip">Local + prod environments</span>
+      <span class="chip">Secrets never in git</span>
+    </div>
+  </section>
+
+  <section class="plate">
+    <div class="tag">Cost</div>
+    <h2>Rough cost per question (illustrative prices)</h2>
+    <div class="tablewrap"><table>
+      <tr><th>Model tier</th><th class="num">Numbers</th><th class="num">Hybrid</th><th>Verdict</th></tr>
+      <tr><td>Small everywhere</td><td class="num">~$0.002</td><td class="num">~$0.004</td><td><span class="pill ok">under</span></td></tr>
+      <tr><td>Mid everywhere</td><td class="num">~$0.015</td><td class="num">~$0.028</td><td><span class="pill bad">over</span></td></tr>
+      <tr><td>Large everywhere</td><td class="num">~$0.045</td><td class="num">~$0.08</td><td><span class="pill bad">over</span></td></tr>
+    </table></div>
+    <p class="note">The &lt;$0.01 average works with model tiering, caching, cheap quick routes and prompt caching. Measured per route once built.</p>
+  </section>
+
+  <section class="plate">
+    <div class="tag">Build plan · draft</div>
+    <h2>Walking skeleton first, then deepen</h2>
+    <div class="milestones">
+      <div class="ms core"><div class="id">M0</div><div class="t">Setup + data profiling</div><p>Compose, Olist loaded, semantic-layer draft</p></div>
+      <div class="ms core"><div class="id">M1</div><div class="t">Walking skeleton</div><p>One numbers question end to end</p></div>
+      <div class="ms core"><div class="id">M2</div><div class="t">Numbers done properly</div><p>Full semantic layer, quick routes, baseline</p></div>
+      <div class="ms core"><div class="id">M3</div><div class="t">Reviews + hybrid</div><p>Ingestion, search, quote checks</p></div>
+      <div class="ms"><div class="id">M4</div><div class="t">Conversation</div><p>Follow-ups, memory, caching</p></div>
+      <div class="ms"><div class="id">M5</div><div class="t">Actions + safety</div><p>Approvals, audit, threat model</p></div>
+      <div class="ms"><div class="id">M6</div><div class="t">Production hardening</div><p>Login, failures, observability, load test</p></div>
+      <div class="ms"><div class="id">M7</div><div class="t">Deploy + demo</div><p>EC2, wake-on-demand, guest access</p></div>
+      <div class="ms must"><div class="id">M8 · mandatory</div><div class="t">Cross-examination</div><p>Defend every component</p></div>
+    </div>
+    <p class="note">Blue border: smallest impressive version (M0–M3 + simple deploy). Order not yet locked.</p>
+  </section>
+</div>
+</main>
+
+<footer class="wrap">Source of truth: docs/v3-problem-statement.md §0 and docs/adr/0001–0020.</footer>
+
+<script>
+(function () {
+  var tabs = { overview: document.getElementById('tab-overview'), deep: document.getElementById('tab-deep') };
+  var panels = { overview: document.getElementById('overview'), deep: document.getElementById('deep') };
+  function show(name) {
+    Object.keys(panels).forEach(function (k) {
+      var on = k === name;
+      panels[k].classList.toggle('offstage', !on);
+      panels[k].setAttribute('aria-hidden', on ? 'false' : 'true');
+      tabs[k].setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    try { localStorage.setItem('adaa-tab', name); } catch (e) {}
+  }
+  tabs.overview.addEventListener('click', function () { show('overview'); window.scrollTo(0, 0); });
+  tabs.deep.addEventListener('click', function () { show('deep'); window.scrollTo(0, 0); });
+  var start = 'overview';
+  if (location.hash === '#deep') start = 'deep';
+  else { try { if (localStorage.getItem('adaa-tab') === 'deep') start = 'deep'; } catch (e) {} }
+  show(start);
+})();
+</script>
