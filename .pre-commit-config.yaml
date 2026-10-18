@@ -1,0 +1,17 @@
+# Runs on every `git commit`. Install once from backend/:  uv run pre-commit install
+# Uses the project's own ruff (pinned in backend/uv.lock), so there is one ruff version only.
+repos:
+  - repo: local
+    hooks:
+      - id: ruff
+        name: ruff check
+        entry: uv run --project backend ruff check --fix
+        language: system
+        types: [python]
+        files: ^backend/
+      - id: ruff-format
+        name: ruff format
+        entry: uv run --project backend ruff format
+        language: system
+        types: [python]
+        files: ^backend/

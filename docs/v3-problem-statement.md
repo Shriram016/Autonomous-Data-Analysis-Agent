@@ -554,7 +554,12 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 > 3. ~~**Repo and codebase plan**~~ ✅ done 2026-10-18: V2 code and docs removed (kept on the
 >    `version2` branch / `v2.0` tag), fresh codebase; layout and tooling in "Repo and codebase
 >    plan" at the end of §0.
-> 4. **Start M0 with data profiling** (also verifies Olist license and review-text counts).
+> 4. **M0 — setup + data profiling.** Slices: ✅ **M0.1 skeleton** (2026-10-18: folders, uv +
+>    Python 3.12, `pyproject.toml`/`uv.lock`, `Settings` (pydantic-settings), ruff/mypy/pytest,
+>    pre-commit via the project's own ruff, `.env.example`; 3 tests + `check_skeleton.py` pass) →
+>    **M0.2 services** (Docker Compose: Postgres + pgvector, Redis; needs Docker Desktop) → M0.3
+>    get the data (download script + licence check) → M0.4 load the 9 CSVs into a `business`
+>    schema → M0.5 profiling report → M0.6 semantic-layer draft (YAML).
 >
 >
 > ⚠️ **MANDATORY — DO NOT SKIP: post-build architecture cross-examination.** Once development is
