@@ -1,5 +1,11 @@
-# Runs on every `git commit`. Install once from backend/:  uv run pre-commit install
-# Uses the project's own ruff (pinned in backend/uv.lock), so there is one ruff version only.
+# Layered checks: fast ones run more often.
+#   pre-commit (every commit): ruff lint + format, mypy
+#   pre-push   (every push):   unit tests
+#   CI         (GitHub):       everything, incl. integration tests
+# Install once from the repo root:
+#   uv run --project backend pre-commit install --hook-type pre-commit --hook-type pre-push
+# Uses the project's own tools (pinned in backend/uv.lock), so versions never disagree.
+default_stages: [pre-commit]
 repos:
   - repo: local
     hooks:
@@ -15,3 +21,18 @@ repos:
         language: system
         types: [python]
         files: ^backend/
+      - id: mypy
+        name: mypy
+        entry: bash -c 'cd backend && uv run mypy'
+        language: system
+        types: [python]
+        files: ^backend/
+        pass_filenames: false
+      - id: unit-tests
+        name: unit tests
+        entry: bash -c 'cd backend && uv run pytest tests/unit -q'
+        language: system
+        types: [python]
+        files: ^backend/
+        pass_filenames: false
+        stages: [pre-push]

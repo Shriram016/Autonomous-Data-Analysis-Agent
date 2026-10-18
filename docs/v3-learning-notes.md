@@ -36,8 +36,17 @@ committed gets checked.
 | `ruff check --fix` (linter) | Likely mistakes and bad patterns | Unused imports, undefined names, import order, common bug patterns (e.g. `def f(x=[])`), outdated syntax, needlessly complex code; fixes what is safe, reports the rest |
 | `ruff format` (formatter) | Consistent layout | Spacing, quotes, line breaks, line length 100 |
 
-**Not in the hook:** tests and mypy (slower) — they run in CI on every push and during each
-slice. The hook stays under a second so committing never feels slow.
+**Layering (locked):** faster checks run more often.
+
+| Layer | When | Runs |
+|---|---|---|
+| pre-commit | every `git commit` | ruff lint + format, mypy |
+| pre-push | every `git push` | unit tests |
+| CI | every push, on GitHub | everything, incl. integration tests (need Docker) |
+| manual | with approval | real-LLM dev_checks, evals (cost money) |
+
+Why not all tests on commit: slow commits make people skip hooks (`--no-verify`); integration
+tests fail whenever Docker is off; CI is the real safety net because it can't be skipped.
 
 **Why one ruff version:** the hook calls the project's own ruff via `uv run`, pinned in
 `uv.lock`, so the hook, the editor and CI never disagree.

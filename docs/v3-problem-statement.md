@@ -983,7 +983,9 @@ library decided in M1/M2 with the first chart.
 **(4) Code quality (🔒 locked 2026-10-18)** — backend: ruff (lint + format), mypy (non-strict
 first, tightened later), pytest, pre-commit running ruff on every commit; frontend: ESLint +
 Prettier + `tsc`. GitHub Actions runs all of them on every push (rebuilt in M0). Types double as
-input/output documentation for each slice.
+input/output documentation for each slice. **Check layering (🔒 2026-10-18):** pre-commit = ruff
+lint + format + mypy (~seconds); pre-push = unit tests; CI = everything incl. integration tests
+(need Docker); manual with approval = real-LLM dev_checks and evals.
 
 **(5) Config and secrets (🔒 locked 2026-10-18)** — secrets (API keys, DB passwords, Keycloak
 client secret) in a git-ignored `.env` for now; where prod secrets live (e.g. AWS SSM Parameter
