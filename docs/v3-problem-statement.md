@@ -568,6 +568,14 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 > and gaps found become fixes or documented limitations. Purpose:
 > the builder must be able to defend every part of the system in an interview.
 >
+> **Build process (agreed 2026-10-18):** learning + hands-on; the builder writes no code. Per
+> slice: Claude explains purpose, input/output and each step → builder's doubts answered and
+> noted (`docs/v3-learning-notes.md`, incl. "learn later" questions) → Claude writes the code
+> (small, readable in one sitting) → builder reads it → at least one test or `dev_checks/`
+> script (TDD where it fits) → record progress here + interview questions in
+> [v3-cross-examination.md](v3-cross-examination.md) → next slice; code-review at milestone end.
+> Replaces Matt Pocock's PRD → issues steps (§0 + ADRs are the spec).
+>
 > Session style: one question at a time, recommendation + options, lock, record here (+ ADR when
 > hard to reverse, surprising, and a real trade-off), terms in [GLOSSARY.md](../GLOSSARY.md).
 
