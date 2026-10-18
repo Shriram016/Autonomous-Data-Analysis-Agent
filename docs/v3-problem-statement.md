@@ -557,7 +557,11 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 > 4. **M0 — setup + data profiling.** Slices: ✅ **M0.1 skeleton** (2026-10-18: folders, uv +
 >    Python 3.12, `pyproject.toml`/`uv.lock`, `Settings` (pydantic-settings), ruff/mypy/pytest,
 >    pre-commit via the project's own ruff, `.env.example`; 3 tests + `check_skeleton.py` pass) →
->    **M0.2 services** (Docker Compose: Postgres + pgvector, Redis; needs Docker Desktop) → M0.3
+>    ✅ **M0.2 services** (2026-10-18: `infra/docker-compose.yml` — Postgres 17.11 + pgvector
+>    0.8.7 on **127.0.0.1:5433** (5432 is taken by a local Windows Postgres), Redis 7 with AOF
+>    on 127.0.0.1:6379, volumes, health checks; `init.sql` creates the 4 schemas; DB/Redis
+>    settings with a 2 s connect timeout; 7 tests (2 integration) + `check_services.py` pass;
+>    data survives container removal) → **M0.3**
 >    get the data (download script + licence check) → M0.4 load the 9 CSVs into a `business`
 >    schema → M0.5 profiling report → M0.6 semantic-layer draft (YAML).
 >

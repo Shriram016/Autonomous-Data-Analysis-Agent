@@ -1,0 +1,40 @@
+# Local services for ADAA V3. Run from the repo root (reads the root .env):
+#   docker compose -f infra/docker-compose.yml --env-file .env up -d
+#   docker compose -f infra/docker-compose.yml --env-file .env ps      # both should be "healthy"
+#   docker compose -f infra/docker-compose.yml --env-file .env down    # data is kept in volumes
+name: adaa
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_DB: ${ADAA_DB_NAME:-adaa}
+      POSTGRES_USER: ${ADAA_DB_USER:-adaa}
+      POSTGRES_PASSWORD: ${ADAA_DB_PASSWORD:?set ADAA_DB_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:${ADAA_DB_PORT:-5433}:5432" # this machine only, not the network
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro # runs on first start only
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"] # AOF: queued jobs survive a restart
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:
+  redisdata:
