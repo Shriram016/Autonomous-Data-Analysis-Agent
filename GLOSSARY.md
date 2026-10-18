@@ -44,6 +44,10 @@ _Avoid_: Breakdown, group-by, attribute
 What the LLM fills in for the semantic layer: metric, dimensions, filters, time period, sort and limit.
 _Avoid_: Query, plan, form
 
+**Review topic**:
+A label from a fixed list (e.g. late delivery, damaged item) attached to each review at load time, so complaints can be counted.
+_Avoid_: Theme (themes are what the answer groups quotes into), category (clashes with product category)
+
 **Escalation**:
 A task the manager creates to hand a question the agent could not answer to a human analyst.
 _Avoid_: Handoff, ticket, referral
@@ -79,7 +83,7 @@ An on-topic question the data cannot answer, including one built on a false prem
 _Avoid_: Invalid question, out-of-scope question
 
 **Route**:
-The category the router assigns a question: numbers, reviews, hybrid, clarify, refuse, off-topic or metadata.
+The category the router assigns a question: numbers, reviews, hybrid, clarify, refuse, off-topic, metadata or action.
 _Avoid_: Intent, path, category
 
 **Off-topic question**:

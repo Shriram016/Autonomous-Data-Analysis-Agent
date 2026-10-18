@@ -239,6 +239,14 @@ All code calls one owned `llm.complete(job, ...)`; **LiteLLM** behind it (provid
 Model per job + fallback chain in config, chosen by evals.
 [ADR 0009](adr/0009-llm-interface-litellm-behind-owned-port.md).
 
+**Every LLM call has a defined output schema (🔒 locked 2026-10-13).** Each job declares a Pydantic
+model; `llm.complete` requests it via the provider's strict JSON-schema mode where supported,
+validates the reply, retries once with the validation error, then falls back to the next model.
+No code parses free text. Prose (the answer text) is a field inside the schema. Examples: router
+→ {route, reason}; rewrite → {standalone_question, is_follow_up, referenced_result_ids}; agent →
+structured / search request; topic tagging → {topics[]}; answer → {text, chart_spec, quotes[]}.
+Model choice must check schema support.
+
 ### Level 1 — Service shape (🔒 locked)
 
 **Backend API + durable job queue + workers; UI is a client** with streamed progress. Why:
@@ -426,6 +434,57 @@ from Claude Desktop, IDEs). No core design change. Shown as a future client; bui
 > scheduler, relative-date resolution against 2016–18 data, LLM-judge vs human check, API
 > versioning, runbooks.
 
+### Level 1 — Gap check round 2 (2026-10-16, after View 3)
+
+Gaps: (1) data isolation between managers ✅, (2) how interviewers get in, (3) prompt-injection
+threat model, (4) cost feasibility of the $0.01 baseline. Left for M0 / Level 2: semantic-layer
+contents, eval test set, API endpoints, table schemas, chart library, model per job, CI/CD +
+Terraform.
+
+**(1) Data isolation (🔒 locked 2026-10-16)** — private to each manager: conversations, turns,
+jobs, progress streams, results, approvals, preferences, feedback. Shared: business data (RBAC
+parked); seller flags and tasks (team records, creator noted). **Every API endpoint checks owner ==
+logged-in manager** (else "not found"), in one shared check; IDs are random UUIDs; tests try
+another manager's IDs on every endpoint (prevents IDOR). **Exact-question cache key includes the
+manager's saved preferences** (the result cache is safe: definitions are inside the structured
+request). Postgres row-level security: documented stretch (defence in depth).
+
+**(2) Interviewer access (🔒 locked for now 2026-10-16)** — a **"Try as guest" button** creates a
+temporary guest account in Keycloak (isolated like a manager, expires after 24 h). Guest quota
+(e.g. 10 questions) + a **global daily spend cap for all guests** (e.g. $2/day) → "Demo limit
+reached for today — watch the demo video". Server asleep → wake flow ("~2–3 min", see Running mode)
+with the demo video playable meanwhile. Guests can't run real actions — approvals are simulated
+("would flag seller 3442"). Rejected: one shared demo account (breaks isolation, one visitor burns
+the quota); self sign-up (too much friction for recruiters).
+
+**(3) Prompt-injection threat model (🔒 locked 2026-10-16; detail at implementation)** — entry
+points: (a) manager's question (direct), (b) review text (indirect — most dangerous), (c) saved
+preferences (persistent), (d) conversation history, (e) data values in results. Hard limits per
+attacker goal: leak personal data → masking in code; run an action → human approval with exact
+preview; change data → read-only role; arbitrary SQL → semantic layer; run up cost → quotas, time
+cap, output-token caps. Plus: reviews wrapped as untrusted data, structured output everywhere,
+history stored as structured data, answer checked against results. **New rule: saved preferences
+are a fixed set of keys with allowed values** (e.g. `revenue_definition`, `default_period`,
+`chart_style`), never free text. Deliverable: `docs/v3-threat-model.md` in the guardrails
+milestone, with attack questions and planted malicious reviews in the evals.
+
+**(4) Cost feasibility (🔒 locked as rough numbers 2026-10-18; revisit at implementation)** — rough
+tokens: quick routes ~3k in / 0.1k out; numbers ~10k / 1k; hybrid ~18k / 2k. With illustrative
+price tiers (not quotes): small ~$0.002 numbers / ~$0.004 hybrid; mid ~$0.015 / ~$0.028; large
+~$0.045 / ~$0.08. Mid everywhere misses the baseline; **feasible with model tiering** (small for
+rewrite/router, cheapest passing model per job), **caching** (hits ≈ $0), cheap quick routes and
+**prompt caching** of the static catalogue/system prompt. Hybrid above $0.01 is fine (average
+target). Ingestion (translate + tag ~40k reviews once) ≈ a few dollars. Tracked per route from the
+first measured runs; baseline revisited if still above.
+
+**Round-2 gaps closed.**
+
+*Final design check (2026-10-18):* dataset date range re-checked — Olist covers ~Sep 2016–Oct
+2018 with no newer release; recent open alternatives are synthetic (lose the real messiness) or
+lack orders/review text. **Olist re-confirmed** (ADR 0001). "What is today?" for relative dates
+(real calendar vs the data's latest date) and the wake-on-demand vs daily-schedule point are
+**deferred to implementation** (Level 2). **No Level 1 design decisions left.**
+
 ### Level 1 — Containers (🔒 locked for now)
 
 On the EC2 server (8 GB instance; ~4.5–5.5 GB in use):
@@ -439,28 +498,61 @@ On the EC2 server (8 GB instance; ~4.5–5.5 GB in use):
 | 5 | redis | Job queue, progress pub/sub, caches, rate-limit counters | Always |
 | 6 | keycloak | Login (OIDC) | Always |
 | 7 | otel-collector | Pushes metrics/traces to Grafana Cloud and Langfuse Cloud | Always |
-| 8 | ingestion | Daily replay → validate → translate → embed → publish; exits | Daily |
+| 8 | ingestion | Daily replay → validate → translate → tag topics → embed → publish; exits | Daily |
 | 9 | housekeeping (optional) | Nightly backup → S3, retention cleanup; build decided later | Scheduled |
 
 Outside the server: React UI (free static hosting), wake-up function (AWS Lambda), Langfuse Cloud,
 Grafana Cloud, LLM providers (via LiteLLM), S3, GitHub Actions.
 
-### Level 1 — Architecture views (Views 1–2 ✅ reviewed; View 3 flows pending)
+### Level 1 — Routes (🔒 locked 2026-10-12)
+
+Checked against the Olist tables (orders, items, payments, reviews, customers, sellers, products,
+category translation, geolocation) and the question types above. New needs found later are
+decided then.
+
+| # | Route | One-line definition | Path |
+|---|---|---|---|
+| 1 | numbers | Answer computed from the records — a single number or a table; if part can't be answered, adds a note naming the missing data | Loop |
+| 2 | reviews | Answer found in what customers wrote — summarised, with real quotes | Loop |
+| 3 | hybrid | Numbers first, then reviews filtered by that result, combined into one answer | Loop |
+| 4 | clarify | Several meanings or an undefined term — ask back, or state the assumption | Quick |
+| 5 | refuse | On-topic but the data can't answer it, or it asks for personal data — say no and why | Quick |
+| 6 | off-topic | Unrelated to the company's data — decline and say what it can do | Quick |
+| 7 | metadata | About the data, the agent, or the last answer ("how did you calculate that?") | Quick |
+| 8 | action | Manager asks the agent to do something — seller flag, task, escalation (approval required), or save preference (no approval; shown with Undo) | Approval pause |
+
+Found by this check: direct action requests had no route (added #8); questions about the last
+answer folded into metadata; partly answerable questions handled inside numbers. Follow-ups are
+not a route (rewritten first).
+
+### Level 1 — Architecture views (Views 1–3 ✅ complete)
 
 Notes from review: scheduled housekeeping jobs (nightly backup, retention cleanup) are **part of
 the design; whether to implement them is decided later**. Router and loop internals: Level 2.
 Progress reaches the UI as a stream of events (submit → job ID → event stream; likely SSE, Level 2).
 
 > **Next steps (in order, as of 2026-10-12):**
-> 1. **View 3 — flows:** walk each route through the components, one at a time: numbers →
->    reviews → hybrid → clarify/refuse/off-topic → follow-up → action with approval. Then check
->    every locked requirement has a home in the picture.
+> 1. ~~**View 3 — flows**~~ ✅ done 2026-10-16 (routes, follow-up, DB access, failures and edges;
+>    requirement check found only the failure-path gap, now closed).
 > 2. **Scope and time check → milestone plan** (old §19 is reference only; it lacks Keycloak,
 >    queue/workers, React, wake-on-demand, etc.). Decide weeks available and the smallest
 >    impressive version.
 > 3. **Repo and codebase plan:** reuse V2 code or fresh; folder layout (backend / frontend /
 >    infra); tooling (Python version, package manager).
 > 4. **Start M0 with data profiling** (also verifies Olist license and review-text counts).
+>
+>
+> ⚠️ **MANDATORY — DO NOT SKIP: post-build architecture cross-examination.** Once development is
+> complete, and before calling V3 done, the builder manually inspects **every component** in the
+> architecture and cross-questions it until each answer is understood in detail. A rigorous
+> breakdown, one component at a time, with written answers. Questions include at least: What
+> happens when load or traffic increases (100 → 200 → 1,000 users)? When the LLM fails? When it
+> responds slowly? How does caching behave, and when is it wrong? How do retries behave? What if a
+> worker or the server restarts mid-question? How are sessions created, resumed, expired? Where is
+> everything stored, for how long, and how is it recovered? Answers are recorded in
+> [v3-cross-examination.md](v3-cross-examination.md) (questions collected there as they come up)
+> and gaps found become fixes or documented limitations. Purpose:
+> the builder must be able to defend every part of the system in an interview.
 >
 > Session style: one question at a time, recommendation + options, lock, record here (+ ADR when
 > hard to reverse, surprising, and a real trade-off), terms in [GLOSSARY.md](../GLOSSARY.md).
@@ -492,6 +584,7 @@ flowchart TB
         FR[Follow-up rewrite] --> GI[Guardrails: before]
         GI --> RT[Router]
         RT -- clarify / refuse / off-topic / metadata --> ANS
+        RT -- action --> AP
         RT -- numbers / reviews / hybrid --> LP[Bounded loop<br/>route tools only · step limit]
         LP -- structured request --> SL[Semantic layer<br/>validate + compile SQL]
         LP --> RS[Review search<br/>full-text + pgvector]
@@ -514,7 +607,7 @@ flowchart TB
         STG[staging schema]
     end
 
-    ING[Ingestion pipeline — daily<br/>replay → staging → validate → translate → embed → publish<br/>clears caches] --> STG
+    ING[Ingestion pipeline — daily<br/>replay → staging → validate → translate → tag topics → embed → publish<br/>clears caches] --> STG
     ING -- translate / embed calls --> LLM
     ING --> BIZ
 
@@ -522,6 +615,312 @@ flowchart TB
     JOBS[Scheduled jobs<br/>nightly backup → S3 · retention cleanup] --> PG
     CI[CI: unit + integration tests · eval subset gate] -.-> W
 ```
+
+**View 3 — Flows (✅ complete 2026-10-16: 8 routes, follow-up, database access, failures and edges)**
+
+*Route 1 — numbers (🔒 locked for now, 2026-10-13).* Example: "What was revenue by state in 2017?"
+
+```
+1. UI → API          check login · check quota · exact-question cache? hit → reply at once
+                     miss → queue job, return job ID; UI opens progress stream
+2. Worker            follow-up rewrite (skip) → input guardrails → router = numbers
+3. Bounded loop      LLM fills structured request {metric, dimensions, filters, period}
+                     → semantic layer validates, compiles SQL (metric rules defined once)
+                     → result cache? reuse : run SQL as adaa_reader
+                     → validation error → back to the LLM to fix, within the step limit
+4. Output guardrails every number must appear in the result · masking
+5. Answer            text + chart spec + "how I got this" → save turn → final stream event
+                     → trace to Langfuse, metrics to Grafana
+```
+
+Progress events at each step meet the first-feedback target.
+
+*Route 2 — reviews (🔒 locked for now, 2026-10-13).* Example: "What do customers complain about
+with delivery?"
+
+```
+1–2. Same as numbers   API checks → queue → worker → rewrite → input guardrails → router = reviews
+3. Bounded loop        LLM fills search request {search text, filters: score, period, category, topic}
+                       → review search as adaa_reader: full-text + pgvector on English translations
+                         → merge → top ~30; filters by joining reviews → orders / products
+                       → review text treated as untrusted
+                       → "how often" questions count topic tags via the semantic layer
+                       → LLM groups results into themes with quoted review IDs
+4. Output guardrails   every quote matches a stored review exactly · masking
+5. Answer              themes + real quotes + counts + "searched X reviews with text, filters …"
+                       → save turn → stream → trace/metrics
+```
+
+Review topics are tagged once at load time (ADR 0020): ingestion labels each review with topics
+from a fixed, versioned list (+ "other"), so "most common complaint" is an exact count and search
+supplies the quotes. Review topic is a semantic-layer dimension.
+
+*Route 3 — hybrid (🔒 locked for now, 2026-10-13).* Example: "Which categories have the most late
+deliveries, and what do those customers say?"
+
+```
+1–2. Same start       … → router = hybrid
+3. Bounded loop
+   Step A (numbers)   structured request → semantic layer → SQL → result table (stored, result ID)
+   Step B (reviews)   search request with filter "from result of Step A" → code fills exact values
+                      → full-text + pgvector → quotes; topic tag counts for "what they say most"
+   Combine            LLM writes one answer: table + themes and quotes per row
+4. Output guardrails  numbers vs result · quotes vs reviews · masking
+5. Answer             table/chart + quotes + "how I got this" for both steps
+```
+
+Step A → Step B values are passed by code from the stored result, never retyped by the LLM (the
+LLM decides *what* to filter by; code supplies the exact values).
+
+*Routes 4–7 — quick routes (🔒 locked for now, 2026-10-13).* No loop; target < 2 s.
+
+```
+1–2. Same start  … → router (sees the catalogue: metrics, dimensions, topics, data range —
+                 generated from the semantic layer)
+clarify    → ask with 2–3 options as buttons; the next message is treated as the answer (follow-up)
+refuse     → name the missing data + offer the closest answerable thing
+off-topic  → decline + say what it can do, with examples
+metadata   → answer from the catalogue, or from the last turn's saved "how I got this"
+→ save turn → stream → trace/metrics
+```
+
+**Ask vs assume:** if the semantic layer defines a default for the term (e.g. "best customer =
+highest revenue"), the question goes to the numbers route with the assumption stated and an
+offer to switch; with no default, clarify asks. Defaults are written once, so behaviour is
+predictable and testable (S4).
+
+*Follow-up (🔒 locked for now, 2026-10-13)* — not a route; runs before routing.
+
+```
+Turn 2: "What about 2018?"
+  follow-up rewrite: LLM sees last ~5 saved turns (question, structured request, summary, result ID)
+    → {standalone_question: "Revenue by state in 2018?", is_follow_up, referenced_result_ids}
+    → input guardrails → router → normal route
+  "those sellers" / "the top 5" → referenced result ID; code fills exact values
+  not a follow-up → passed through unchanged
+```
+
+The rewritten question is **shown** with the answer ("Understood as: Revenue by state in 2018"),
+so a misread follow-up is visible at once.
+
+*Route 8 — action (🔒 locked for now, 2026-10-16).* Example: "Flag seller 3442 for late deliveries."
+
+```
+1–2. Same start     … → router = action
+3. Agent            LLM fills action request {type, target, reason}
+                    → code checks: allowed type? target exists? within quota?
+4. Approval pause   LangGraph pauses, checkpoints to Postgres, worker freed
+                    → "approval needed" event with exact preview → Approve / Reject buttons
+5. Resume           Approve → write as adaa_agent + audit log → "Done" + link
+                    Reject → nothing written, logged
+```
+
+Same pause for agent-proposed actions after an answer ("Flag these 3 sellers?"), tasks and
+escalations. **Saving a preference needs no approval** (decided 2026-10-16, matches ADR 0014): it
+affects only the manager's own answers and is the manager's explicit request → "Saved: revenue =
+payment value. [Undo]". **Unanswered approvals expire after a set time (e.g. 24 h)**:
+cancelled and logged; the manager can ask again. Nothing stale runs.
+
+*Failures and edges (in progress, 2026-10-16)* — LLM and database failures handled separately.
+
+LLM failures, topics: (1) error types + retry rules ✅, (2) per-call timeouts, (3) fallback chain,
+(4) circuit breaker, (5) prevention via central rate limiter, (6) mid-question failure (restart
+vs resume from checkpoint), (7) what the manager sees, (8) observing it, (9) testing via fault
+injection.
+
+**(1) Retry rules (🔒 locked 2026-10-16)** — inside `llm.complete`:
+
+| Error | Retry? | How |
+|---|---|---|
+| 429 rate limited | Yes | Provider's `Retry-After` if given, else exponential backoff + jitter |
+| 5xx / timeout | Up to 2× | Backoff + jitter (≈1 s, ≈2 s, randomised) → fallback model |
+| Invalid schema output | Once | Validation error sent back → fallback model |
+| 400 bad request / 401 wrong key | No | Fail at once + alert (our bug or config) |
+| Content refused by provider | No | Honest message, logged |
+
+Backoff = wait longer after each failure; jitter = randomise the wait so many failed calls don't
+retry at the same moment (the "thundering herd"). Retries never exceed the question's time cap.
+
+**(2) Timeouts (🔒 locked 2026-10-16, starting values tuned in load tests)** — per job, in config:
+
+| Job | Timeout | Why |
+|---|---|---|
+| Follow-up rewrite, router | ~3 s | Quick routes < 4 s p95 |
+| Agent step (structured / search request) | ~8 s | Numbers < 10 s p95 |
+| Answer writing | ~10 s | Longest output |
+| Topic tagging / translation (ingestion) | ~30 s | Background, nobody waiting |
+
+Overall cap per question ~30 s (above hybrid's 20 s p95). **Budget rule:** before any retry, check
+time left on the question; if it can't fit another full call, skip to fallback or fail honestly.
+
+**(3) Fallback chain (🔒 locked 2026-10-16)** — per job, in config: **primary → one comparable
+model from a different provider**, then stop (chain of 2; a provider outage takes all its models
+down). A fallback must pass the same evals as the primary for that job before it's allowed in the
+chain; approved providers only (ADR 0019); strict schema support required.
+
+**(4) Circuit breaker (🔒 locked 2026-10-16)** — per provider + model. CLOSED (normal) → after ≥5
+failures in 30 s or ≥50% of the last 10 calls → OPEN (skip straight to fallback, no timeout waits)
+→ after ~30 s → HALF-OPEN (one test call: success → CLOSED, failure → OPEN). **State shared in
+Redis**, so the first worker to see an outage switches all workers at once; if Redis is down, each
+worker falls back to a local breaker. Breaker open → dashboard + alert. Numbers are starting values.
+
+**(5) Central rate limiter (🔒 locked 2026-10-16; details to be explored during implementation)** —
+one shared token bucket per provider in Redis, counting calls **and** tokens per minute;
+`llm.complete` asks before every call; allowed up to ~85% of the provider's limit. Bucket empty →
+wait up to ~2 s (within the question's time budget) → fallback provider → if that is full too,
+"busy, try again shortly". Prevents 429 bursts; the breaker (4) handles failures that still happen.
+
+**(6) Mid-question failure (🔒 locked 2026-10-16)** — LangGraph checkpoints each step in Postgres.
+All models fail → honest error + completed part shown, **labelled partial** + **Retry** button that
+resumes from the last good step (no recompute). Worker crash → queue redelivers the job to another
+worker, which resumes from the checkpoint automatically (once). Checkpoints for failed questions
+expire like approvals (e.g. 24 h).
+
+**(7) What the manager sees (🔒 locked 2026-10-16)** — plain words, only when it matters: normal
+progress events; a step over ~5 s → "Taking a bit longer than usual…"; "how I got this" notes
+"Answered by backup model" when a fallback was used; final failure → "Couldn't finish — the AI
+service is unavailable. [Retry] · Ref: <trace ID>". Technical detail (codes, providers, retries)
+only in traces and logs.
+
+**(8) Observing it (🔒 locked 2026-10-16)** — metrics by provider / model / job: errors by type
+(429, 5xx, timeout, schema, 4xx), retry count, fallback rate, breaker state, rate-limiter wait +
+"busy" rejections, LLM latency p50/p95 per job, cost per question incl. retries. Alerts (starting
+values): breaker open → immediate; any 400/401 → immediate; fallback rate > 10% for 10 min; "busy"
+rejections sustained 5 min. Langfuse traces record every attempt (model, error, wait, final model).
+
+**(9) Testing via fault injection (🔒 locked 2026-10-16)** — a fake LLM adapter behind
+`llm.complete` returns scripted failures (429 + Retry-After, 503, hang past timeout, bad JSON, 401).
+Unit tests: each rule in (1)–(5). Integration: full agent with "primary down" → backup answers +
+note; both down → honest error + Retry + trace ID. Load test with chaos: block the primary and kill
+a worker mid-question at 100 users → breaker trips, crashed jobs resume, alerts fire.
+
+**LLM failures complete.**
+
+Database failures, topics: (1) error types + retry rules ✅, (2) timeouts (connect vs query),
+(3) connection pool exhaustion at peak, (4) database fully down (breaker, health check, caches),
+(5) heavy / slow queries, (6) daily publish mid-question, (7) conversation-state writes failing,
+(8) what the manager sees · observing · testing.
+
+**(1) Retry rules (🔒 locked 2026-10-16):**
+
+| Error | Retry? | Why / how |
+|---|---|---|
+| Connection refused / dropped | Once, ~0.5 s + jitter | Often a blip; repeated failure counts toward the breaker |
+| Query timeout | No | Same query times out again → suggest a narrower question |
+| Deadlock / serialization error | Once | Postgres asks for a retry; mostly agent writes |
+| Permission denied | No | Our bug or an attack → fail + alert |
+| SQL syntax / missing column | No | Semantic layer compiled bad SQL → fail + alert |
+| Disk full / too many connections | No | Capacity problem → fail + immediate alert |
+
+**(2) Timeouts (🔒 locked 2026-10-16, starting values)** — enforced by Postgres per role:
+
+| Timeout | Value |
+|---|---|
+| Connect | ~2 s |
+| Statement | `adaa_reader` ~5 s · `adaa_agent` / `adaa_conversation` ~2 s · `adaa_ingest` ~10 min |
+| Lock / idle-in-transaction | ~2 s / ~10 s |
+
+`adaa_reader` lowered from ~10 s to ~5 s: numbers must finish < 10 s p95 including LLM calls.
+
+**(3) Connection pools (🔒 locked 2026-10-16; to learn more during implementation)** — connections
+add up as *workers × roles × pool size* + API + Keycloak + ingestion (e.g. 4 × 3 × 3 + 5 + 10 + 3 =
+54, under Postgres's ~100 default). Each costs ~5–10 MB, and more connections than CPU cores don't
+add speed. **Now:** small fixed pools per process and role, with the sum written down and kept
+under the limit; pool busy → wait ~2 s → "busy, try again shortly"; the global concurrency limit
+keeps demand within the pools. **Scaling step (documented, not built):** PgBouncer — many clients
+share a few real connections (the answer to "what about 1,000 users?").
+
+**(4) Database fully down (🔒 locked 2026-10-16)** — Postgres holds business data, conversation
+state, checkpoints, agent tables and Keycloak accounts. Docker restart policy brings it back
+(~10–30 s); API `/health` reports "degraded" → alert; a DB breaker shared in Redis makes workers
+fail fast. In-progress questions → "Data temporarily unavailable. [Retry] · Ref" (resume from last
+checkpoint); queued questions wait until the DB is back or their time cap ends. Logged-in managers
+keep working (token checked against Keycloak's cached public key); new logins fail until recovery.
+**Cache hits are not served during the outage** — one consistent "unavailable" rule; no unsaved
+turns breaking follow-ups.
+
+**(5) Heavy / slow queries (🔒 locked 2026-10-16)** — the semantic layer knows each dimension's
+rough size and **estimates result size before running**; too big (e.g. > 1,000 rows) → not run,
+manager offered a narrower version ("try by state, or top 20 zip codes?"). Results capped (e.g.
+1,000 rows): the LLM sees a summary / top N, the full table is downloadable. The 5 s statement
+timeout remains the backstop. **Pre-built summary tables** (refreshed at daily publish) only if load
+tests or the 10× growth test show a need.
+
+**(6) Daily publish mid-question (🔒 locked 2026-10-16; to learn more during implementation)** —
+publish runs at a quiet hour (e.g. 3 am) and switches all new data in **atomically** (one
+transaction, never half-loaded). Each question records the **data version at start**; if it changed
+by the end, the question reruns once automatically, so numbers and quotes always come from the same
+data. Every answer shows "Data as of <date>". Analogy: the new newspaper edition is printed in the
+back room and swapped onto the stand in one instant; a reader who notices the edition changed
+mid-read starts again on the new one.
+
+**(7) Conversation-state writes failing (🔒 locked 2026-10-16)** — after the one retry:
+checkpoint write fails → fail the question honestly + Retry (can't resume safely without it);
+final turn write fails → **still deliver the answer** with "This answer wasn't saved to history —
+follow-ups may not see it" + log + alert; **action and its audit log are written in one
+transaction** — both or neither → "Action not completed. [Retry]".
+
+**(8) Messages, observing, testing (🔒 locked 2026-10-16).** Messages: DB down → "Data temporarily
+unavailable. [Retry] · Ref"; too big → offer narrower version; query timeout → "took too long, try
+a narrower range or fewer breakdowns"; pool busy → "Busy, try again shortly"; turn not saved →
+note. Metrics: DB errors by type, query time p50/p95, statement timeouts, pool in-use/wait,
+connections vs limit, breaker state, publish success, data version age. Alerts: DB down / breaker
+open, permission denied or SQL syntax error → immediate; connections > 80% of limit; data older than
+24 h. Tests: fake DB errors per retry rule; stop Postgres mid-question (honest error, resume,
+auto-restart); publish during a hybrid question (one rerun); failed audit write (no action saved);
+100-user load within the connection budget.
+
+**Database failures complete.**
+
+Other failures, topics: (1) Redis down ✅, (2) Keycloak down, (3) stream disconnect, (4) edges —
+quota / queue messages, feedback.
+
+**(1) Redis down (🔒 locked for now 2026-10-16; revisit at implementation)** — Docker restarts it;
+`/health` → "degraded" + alert. New questions refused politely ("Service temporarily unavailable —
+try again in a minute"), never run without the queue (would bypass the concurrency limit).
+In-progress questions keep running (state in Postgres checkpoints); result saved to the turn, UI
+picks it up on reconnect. **Redis persistence (AOF) on** so queued jobs survive a restart. Breaker
+and rate limiter fall back to local per-worker versions. Caches are lost — acceptable.
+
+**(2) Keycloak down (🔒 locked 2026-10-16)** — the API verifies tokens with Keycloak's cached
+public keys, so logged-in managers keep working until their token expires; refresh and new logins
+fail ("Login temporarily unavailable — try again shortly"); Docker restarts it; `/health` →
+"degraded" + alert. **Access tokens last ~15 min** — rides out short restarts while keeping the
+window for a disabled account or stolen token small.
+
+*Token lifecycle (🔒 locked 2026-10-16):* the token is checked **once, when a request arrives**;
+the worker runs the job under the identity recorded at submit, so expiry mid-question doesn't
+matter. The UI silently swaps the **refresh token** (working session, ~8–10 h) for a new access
+token ~1 min before expiry (standard OIDC client library). An open stream stays open; reconnects
+use the fresh token. Session over → log in again.
+
+**(3) Stream disconnect (🔒 locked 2026-10-16)** — the question **keeps running**; it doesn't depend
+on the browser connection (ADR 0010). On reconnect the UI asks for events since the last one it
+saw (SSE `Last-Event-ID`); the API replays them from Redis (kept ~1 h per job). Finished job → UI
+loads the answer from the saved turn. Page refresh → conversation reloads, running questions show
+live progress again.
+
+**(4) Edges (🔒 locked 2026-10-16, starting values)** — quota 30 questions/hour per manager
+(sliding window in Redis; cache hits count) → "Hourly limit reached — try again in 12 min";
+global concurrency N = workers × questions per worker (e.g. 4 × 3 = 12), rest queue; queue
+position streamed live ("Busy — you're #3"); queue over ~200 → refuse at submit ("Very busy —
+try again in a minute"), covering the 200-user spike; queue wait has its own ~60 s cap, the 30 s
+question cap starts when a worker picks the job up; 👍/👎 + optional comment per answer, linked to
+the trace ID, 👎 → review list → new eval questions.
+
+**Failures and edges complete. View 3 complete.**
+
+*Database access (🔒 locked 2026-10-13).* The LLM never connects to the database; worker code
+(the semantic layer's run-query function) runs the compiled SQL. Postgres is on the private Docker
+network only. Each worker keeps a small connection pool. One role per job (least privilege);
+passwords in `.env` locally and the server's secret store in prod, never in git:
+
+| Role | Can do | Used by |
+|---|---|---|
+| `adaa_reader` | SELECT on business data only; statement timeout (~5 s, lowered 2026-10-16) + row limit | Numbers / reviews queries |
+| `adaa_agent` | Write agent tables only (flags, tasks, escalations, preferences) | Action route, after approval |
+| `adaa_conversation` | Read/write conversation state and turns | Memory |
+| `adaa_ingest` | Write staging, then publish | Daily ingestion |
 
 ---
 

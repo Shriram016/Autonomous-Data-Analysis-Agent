@@ -11,6 +11,7 @@ Across conversations, the agent remembers only what the manager explicitly asks 
 
 - Saved preferences live in agent-owned tables (consistent with ADR 0002); saving is the manager's own explicit request, so no separate approval step.
 - Preferences that change a metric's meaning must map onto semantic-layer definitions, not free text.
+- **Fixed set of keys (2026-10-16, threat model):** preferences are a fixed set of keys with allowed values (e.g. `revenue_definition`, `home_region`, `default_period`, `chart_style`), never free text, so a preference can't carry injected instructions into every future session.
 - Eval needs cases where a saved preference must (and must not) change the answer.
 - Gap noted: long-term memory was missing from the original reference checklist; found by the builder's question.
 

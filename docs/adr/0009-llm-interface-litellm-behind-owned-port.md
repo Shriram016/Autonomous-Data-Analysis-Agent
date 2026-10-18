@@ -14,6 +14,7 @@ All code calls one function we own, `llm.complete(job, ...)` (job = router, agen
 - Per-job model config enables model tiering (cheap model for simple steps) against the cost baseline.
 - Behaviour differs between models even when the API matches, so the eval suite is the safety net for any model swap.
 - The central rate-limit enforcement can live behind the same interface.
+- **Structured output on every call (added 2026-10-13).** Each job declares a Pydantic output schema; `llm.complete` uses the provider's strict JSON-schema mode where supported, validates, retries once with the error, then falls back. No free-text parsing anywhere; prose is a field in the schema. Models without reliable schema support can't be used for a job.
 
 ## Questions that drove this
 
