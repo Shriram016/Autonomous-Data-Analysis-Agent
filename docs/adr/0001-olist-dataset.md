@@ -20,7 +20,7 @@ A web search (2026-10-11) found no candidate meeting all criteria better. Re-che
 - Reviews are in **Portuguese**; the manager works in English. How to handle this is a separate decision.
 - Data covers **2016–2018**: relative dates ("last quarter") must resolve against the data's range, not today; the exact rule is decided at implementation (Level 2).
 - Company names in review text were anonymised as Game of Thrones house names: real mess to handle.
-- To verify during profiling: license (believed CC BY-NC-SA 4.0, so raw data is not committed; download script + attribution instead) and how many reviews have comment text.
+- License **confirmed CC BY-NC-SA 4.0** (Kaggle page, 2026-10-18; "expected update frequency: Never"): raw data is not committed; manual download + `prepare_olist` script + attribution in [docs/data-source.md](../data-source.md). Review-text share is checked in profiling (M0.5).
 - Possible later add-on: Olist's separate Marketing Funnel dataset (unverified) links to sellers.
 
 ## Questions that drove this

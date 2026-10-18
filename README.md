@@ -5,4 +5,5 @@
 An AI agent that answers a manager's plain-English questions over a company's records and customer reviews, shows how it got each answer, asks when a question is unclear, and refuses when the data can't answer it.
 
 - Design: [docs/v3-problem-statement.md](docs/v3-problem-statement.md) (§0) and [docs/adr/](docs/adr/)
+- Data: Olist Brazilian E-Commerce (CC BY-NC-SA 4.0) — source and attribution in [docs/data-source.md](docs/data-source.md)
 - Previous version: [`version2` branch](../../tree/version2) / tag `v2.0`
