@@ -551,8 +551,9 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    **Visual summary:** [v3-blueprint.html](v3-blueprint.html) (source) — published as the
 >    "ADAA V3 Blueprint" artifact (https://claude.ai/artifact/6KH9Q1fuB8NpGPH8rKjSae); update
 >    it when the design changes.
-> 3. **Repo and codebase plan:** reuse V2 code or fresh; folder layout (backend / frontend /
->    infra); tooling (Python version, package manager).
+> 3. ~~**Repo and codebase plan**~~ ✅ done 2026-10-18: V2 code and docs removed (kept on the
+>    `version2` branch / `v2.0` tag), fresh codebase; layout and tooling in "Repo and codebase
+>    plan" at the end of §0.
 > 4. **Start M0 with data profiling** (also verifies Olist license and review-text counts).
 >
 >
@@ -943,6 +944,65 @@ passwords in `.env` locally and the server's secret store in prod, never in git:
 | `adaa_agent` | Write agent tables only (flags, tasks, escalations, preferences) | Action route, after approval |
 | `adaa_conversation` | Read/write conversation state and turns | Memory |
 | `adaa_ingest` | Write staging, then publish | Daily ingestion |
+
+### Repo and codebase plan (✅ complete, 2026-10-18)
+
+Topics: (1) folder layout, (2) Python version + package manager, (3) frontend tooling,
+(4) code quality tools, (5) config and secrets, (6) local run, (7) tests / checks / eval layout.
+
+**(1) Folder layout (🔒 locked for now)** — one repo (monorepo); modules mirror the View 2 boxes:
+
+```
+backend/src/adaa/  api/ · worker/ · agent/ · llm/ · semantic_layer/ · search/ · guardrails/ · ingestion/ · db/
+backend/tests/ · backend/dev_checks/
+semantic_layer/    metric / dimension / default definitions as versioned YAML (data, not code)
+frontend/          React + Vite + TypeScript
+eval/              test questions, runner, results
+infra/             docker-compose, Keycloak config, deploy scripts
+docs/              design, ADRs, learning notes, cross-examination
+```
+
+API and workers share one package and one image (different start commands). Module names may
+shift slightly during the build.
+
+**(2) Python + package manager (🔒 locked 2026-10-18)** — **Python 3.12 + uv**. `pyproject.toml`
++ `uv.lock` pin the exact version of every library (including dependencies), so laptop, Docker
+and CI install the same set; installs are fast; commands run through `uv run`. The project gets
+its own environment (`backend/.venv`), replacing V2's shared `E:/agent_env`. Rejected: pip +
+venv (no real lockfile, slow), Poetry (slower, own quirks).
+
+**(3) Frontend tooling (🔒 locked 2026-10-18)** — Node 22 LTS + npm + Tailwind + shadcn/ui
+(ready-made components copied into the repo) on the locked React + Vite + TypeScript. Chart
+library decided in M1/M2 with the first chart.
+
+**(4) Code quality (🔒 locked 2026-10-18)** — backend: ruff (lint + format), mypy (non-strict
+first, tightened later), pytest, pre-commit running ruff on every commit; frontend: ESLint +
+Prettier + `tsc`. GitHub Actions runs all of them on every push (rebuilt in M0). Types double as
+input/output documentation for each slice.
+
+**(5) Config and secrets (🔒 locked 2026-10-18)** — secrets (API keys, DB passwords, Keycloak
+client secret) in a git-ignored `.env` for now; where prod secrets live (e.g. AWS SSM Parameter
+Store) is decided at deployment (M7). Normal config (model per job + fallback, timeouts, quotas,
+breaker thresholds, masking rules) in versioned YAML in the repo. One `Settings` class
+(pydantic-settings) loads and validates everything at startup and refuses to start if a key is
+missing. `.env.example` committed with every name, no values. Local vs prod = same code,
+different values.
+
+**(6) Local run (🔒 locked 2026-10-18)** — daily work: Docker runs only the services (Postgres,
+Redis, Keycloak); API, worker and UI run natively with auto-reload (`uv run …`, `npm run dev`).
+Plus a **full profile** (`docker compose --profile full up`) running everything containerised like
+prod, used for integration and chaos tests and before deploying.
+
+**(7) Tests, checks, evals (🔒 locked for now 2026-10-18)** — `backend/tests/unit/` (one module,
+fake LLM adapter; every commit + CI); `backend/tests/integration/` (real Postgres + Redis in
+Docker, fake LLM: full flows, outages, resume; CI); `backend/dev_checks/check_<slice>.py`
+(one-off proof per slice, may use the real LLM — run manually after stating what runs and the
+cost); `eval/questions/` (~150 YAML questions: route, type, expected answer/behaviour),
+`eval/runner/`, `eval/results/<date>/` (real system, S1–S9 scoring, failure-cause labels; manual
+with approval, small subset as the release gate). **CI never makes real LLM calls on ordinary
+pushes.**
+
+**Repo and codebase plan complete.**
 
 ---
 
