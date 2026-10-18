@@ -79,6 +79,23 @@ A schema is a named folder inside one database that groups tables: `business` (O
 `agent` (flags, tasks), `conversation` (turns, checkpoints), `staging` (daily loads). Permissions
 can be granted per schema, which is how the read-only role will be enforced.
 
+### Database roles (least privilege)
+
+A role is a Postgres login with its own permissions, granted per schema, table or even column;
+anything not granted is refused by Postgres itself. Like office badges: each opens only certain
+doors. Named after the job that holds the badge:
+
+| Role | Access | Used by |
+|---|---|---|
+| `adaa_owner` | everything | setup / migrations only |
+| `adaa_loader` | write `staging`, publish to `business` | load + daily ingestion |
+| `adaa_query` | read `business` only | agent queries + review search |
+| `adaa_actions` | write `agent` only | flags, tasks, escalations, preferences |
+| `adaa_memory` | read/write `conversation` only | turns, checkpoints |
+
+Why: if the agent is tricked or buggy, its badge physically can't change data — stronger than
+"our code promises not to".
+
 ### Redis AOF
 
 Append-only file: Redis writes every change to disk, so queued jobs survive a restart instead of

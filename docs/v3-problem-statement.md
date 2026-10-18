@@ -661,7 +661,7 @@ flowchart TB
 2. Worker            follow-up rewrite (skip) → input guardrails → router = numbers
 3. Bounded loop      LLM fills structured request {metric, dimensions, filters, period}
                      → semantic layer validates, compiles SQL (metric rules defined once)
-                     → result cache? reuse : run SQL as adaa_reader
+                     → result cache? reuse : run SQL as adaa_query
                      → validation error → back to the LLM to fix, within the step limit
 4. Output guardrails every number must appear in the result · masking
 5. Answer            text + chart spec + "how I got this" → save turn → final stream event
@@ -676,7 +676,7 @@ with delivery?"
 ```
 1–2. Same as numbers   API checks → queue → worker → rewrite → input guardrails → router = reviews
 3. Bounded loop        LLM fills search request {search text, filters: score, period, category, topic}
-                       → review search as adaa_reader: full-text + pgvector on English translations
+                       → review search as adaa_query: full-text + pgvector on English translations
                          → merge → top ~30; filters by joining reviews → orders / products
                        → review text treated as untrusted
                        → "how often" questions count topic tags via the semantic layer
@@ -746,7 +746,7 @@ so a misread follow-up is visible at once.
                     → code checks: allowed type? target exists? within quota?
 4. Approval pause   LangGraph pauses, checkpoints to Postgres, worker freed
                     → "approval needed" event with exact preview → Approve / Reject buttons
-5. Resume           Approve → write as adaa_agent + audit log → "Done" + link
+5. Resume           Approve → write as adaa_actions + audit log → "Done" + link
                     Reject → nothing written, logged
 ```
 
@@ -852,10 +852,10 @@ Database failures, topics: (1) error types + retry rules ✅, (2) timeouts (conn
 | Timeout | Value |
 |---|---|
 | Connect | ~2 s |
-| Statement | `adaa_reader` ~5 s · `adaa_agent` / `adaa_conversation` ~2 s · `adaa_ingest` ~10 min |
+| Statement | `adaa_query` ~5 s · `adaa_actions` / `adaa_memory` ~2 s · `adaa_loader` ~10 min |
 | Lock / idle-in-transaction | ~2 s / ~10 s |
 
-`adaa_reader` lowered from ~10 s to ~5 s: numbers must finish < 10 s p95 including LLM calls.
+`adaa_query` lowered from ~10 s to ~5 s: numbers must finish < 10 s p95 including LLM calls.
 
 **(3) Connection pools (🔒 locked 2026-10-16; to learn more during implementation)** — connections
 add up as *workers × roles × pool size* + API + Keycloak + ingestion (e.g. 4 × 3 × 3 + 5 + 10 + 3 =
@@ -948,14 +948,18 @@ the trace ID, 👎 → review list → new eval questions.
 *Database access (🔒 locked 2026-10-13).* The LLM never connects to the database; worker code
 (the semantic layer's run-query function) runs the compiled SQL. Postgres is on the private Docker
 network only. Each worker keeps a small connection pool. One role per job (least privilege);
-passwords in `.env` locally and the server's secret store in prod, never in git:
+passwords in `.env` locally and the server's secret store in prod, never in git. **Roles are
+named after the job that uses them** (renamed 2026-10-18 from reader / ingest / agent /
+conversation — job names read better in logs and interviews); each can touch only the schemas
+granted to it:
 
 | Role | Can do | Used by |
 |---|---|---|
-| `adaa_reader` | SELECT on business data only; statement timeout (~5 s, lowered 2026-10-16) + row limit | Numbers / reviews queries |
-| `adaa_agent` | Write agent tables only (flags, tasks, escalations, preferences) | Action route, after approval |
-| `adaa_conversation` | Read/write conversation state and turns | Memory |
-| `adaa_ingest` | Write staging, then publish | Daily ingestion |
+| `adaa_owner` | Everything (creates schemas, roles, tables) | Setup / migrations only, never the app |
+| `adaa_query` | SELECT on business data only; statement timeout (~5 s, lowered 2026-10-16) + row limit | Numbers / reviews queries |
+| `adaa_actions` | Write agent tables only (flags, tasks, escalations, preferences) | Action route, after approval |
+| `adaa_memory` | Read/write conversation state and turns | Memory |
+| `adaa_loader` | Write staging, then publish | Daily ingestion |
 
 ### Repo and codebase plan (✅ complete, 2026-10-18)
 

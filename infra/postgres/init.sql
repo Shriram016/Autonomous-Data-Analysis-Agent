@@ -1,5 +1,5 @@
 -- Runs once, the first time the Postgres container starts with an empty volume,
--- inside the "adaa" database. Roles (adaa_reader, adaa_agent, ...) are added by the slice
+-- inside the "adaa" database. Roles (adaa_query, adaa_actions, ...) are added by the slice
 -- that first needs each one.
 
 CREATE EXTENSION IF NOT EXISTS vector;  -- pgvector: store and search embeddings

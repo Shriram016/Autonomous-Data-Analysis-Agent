@@ -311,8 +311,8 @@ flowchart TB
   end
   W -- "every LLM call" --> LLM["llm.complete&lt;br/&gt;schema · masking · limiter · fallback"]
   LLM --> EXT[("LLM providers")]
-  SL & RS -- "adaa_reader" --> PG[("Postgres + pgvector")]
-  AP -- "adaa_agent" --> PG
+  SL & RS -- "adaa_query" --> PG[("Postgres + pgvector")]
+  AP -- "adaa_actions" --> PG
   ING["Daily ingestion"] --> PG
   W & API -. "OpenTelemetry" .-> OBS["Langfuse Cloud · Grafana Cloud"]
     </pre></div>
@@ -343,7 +343,7 @@ sequenceDiagram
   W-->>UI: "Understanding…"
   W->>L: fill structured request
   W->>W: semantic layer validates, builds SQL
-  W->>DB: run as adaa_reader (5 s cap)
+  W->>DB: run as adaa_query (5 s cap)
   W-->>UI: "Running query…"
   W->>W: every number must be in the result
   W->>L: write answer
@@ -413,7 +413,7 @@ flowchart TB
 flowchart LR
   R["Router: action"] --> F["LLM fills&lt;br/&gt;type · target · reason"] --> V["Code checks&lt;br/&gt;allowed? exists? quota?"]
   V --> P["Pause + checkpoint&lt;br/&gt;worker freed"] --> PV["Exact preview&lt;br/&gt;Approve / Reject"]
-  PV -- "approve" --> WR["Write as adaa_agent&lt;br/&gt;+ audit log, one transaction"]
+  PV -- "approve" --> WR["Write as adaa_actions&lt;br/&gt;+ audit log, one transaction"]
   PV -- "reject" --> LG["Nothing written, logged"]
   PV -- "no click in 24 h" --> EX["Expired, logged"]
     </pre></div>
@@ -450,10 +450,10 @@ flowchart LR
     </table></div>
     <h3>Database roles and isolation</h3>
     <div class="chips">
-      <span class="chip"><b>adaa_reader</b>SELECT only, 5 s cap</span>
-      <span class="chip"><b>adaa_agent</b>agent tables only</span>
-      <span class="chip"><b>adaa_conversation</b>turns + checkpoints</span>
-      <span class="chip"><b>adaa_ingest</b>staging + publish</span>
+      <span class="chip"><b>adaa_query</b>SELECT only, 5 s cap</span>
+      <span class="chip"><b>adaa_actions</b>agent tables only</span>
+      <span class="chip"><b>adaa_memory</b>turns + checkpoints</span>
+      <span class="chip"><b>adaa_loader</b>staging + publish</span>
       <span class="chip"><b>owner check</b>every endpoint, UUIDs</span>
     </div>
   </section>
