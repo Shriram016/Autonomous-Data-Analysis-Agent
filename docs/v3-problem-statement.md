@@ -572,7 +572,13 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    zip prefixes as text to keep leading zeros), original column names, primary keys only where
 >    values are unique, no foreign keys, no business rules; messy-data rules live in the
 >    semantic layer. Load via `COPY` into `staging` as `adaa_loader` → row counts vs manifest →
->    atomic swap into `business` → **M0.5 profiling report** → M0.6 semantic-layer draft (YAML).
+>    atomic swap into `business` → ✅ **M0.5 profile** (2026-10-19: `adaa.ingestion.profile_olist`
+>    writes [data-profile.md](data-profile.md), 10 areas in ~4 s, SQL only; findings F1–F9 with
+>    impact lines; estimates confirmed — 41.3% of reviews have text; usable window 2017-01 to
+>    2018-08; revenue differs 13.6M–16.0M by definition) → **M0.6 semantic-layer draft** (YAML).
+>    **Open for M3 (raised 2026-10-19, not locked):** build ingestion as an incremental load
+>    with a watermark and upsert (not full reload + swap), so a real-time source only changes
+>    *when* the load runs. See Q3 in [v3-cross-examination.md](v3-cross-examination.md).
 >
 >
 > ⚠️ **MANDATORY — DO NOT SKIP: post-build architecture cross-examination.** Once development is
