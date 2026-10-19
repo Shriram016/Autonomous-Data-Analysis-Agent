@@ -162,5 +162,39 @@ before the publish, and `business` does not change (an integration test proves t
 
 ---
 
+## M0.6 — Semantic layer draft
+
+### Grain and double counting (fan-out)
+
+Grain = what one row describes. `order_items`: one item. `payments`: one payment for a whole
+order. `reviews`: one review of an order. A number about the whole order cannot be split by
+something about single items: one payment of 120 for an order with a toy and a book would count
+120 for toys and 120 for books (240 in total). This error is called double counting, or fan-out.
+
+The grain tree: `order` is the parent of `item`, `payment` and `review`. A metric can use a
+dimension at its own grain or at `order`. Each metric and dimension has a `grain` label, and one
+check in code applies the rule, so no one has to remember special cases.
+
+### Why revenue = item price (D1)
+
+Item price + freight = payment value for 99.7% of orders. The total payment is 0.17M higher, but
+98% of that gap comes from 775 orders with a payment and no items (unavailable / canceled), and
+only 2% from interest and vouchers. With delivered orders only (D2): revenue 13.22M + freight
+2.20M = 15.42M ≈ total paid 15.42M. Payment value can't split by category or seller, so revenue
+uses item price, and freight / total paid are separate metrics.
+
+### The YAML `on` trap
+
+YAML 1.1 (used by PyYAML) reads a bare `on`, `off`, `yes` or `no` as true / false. A join key
+written `on:` loaded as the boolean `True`, and the loader reported the field as missing. Fix:
+name the key `condition`. Lesson: avoid these words as keys, or quote them.
+
+### Semantic layer fingerprint
+
+The loader computes a SHA-256 of the 4 YAML files. Each answer can record it, so we can always
+prove which definitions produced a number (gap G6, semantic-layer versioning).
+
+---
+
 **Why one ruff version:** the hook calls the project's own ruff via `uv run`, pinned in
 `uv.lock`, so the hook, the editor and CI never disagree.

@@ -575,7 +575,21 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    atomic swap into `business` → ✅ **M0.5 profile** (2026-10-19: `adaa.ingestion.profile_olist`
 >    writes [data-profile.md](data-profile.md), 10 areas in ~4 s, SQL only; findings F1–F9 with
 >    impact lines; estimates confirmed — 41.3% of reviews have text; usable window 2017-01 to
->    2018-08; revenue differs 13.6M–16.0M by definition) → **M0.6 semantic-layer draft** (YAML).
+>    2018-08; revenue differs 13.6M–16.0M by definition) → ✅ **M0.6 semantic-layer draft**
+>    (2026-10-19: `semantic_layer/*.yaml` v0.1.0 — 10 metrics, 9 dimensions, 7 joins, 5
+>    defaults; `adaa.semantic_layer.definitions` loads, checks, applies the grain rule, finds
+>    join paths, fingerprints the files; 16 unit tests; `check_semantic_layer.py` runs every
+>    metric on real data — delivered revenue 13,221,498.11, late rate 6.77%, 93,358 customers,
+>    matching hand-written SQL). **M0 complete.**
+>    *M0.6 decisions (2026-10-19):* draft structure accepted — 4 files (`metrics`,
+>    `dimensions`, `joins`, `defaults`), every metric and dimension has a **grain** (tree: order →
+>    item / payment / review); a metric can use a dimension at its own grain or at order, so
+>    double counting (fan-out) is refused by design. 🔒 **D1 revenue = item price only**
+>    (product sales, excluding freight); `freight` and `total_paid` are separate metrics;
+>    `total_paid` (payment grain) cannot split by category or seller. 🔒 **D2 default status
+>    filter = delivered orders only** (final sales; the delivery metrics need a delivery date
+>    anyway, so all order metrics use the same set); override via the `order_status`
+>    dimension or an explicit filter; review metrics have no status filter.
 >    **Open for M3 (raised 2026-10-19, not locked):** build ingestion as an incremental load
 >    with a watermark and upsert (not full reload + swap), so a real-time source only changes
 >    *when* the load runs. See Q3 in [v3-cross-examination.md](v3-cross-examination.md).

@@ -7,6 +7,7 @@ dependencies = [
     "psycopg[binary]>=3.3.6",
     "pydantic>=2.7",
     "pydantic-settings>=2.3",
+    "pyyaml>=6.0.3",
     "redis>=8.1.0",
 ]
 
@@ -16,6 +17,7 @@ dev = [
     "ruff>=0.6",
     "mypy>=1.11",
     "pre-commit>=3.8",
+    "types-pyyaml>=6.0.12.20260906",
 ]
 
 [tool.uv]

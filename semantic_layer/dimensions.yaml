@@ -1,0 +1,67 @@
+# Dimensions: the ways a metric can be broken down.
+#
+# Grain tree:          order       (state, month, status)
+#                   /    |    \
+#                item  payment  review
+# A metric can use a dimension at its own grain or at "order" (above it in the tree).
+# Example: revenue (item) can use category (item) and state (order), not payment type (payment).
+version: 0.1.0
+
+dimensions:
+  month:
+    label: Month
+    grain: order
+    sql: date_trunc('month', orders.order_purchase_timestamp)
+    terms: [month, monthly, per month]
+    why: Purchase date is the order date. Months outside 2017-01..2018-08 are thin. (F1)
+
+  year:
+    label: Year
+    grain: order
+    sql: extract(year FROM orders.order_purchase_timestamp)
+    terms: [year, yearly, annual]
+
+  customer_state:
+    label: Customer state
+    grain: order
+    sql: customers.customer_state
+    terms: [state, customer state, region]
+
+  order_status:
+    label: Order status
+    grain: order
+    sql: orders.order_status
+    terms: [status, order status]
+    why: Lets a manager see orders that are not delivered (overrides D2).
+
+  product_category:
+    label: Product category
+    grain: item
+    sql: coalesce(category_translation.product_category_name_english, products.product_category_name, 'unknown')
+    terms: [category, product category, product type]
+    why: English name; Portuguese if not translated; 'unknown' if empty. (F8)
+
+  seller_state:
+    label: Seller state
+    grain: item
+    sql: sellers.seller_state
+    terms: [seller state, seller location]
+
+  seller:
+    label: Seller
+    grain: item
+    sql: order_items.seller_id
+    terms: [seller, vendor, merchant]
+
+  payment_type:
+    label: Payment type
+    grain: payment
+    sql: payments.payment_type
+    terms: [payment type, payment method]
+    why: One order can use 2 payment types, so only payment metrics can use it.
+
+  review_score:
+    label: Review score
+    grain: review
+    sql: reviews.review_score
+    terms: [score, stars, review stars]
