@@ -57,3 +57,51 @@ partitioning and summary tables keep queries inside the latency targets."
 **Related open point (not locked):** with wake-on-demand the server is usually off, so a real daily
 schedule would need a scheduled wake-up (vs catching up on wake, vs a replay clock that only moves
 while the server is on).
+
+---
+
+## Q2. If the database container crashes, is the data lost? Is this how production databases run?
+
+*Raised 2026-10-19, during M0.5.*
+
+**Short answer:** committed data is not lost. The container is only the Postgres program. The
+data is in a Docker volume (files on disk). Before Postgres confirms a `COMMIT`, it writes the
+change to the write-ahead log (WAL) on disk. After a crash, Postgres replays the WAL at startup.
+M0.2 tested this: the containers were deleted and recreated, and the data stayed.
+
+**When data is lost**
+
+| Situation | Result |
+|---|---|
+| Container crashes, stops, or is deleted | Committed data is safe |
+| Transaction not committed before the crash | That transaction is cancelled (all or nothing) |
+| Volume deleted (`docker volume rm`, `docker compose down -v`) | All data lost |
+| Disk fails or the machine is lost | All data lost, unless there is a backup |
+
+**ADAA local setup vs typical production**
+
+| Topic | ADAA now (local) | Typical production |
+|---|---|---|
+| Where it runs | One Docker container | Managed service (AWS RDS, Cloud SQL) or dedicated servers |
+| Storage | Docker volume on local disk | Network disks, separate from the server, replicated |
+| Copies | One | Primary + standby replicas, often in different data centres |
+| Server failure | Data safe; service down until restart (`restart: unless-stopped`) | Automatic failover to a standby in ~30–120 s |
+| Backups | Planned nightly `pg_dump` to S3 (G3) | Automatic snapshots + continuous WAL archiving |
+| Restore point | Last nightly backup | Point-in-time recovery to any second |
+| Restore test | Planned restore drill | Regular scheduled restore tests |
+| Security | Localhost only, roles per job | Private network, encryption at rest and in transit, audit logs |
+| Maintenance | Manual | Automatic patches in a maintenance window |
+| Monitoring | Not yet | Alerts: disk, replication delay, slow queries, connections |
+
+**Postgres in Docker in production?** Possible with Kubernetes and a Postgres operator (for
+example CloudNativePG: replicas, failover, backups). Most small and medium teams use a managed
+service, because the provider runs those parts.
+
+**ADAA path:** local Docker → one EC2 server with Docker + nightly backups to S3 (documented
+single point of failure) → move the database to AWS RDS Multi-AZ with point-in-time recovery.
+Only the connection settings change; the application code stays the same.
+
+**Interview one-liner:** "Durability comes from the WAL and from storage that outlives the
+process; availability comes from replicas and failover; recoverability comes from backups you
+have actually restored. ADAA has the first now, documents the gap in the second, and designs
+the third."

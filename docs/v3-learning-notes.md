@@ -96,6 +96,20 @@ doors. Named after the job that holds the badge:
 Why: if the agent is tricked or buggy, its badge physically can't change data — stronger than
 "our code promises not to".
 
+### Container crash: is the data lost?
+
+No, if the change was committed. The container is the Postgres program; the data is in the volume
+`adaa_pgdata` on disk. Postgres writes each change to the write-ahead log (WAL) before it
+confirms `COMMIT`, and replays the WAL after a crash. Data is lost only when the transaction did
+not commit, the volume is deleted, or the disk fails without a backup.
+
+`restart: unless-stopped` (added 2026-10-19) starts both containers again after a crash or a
+Docker Desktop restart. They stay down only if you stop them yourself. DBeaver can connect only
+while the container runs.
+
+Production comparison (replicas, failover, point-in-time recovery): see Q2 in
+[v3-cross-examination.md](v3-cross-examination.md).
+
 ### Redis AOF
 
 Append-only file: Redis writes every change to disk, so queued jobs survive a restart instead of

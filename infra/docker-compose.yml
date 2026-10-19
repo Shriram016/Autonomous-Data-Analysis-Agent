@@ -7,6 +7,7 @@ name: adaa
 services:
   postgres:
     image: pgvector/pgvector:pg17
+    restart: unless-stopped # start again after a crash or a Docker restart
     environment:
       POSTGRES_DB: ${ADAA_DB_NAME:-adaa}
       POSTGRES_USER: ${ADAA_DB_USER:-adaa_owner}
@@ -24,6 +25,7 @@ services:
 
   redis:
     image: redis:7-alpine
+    restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes"] # AOF: queued jobs survive a restart
     ports:
       - "127.0.0.1:6379:6379"
