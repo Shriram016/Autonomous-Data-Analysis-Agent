@@ -564,9 +564,15 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    data survives container removal) → ✅ **M0.3 data** (2026-10-18: ZIP downloaded by hand into
 >    `data/raw/` (git-ignored); `adaa.ingestion.prepare_olist` extracts the 9 CSVs, checks exact
 >    headers, counts CSV records, writes `manifest.json` with SHA-256; 1,550,922 rows in total;
->    licence confirmed CC BY-NC-SA 4.0 → [data-source.md](data-source.md)) → **M0.4**
->    get the data (download script + licence check) → M0.4 load the 9 CSVs into a `business`
->    schema → M0.5 profiling report → M0.6 semantic-layer draft (YAML).
+>    licence confirmed CC BY-NC-SA 4.0 → [data-source.md](data-source.md)) → ✅ **M0.4 load**
+>    (2026-10-19: superuser renamed `adaa_owner`; `adaa.db.roles` creates `adaa_loader`;
+>    `adaa.ingestion.load_olist` loads 1,550,922 rows in ~4.4 s; all primary keys held; 14
+>    tests + `check_business_tables.py` pass). **Load rule (🔒 2026-10-18): faithful
+>    but typed** — same rows and values as the CSVs, correct types (timestamps, numeric money,
+>    zip prefixes as text to keep leading zeros), original column names, primary keys only where
+>    values are unique, no foreign keys, no business rules; messy-data rules live in the
+>    semantic layer. Load via `COPY` into `staging` as `adaa_loader` → row counts vs manifest →
+>    atomic swap into `business` → **M0.5 profiling report** → M0.6 semantic-layer draft (YAML).
 >
 >
 > ⚠️ **MANDATORY — DO NOT SKIP: post-build architecture cross-examination.** Once development is

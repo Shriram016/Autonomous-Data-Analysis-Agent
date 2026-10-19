@@ -13,6 +13,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 # settings.py → adaa → src → backend → repo root
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
+# Database roles are named after the job that uses them (§0, Database access).
+DbRole = Literal["owner", "loader"]
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -28,18 +31,25 @@ class Settings(BaseSettings):
     db_host: str = "127.0.0.1"  # not "localhost": Windows may try IPv6 first and hang
     db_port: int = 5433  # 5433: a local Windows Postgres often owns 5432
     db_name: str = "adaa"
-    db_user: str = "adaa"
+    db_user: str = "adaa_owner"  # the owner role: setup and migrations only
     db_password: SecretStr  # required; SecretStr keeps it out of logs and reprs
+    db_loader_password: SecretStr | None = None  # only the load / ingestion job needs it
 
     db_connect_timeout_s: int = 2  # locked in the failure design: fail fast, never hang
 
     redis_url: str = "redis://127.0.0.1:6379/0"
 
-    def postgres_conninfo(self) -> str:
-        """Connection string for psycopg."""
+    def postgres_conninfo(self, role: DbRole = "owner") -> str:
+        """Connection string for psycopg, logging in as the given role."""
+        if role == "owner":
+            user, password = self.db_user, self.db_password
+        else:
+            if self.db_loader_password is None:
+                raise ValueError("ADAA_DB_LOADER_PASSWORD is not set in .env")
+            user, password = "adaa_loader", self.db_loader_password
         return (
             f"host={self.db_host} port={self.db_port} dbname={self.db_name} "
-            f"user={self.db_user} password={self.db_password.get_secret_value()} "
+            f"user={user} password={password.get_secret_value()} "
             f"connect_timeout={self.db_connect_timeout_s}"
         )
 

@@ -30,6 +30,20 @@ def test_password_is_hidden_but_usable() -> None:
     assert "password=test-password" in settings.postgres_conninfo()
 
 
+@pytest.mark.usefixtures("required_env")
+def test_loader_role_needs_its_own_password(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("ADAA_DB_LOADER_PASSWORD", raising=False)
+    settings = load_without_env_file()
+    assert "user=adaa_owner" in settings.postgres_conninfo("owner")
+    with pytest.raises(ValueError, match="ADAA_DB_LOADER_PASSWORD"):
+        settings.postgres_conninfo("loader")
+
+    monkeypatch.setenv("ADAA_DB_LOADER_PASSWORD", "loader-pw")
+    assert "user=adaa_loader password=loader-pw" in load_without_env_file().postgres_conninfo(
+        "loader"
+    )
+
+
 @pytest.mark.parametrize("missing", ["ADAA_APP_ENV", "ADAA_DB_PASSWORD"])
 @pytest.mark.usefixtures("required_env")
 def test_missing_required_value_refuses_to_start(

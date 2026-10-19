@@ -103,5 +103,43 @@ vanishing (locked in the failure design).
 
 ---
 
+## M0.4 — Load into Postgres
+
+### "Faithful but typed"
+
+The tables keep the same rows and column names as the CSV files. Each column gets the correct
+type. The load fixes nothing and removes nothing. The semantic layer applies business rules.
+
+| Data | Type | Reason |
+|---|---|---|
+| IDs | text | An ID is a label, not a number |
+| Dates | timestamp | Date calculations work directly |
+| Money | numeric(10,2) | Exact; a float type can store 0.1 as 0.1000000001 |
+| Zip prefixes | text | Leading zeros: `01310` as a number becomes `1310` (23,995 customers affected) |
+| Empty cells | NULL | Empty means unknown |
+
+### Primary key vs foreign key
+
+- **Primary key:** a column (or columns) whose values are unique in a table, for example
+  `orders.order_id`. Postgres refuses a duplicate. We added one only where the data is unique.
+  `reviews.review_id` repeats, so it has no primary key.
+- **Foreign key:** a rule that a value must exist in another table. We added none, because the
+  real data has orphans (for example, categories missing from the translation table). A foreign
+  key would refuse real rows and break "faithful".
+
+### COPY
+
+`COPY` is the Postgres bulk-load command. It streams a whole file in one operation.
+1.55 million rows took 4.4 seconds. Row-by-row `INSERT` would take minutes.
+
+### Transaction and atomic swap
+
+A transaction groups statements: all succeed, or none take effect. The publish step drops the old
+`business` tables and moves the new ones from `staging` in one transaction. A reader sees all old
+data or all new data, never a mix. If the row counts do not match `manifest.json`, the load stops
+before the publish, and `business` does not change (an integration test proves this).
+
+---
+
 **Why one ruff version:** the hook calls the project's own ruff via `uv run`, pinned in
 `uv.lock`, so the hook, the editor and CI never disagree.
