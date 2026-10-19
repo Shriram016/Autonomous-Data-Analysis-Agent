@@ -101,7 +101,64 @@ service, because the provider runs those parts.
 single point of failure) → move the database to AWS RDS Multi-AZ with point-in-time recovery.
 Only the connection settings change; the application code stays the same.
 
-**Interview one-liner:** "Durability comes from the WAL and from storage that outlives the
+**Interview one-liner (Q2):** "Durability comes from the WAL and from storage that outlives the
 process; availability comes from replicas and failover; recoverability comes from backups you
 have actually restored. ADAA has the first now, documents the gap in the second, and designs
 the third."
+
+---
+
+## Q3. Real e-commerce orders arrive every second. Doesn't a daily load contradict that?
+
+*Raised 2026-10-19, during M0.5. Extends Q1. Not locked.*
+
+**Short answer:** no. A real company keeps two databases. The **production database (OLTP)**
+takes orders in real time and must stay fast for customers. The **analytics copy (OLAP)** answers
+heavy questions and is filled from production with a delay. ADAA reads only the analytics copy.
+The orders change in real time in production; our copy shows the state "as of" the last load.
+**Freshness is a separate choice:** how old may the copy be?
+
+```
+Shop app (thousands of users) → Production DB (OLTP) ──copy with delay──▶ Analytics copy (OLAP) ◀── ADAA reads
+```
+
+**Freshness options**
+
+| Method | How it works | Delay | Cost / complexity |
+|---|---|---|---|
+| Daily batch (current ADAA design) | Copy new rows once a day | Up to 24 h | Low |
+| Micro-batch | Same pipeline every 5–15 min | Minutes | Medium |
+| Read replica | Live copy of the production DB | Seconds | Medium; no translations or topic tags; heavy queries still hit a copy of the production schema |
+| CDC streaming (e.g. Debezium → Kafka) | Every insert / update / delete streams out as it happens | Seconds | High |
+| Hybrid | Real-time counters for "today so far" + batch for history | Seconds for today | High |
+
+**What changes in ADAA for a real-time source**
+
+1. **Incremental load with a watermark:** load only rows changed since the last load, and merge
+   them, instead of reloading and swapping every table.
+2. **Upsert, not insert only:** an order moves from `shipped` to `delivered`, so existing rows
+   are updated by primary key.
+3. **Deletes:** a watermark on `updated_at` cannot see a deleted row. Options: soft delete (a
+   `deleted_at` column) in the source, or CDC, which streams delete events ("tombstones").
+4. **New reviews only:** translation, topic tags and embeddings run on new reviews in the
+   background.
+5. **Consistency:** each question records the watermark at start, so numbers and quotes come
+   from the same moment (today's "data version" becomes a watermark).
+6. **Caches:** clear only entries whose time range includes the new rows.
+7. **Answers:** still show "Data as of …", now a time instead of a date.
+
+**How copies decide insert / update / delete (first answer; deeper study in learning notes):**
+
+| Method | What it reads | Insert / update / delete decided by |
+|---|---|---|
+| Physical replication (Postgres streaming replicas) | The primary's WAL, byte for byte | Nothing to decide: the replica replays the exact same changes, so it is an identical copy |
+| Logical replication / CDC | Change events decoded from the WAL | Each event already says INSERT, UPDATE or DELETE, with the row's primary key |
+| Watermark batch load | Rows with `updated_at` after the last load | New key → insert; existing key → update (upsert); deletes are invisible without a soft-delete flag |
+
+**Recommendation (to decide in M3):** keep daily batch, because Olist is a snapshot, but build
+ingestion as an **incremental load with a watermark and upsert** from the start. Then a move to
+micro-batch or CDC changes only *when* the load runs, not *how* it works.
+
+**Interview one-liner:** "Analytics never runs on the production database. Freshness is a dial,
+from daily batch to CDC; ADAA uses daily batch for a snapshot dataset, but its ingestion is
+incremental and keyed, so turning the dial changes the trigger, not the pipeline."

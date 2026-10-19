@@ -8,6 +8,13 @@ later. Interview-style system-design questions live in [v3-cross-examination.md]
 - Rate limiter internals (token bucket) — from failure-handling design
 - Connection pools and PgBouncer — from database failure design
 - Atomic publish and data versioning — from daily-publish design
+- **Database sync between a primary ("master") and its copies ("replicas", "child DBs")** —
+  raised 2026-10-19 (see Q3 in [v3-cross-examination.md](v3-cross-examination.md)):
+  - How does a primary send its changes to the replicas? (physical vs logical replication, WAL streaming)
+  - What decides whether a record is inserted, updated or deleted in the copy?
+  - How does a copy learn about deletes and updates, not only new rows? (CDC vs watermark loads, tombstones)
+  - Synchronous vs asynchronous replication: what is replication lag, and what can be lost on failover?
+  - How does CDC work (for example Debezium → Kafka → warehouse)?
 
 ---
 
