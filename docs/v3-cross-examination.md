@@ -162,3 +162,35 @@ micro-batch or CDC changes only *when* the load runs, not *how* it works.
 **Interview one-liner:** "Analytics never runs on the production database. Freshness is a dial,
 from daily batch to CDC; ADAA uses daily batch for a snapshot dataset, but its ingestion is
 incremental and keyed, so turning the dial changes the trigger, not the pipeline."
+
+---
+
+## Q4. Why not LiteLLM? Doesn't writing your own adapters mean code changes for every new provider?
+
+**Short answer:** No. All code calls one function, `llm.complete(job, messages, form)`. Behind
+it sit two adapters that use the official SDKs: `anthropic` (Claude) and `openai_compatible`
+(OpenAI, Groq, DeepInfra, Together, Fireworks, Mistral, Gemini's OpenAI endpoint). A provider
+change inside those two API styles is a config change (`adapter`, `base_url`, `model`,
+`api_key_env`). Only a new API style needs code: one new adapter file of about 50 lines.
+
+**Why not LiteLLM (decided 2026-10-20, ADR 0009 amended):**
+1. Its main value is retry, fallback and a cost table. We build retry, fallback, breaker and
+   rate limiter ourselves, on purpose, inside `llm.complete`.
+2. We need two API styles, not 100+ providers.
+3. Supply-chain risk: on 2026-03-24, two malicious LiteLLM releases on PyPI stole credentials and
+   `.env` secrets. Fewer dependencies = smaller attack surface.
+4. New provider features (adaptive thinking, strict JSON) arrive first in the official SDKs.
+
+| Option | Pros | Cons |
+|---|---|---|
+| Official SDKs, two adapters (chosen) | Full control, newest features, few dependencies, easy to explain | Price per model kept in our config; new API style = new adapter |
+| LiteLLM library | 100+ providers with no code, cost table, built-in fallback | Large dependency, supply-chain incident, many open bugs, features lag |
+| any-llm (Mozilla) | Wraps official SDKs, light | Young, small community |
+| Gateway server (Portkey, Bifrost, LiteLLM Proxy) | Budgets, logs, routing for many teams | A separate service to run; fits a large org, not this stage |
+
+**When would I change my mind?** Many teams sharing many providers, with central budgets and
+keys → a gateway. It still plugs in as one more adapter behind `llm.complete`.
+
+**Interview one-liner:** "The port is ours; adapters are cheap. Two API styles cover almost every
+provider, so swapping a model is a config line, and I didn't take on a dependency whose main
+features I was building myself anyway."

@@ -235,7 +235,7 @@ or bounded loop with only that route's tools. Classifier type: Level 2.
 
 ### Level 1 — LLM interface (🔒 locked)
 
-All code calls one owned `llm.complete(job, ...)`; **LiteLLM** behind it (providers, fallback, cost).
+All code calls one owned `llm.complete(job, ...)`; behind it, **official SDKs in two adapters** (`anthropic`, `openai_compatible`); provider, model, thinking effort and price per job in config (LiteLLM removed 2026-10-20).
 Model per job + fallback chain in config, chosen by evals.
 [ADR 0009](adr/0009-llm-interface-litellm-behind-owned-port.md).
 
@@ -502,7 +502,7 @@ On the EC2 server (8 GB instance; ~4.5–5.5 GB in use):
 | 9 | housekeeping (optional) | Nightly backup → S3, retention cleanup; build decided later | Scheduled |
 
 Outside the server: React UI (free static hosting), wake-up function (AWS Lambda), Langfuse Cloud,
-Grafana Cloud, LLM providers (via LiteLLM), S3, GitHub Actions.
+Grafana Cloud, LLM providers (official SDKs, two adapters), S3, GitHub Actions.
 
 ### Level 1 — Routes (🔒 locked 2026-10-12)
 
@@ -607,10 +607,30 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    definitions and joins found automatically, every value a placeholder, "how I got this"
 >    explanation; `runner.py` — always `adaa_query`, plain timeout / unavailable messages; 73
 >    tests; `check_compiler.py` prints 5 sample forms. D3 (no period = all data) made during
->    M1.1. **Next: M1.2 `llm.complete`** (first LLM cost; provider / model decision).
->    *Decisions still open in M1 (one at a time, when the slice starts):* M1.2 LLM provider +
->    model (must not train on our data, ADR 0019; must support strict structured output);
->    M1.4 queue library (e.g. arq / RQ / Celery); M1.6 chart library (e.g. Recharts /
+>    M1.1. **Next: M1.2 `llm.complete`** (first LLM cost).
+>    🔒 **M1.2 provider / model (locked 2026-10-20):** **direct API now**; a cloud platform
+>    (Bedrock / Vertex / Azure) is decided with deployment — a config change behind `llm.complete`.
+>    **Primary: Claude Haiku 5.5** ($0.10 / $0.50 per 1M tokens up to 100K-token prompts; no
+>    training on API data; strict JSON-schema output). **Thinking off** at the start; effort
+>    (off / low / medium) is a per-job config setting, so when evals show failures we can turn
+>    it on and measure whether thinking helps. Thinking tokens bill at the output rate and
+>    count toward `max_tokens`; log them per call. Compared (2026-10-20): GPT-5.4 nano / mini,
+>    Gemini 3.1 Flash-Lite / 3.8 Flash (free tier trains on data → excluded), Mistral Small 4,
+>    Groq / DeepInfra gpt-oss-120b; all < $0.005 per question, so quality and reliable strict
+>    output decide, not price. Proposed fallback (built later, confirm then): Groq
+>    gpt-oss-120b (different company). M1.7 evals confirm the choice.
+>    🔒 **No LiteLLM (locked 2026-10-20, ADR 0009 amended):** official SDKs in two adapters —
+>    `anthropic` and `openai_compatible` (OpenAI, Groq, DeepInfra, Together, Fireworks,
+>    Mistral, Gemini's OpenAI endpoint). Provider change within these = config change
+>    (`adapter`, `base_url`, `model`, `api_key_env`); new API style = one new adapter file.
+>    Reasons: we build retry / fallback / breaker / limiter ourselves; two API styles are
+>    enough; LiteLLM's PyPI compromise (2026-03-24) stole `.env` secrets; fewer dependencies.
+>    M1.2 tasks: (1) provider ✅ (2) model config per job + key in `.env` (key slot added; the
+>    builder adds the key later) (3) add the `anthropic` SDK (4) `llm.complete` — send messages + form schema, check reply (5) one retry with the
+>    error, then a clear error (6) log tokens incl. thinking, cost, time (7) fake LLM for unit
+>    tests (8) `dev_checks/check_llm.py` — one real call after cost approval (9) record +
+>    commit after confirm. Later, not M1.2: masking, fallback, breaker, rate limiter.
+>    *Decisions still open in M1 (one at a time, when the slice starts):* M1.4 queue library (e.g. arq / RQ / Celery); M1.6 chart library (e.g. Recharts /
 >    ECharts). Cost rule: state what runs and the cost before any real LLM run.
 >
 >
@@ -673,7 +693,7 @@ flowchart TB
         GO --> ANS[Answer + chart spec + explanation]
     end
 
-    W -- all LLM calls --> LLM[llm.complete<br/>masking · rate limiter · LiteLLM · fallback]
+    W -- all LLM calls --> LLM[llm.complete<br/>masking · rate limiter · adapters · fallback]
     LLM --> EXT[(LLM providers)]
     SL -- read-only role --> PG
     RS -- read-only role --> PG
@@ -1612,7 +1632,7 @@ Status: ✅ covered · ⚠️ partial · ❌ not started
 | 7 | Guardrails as a layer | **Input:** off-topic, injection detection. **Output:** every number in the answer must come from the query result, review citations, personal-data redaction | Core | ⚠️ | Read-only role (D3) and pre-execution validation (D6) exist; rest in design |
 | 8 | Prompt-injection / security threat model | Review text is untrusted input entering prompts; written threat model and defences (least privilege, structured outputs, content isolation) | Core | ⚠️ | Only an eval category so far (D7) |
 | 9 | Service / API design | Endpoints, streaming responses, async, login, multi-user conversation state | Core | ❌ | Design phase |
-| 10 | Failure handling | Timeouts, retries, fallback model/provider, provider abstraction, graceful degradation | Core | ⚠️ | Targets in NFRs (A1–A4), not yet designed. **Design idea (to explore in M0/M4):** ports-and-adapters LLM layer, like an ORM for models: pipeline code calls one owned interface (`llm.complete(job, ...)`), one adapter per vendor (Groq / Gemini / Claude / OpenAI, or LiteLLM behind it), vendor SDK imports only inside the adapters, per-job model config, fallback chain; the eval harness is the swap safety net because behaviour (not just syntax) differs across models. V2 has the coupling (4 modules call `Groq(...)` directly), which hid the deprecated-model 404 |
+| 10 | Failure handling | Timeouts, retries, fallback model/provider, provider abstraction, graceful degradation | Core | ⚠️ | Targets in NFRs (A1–A4), not yet designed. **Design idea (to explore in M0/M4):** ports-and-adapters LLM layer, like an ORM for models: pipeline code calls one owned interface (`llm.complete(job, ...)`), one adapter per vendor (`anthropic` + `openai_compatible`, official SDKs; LiteLLM removed 2026-10-20), vendor SDK imports only inside the adapters, per-job model config, fallback chain; the eval harness is the swap safety net because behaviour (not just syntax) differs across models. V2 has the coupling (4 modules call `Groq(...)` directly), which hid the deprecated-model 404 |
 | 11 | Testing beyond evals | Unit, integration, end-to-end tests | Core | ❌ | Design phase |
 | 12 | LLMOps | Prompt and model versioning; a model or prompt change must pass evals before release | Core | ❌ | Design phase |
 | 13 | DevOps | Docker Compose, CI/CD, secrets management, environments | Core | ⚠️ | Docker required (D3); minimal deployment is core (D8) |
