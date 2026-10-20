@@ -608,6 +608,10 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    explanation; `runner.py` — always `adaa_query`, plain timeout / unavailable messages; 73
 >    tests; `check_compiler.py` prints 5 sample forms. D3 (no period = all data) made during
 >    M1.1. **Next: M1.2 `llm.complete`** (first LLM cost; provider / model decision).
+>    *Decisions still open in M1 (one at a time, when the slice starts):* M1.2 LLM provider +
+>    model (must not train on our data, ADR 0019; must support strict structured output);
+>    M1.4 queue library (e.g. arq / RQ / Celery); M1.6 chart library (e.g. Recharts /
+>    ECharts). Cost rule: state what runs and the cost before any real LLM run.
 >
 >
 > ⚠️ **MANDATORY — DO NOT SKIP: post-build architecture cross-examination.** Once development is

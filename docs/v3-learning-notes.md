@@ -18,6 +18,24 @@ later. Interview-style system-design questions live in [v3-cross-examination.md]
 
 ---
 
+## Local setup tips (problems already hit)
+
+- **Docker Desktop must run** for Postgres / Redis, DBeaver, integration tests and check scripts.
+  Turn on Settings → General → "Start Docker Desktop when you sign in". The containers then
+  start by themselves (`restart: unless-stopped`).
+- **Start the services by hand** (repo root):
+  `docker compose -f infra/docker-compose.yml --env-file .env up -d`
+- **`uv` not found in a terminal:** the terminal started before uv was installed. Restart VS
+  Code (uv lives in `C:\Users\<you>\.local\bin`).
+- **VS Code "file changed on disk":** click **Revert**, not Overwrite. Saving an old open copy
+  once undid three fixes in `profile_olist.py`; the pre-commit hook caught it.
+- **DBeaver connection:** host `127.0.0.1`, port `5433`, database `adaa`, user `adaa_loader` or
+  `adaa_query`, password from `.env`.
+- **What runs on commit / push:** commit → ruff, ruff format, mypy (staged Python only); push →
+  unit tests. Integration tests, check scripts and evals run by hand.
+
+---
+
 ## M0.1 — Skeleton
 
 ### Pre-commit hook: what runs, how, and what it checks
