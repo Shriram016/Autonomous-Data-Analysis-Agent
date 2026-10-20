@@ -14,7 +14,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
 # Database roles are named after the job that uses them (§0, Database access).
-DbRole = Literal["owner", "loader"]
+DbRole = Literal["owner", "loader", "query"]
 
 
 class Settings(BaseSettings):
@@ -34,6 +34,7 @@ class Settings(BaseSettings):
     db_user: str = "adaa_owner"  # the owner role: setup and migrations only
     db_password: SecretStr  # required; SecretStr keeps it out of logs and reprs
     db_loader_password: SecretStr | None = None  # only the load / ingestion job needs it
+    db_query_password: SecretStr | None = None  # the agent's read-only queries
 
     db_connect_timeout_s: int = 2  # locked in the failure design: fail fast, never hang
 
@@ -44,9 +45,11 @@ class Settings(BaseSettings):
         if role == "owner":
             user, password = self.db_user, self.db_password
         else:
-            if self.db_loader_password is None:
-                raise ValueError("ADAA_DB_LOADER_PASSWORD is not set in .env")
-            user, password = "adaa_loader", self.db_loader_password
+            role_password = {"loader": self.db_loader_password, "query": self.db_query_password}
+            found = role_password[role]
+            if found is None:
+                raise ValueError(f"ADAA_DB_{role.upper()}_PASSWORD is not set in .env")
+            user, password = f"adaa_{role}", found
         return (
             f"host={self.db_host} port={self.db_port} dbname={self.db_name} "
             f"user={user} password={password.get_secret_value()} "
