@@ -196,5 +196,69 @@ prove which definitions produced a number (gap G6, semantic-layer versioning).
 
 ---
 
+## M1.1 — Query compiler
+
+### The path of a numbers question
+
+```
+English question → LLM fills the form (M1.3) → compiler → SQL → Postgres (adaa_query) → rows + "how"
+```
+
+M1.1 built everything after the form. The compiler does not understand English; it only reads
+the form. Building and testing this part first means a wrong number later can only come from a
+wrong form, which we can see directly.
+
+### The structured request (the form)
+
+Fields: `metric`, up to 2 `dimensions`, `filters` (dimension, op, values), `period`, `sort`,
+`limit` (at most 1,000). The form refuses unknown fields, so the LLM cannot add `"sql": ...`.
+The same Pydantic model becomes the LLM's output schema in M1.3: one definition, two users.
+
+### How the compiler finds the joins by itself
+
+The form never names tables. Every definition in the YAML contains table names in its SQL
+(`sum(order_items.price)`, `customers.customer_state`, the delivered filter on `orders`). The
+compiler collects them, starts at the metric's table, and follows `joins.yaml` (shortest path,
+many-to-one only). One needed table = no join. Example: `review_count` with no period uses only
+`reviews`; with a period it also joins `orders`, because the period is on the order date.
+
+### Placeholders and SQL injection
+
+Values never go into the SQL text. The SQL has `%(f0_0)s`, and the value travels separately;
+Postgres always treats it as data. A value like `SP'; DROP TABLE orders; --` stays a value.
+A unit test proves it.
+
+### Why the runner always uses adaa_query
+
+Answering a question only reads. The SQL comes from the LLM's form, so the runner is fixed to the
+read-only role with a 5 s limit: if anything upstream goes wrong, Postgres itself refuses any
+write. Writes happen elsewhere, with their own roles: memory (`adaa_memory`), approved actions
+(`adaa_actions`, `agent` tables only), loading (`adaa_loader`). No path changes business data
+from a question.
+
+### Setup vs normal use (roles)
+
+`roles.py` runs once at setup (or when a role or password changes). It tells Postgres that a
+user exists, its password and its permissions. `settings.py` + `.env` only tell our code how to
+log in. Both sides must match; "create or update" keeps them matched, and running it twice is
+safe (idempotent). Default privileges give every new table from the daily load read permission
+for `adaa_query` automatically; a real reload proved it.
+
+### D3: no period = all available data
+
+The first default (2017-01 to 2018-08) quietly lowered totals (13,181,027 instead of
+13,221,498). "Total revenue" means everything, so no period now means all data, and thin months
+(< 500 orders) are flagged in month / year answers instead. Changing a default's meaning raised
+the semantic layer to v0.2.0, and the fingerprint changed: every answer records which
+definitions produced it.
+
+### A pattern worth a hybrid question later
+
+The late-delivery rate jumped to 14.1% in Feb 2018 and 19.0% in Mar 2018, against ~5% in other
+months. "Why were deliveries late in March 2018, and what did customers say?" is a natural
+hybrid question for M3.
+
+---
+
 **Why one ruff version:** the hook calls the project's own ruff via `uv run`, pinned in
 `uv.lock`, so the hook, the editor and CI never disagree.

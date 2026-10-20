@@ -596,6 +596,18 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    **Open for M3 (raised 2026-10-19, not locked):** build ingestion as an incremental load
 >    with a watermark and upsert (not full reload + swap), so a real-time source only changes
 >    *when* the load runs. See Q3 in [v3-cross-examination.md](v3-cross-examination.md).
+> 5. **M1 — walking skeleton** (one numbers question end to end). Slices: M1.1 query compiler →
+>    M1.2 `llm.complete` → M1.3 agent (English → form → answer) → M1.4 worker + queue → M1.5
+>    API → M1.6 React page → M1.7 eval harness.
+>    ✅ **M1.1 query compiler** (2026-10-20, commits `a1862b3`…`8072929`): `adaa_query` role
+>    (SELECT on `business` only, 5 s statement timeout on the role, default privileges keep new
+>    tables from the daily load readable); `request.py` — the structured request form (metric,
+>    ≤ 2 dimensions, filters, period, sort, limit ≤ 1,000; unknown fields refused; doubles as
+>    the LLM output schema); `compiler.py` — name lookup, grain rule, tables collected from the
+>    definitions and joins found automatically, every value a placeholder, "how I got this"
+>    explanation; `runner.py` — always `adaa_query`, plain timeout / unavailable messages; 73
+>    tests; `check_compiler.py` prints 5 sample forms. D3 (no period = all data) made during
+>    M1.1. **Next: M1.2 `llm.complete`** (first LLM cost; provider / model decision).
 >
 >
 > ⚠️ **MANDATORY — DO NOT SKIP: post-build architecture cross-examination.** Once development is
