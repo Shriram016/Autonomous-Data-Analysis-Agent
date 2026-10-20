@@ -1,6 +1,6 @@
 # Default meanings for vague words and missing details. Each default is stated in the answer,
 # with an offer to switch (§0: assume only when a default is written down; otherwise ask).
-version: 0.1.0
+version: 0.2.0
 
 defaults:
   default_status_filter:
@@ -9,9 +9,16 @@ defaults:
     why: D2. Final sales; delivery metrics need a delivery date anyway.
 
   default_period:
-    means: 2017-01-01 to 2018-08-31
-    shown_in_answer: "Using Jan 2017 – Aug 2018, the months with complete data."
-    why: The months before and after are too thin. (F1)
+    means: all available data
+    shown_in_answer: "Period: all available data (no period was asked for)."
+    why: >
+      A question with no period means everything; a smaller default would quietly change totals
+      (changed 2026-10-20 from 2017-01..2018-08). Thin months are flagged instead. (F1)
+
+  thin_month:
+    means: "500"
+    shown_in_answer: "Months with fewer than 500 orders are marked as not reliable."
+    why: The first and last months have 1 to 324 orders, so a trend can show a false drop. (F1)
 
   best_customer:
     terms: [best customers, top customers, most valuable customers]

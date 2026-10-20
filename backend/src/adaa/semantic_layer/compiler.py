@@ -13,9 +13,8 @@ Every value from the form goes into `params`, never into the SQL text, so a valu
 become a command (SQL injection). It returns the SQL; running it is runner.py's job.
 """
 
-import re
 from dataclasses import dataclass
-from datetime import date, timedelta
+from datetime import timedelta
 
 from adaa.semantic_layer.definitions import SemanticLayer, tables_in
 from adaa.semantic_layer.request import MAX_LIMIT, Filter, StructuredRequest
@@ -73,7 +72,9 @@ def check_grain(request: StructuredRequest, layer: SemanticLayer) -> None:
 
 def needed_tables(request: StructuredRequest, layer: SemanticLayer) -> set[str]:
     metric = layer.metrics[request.metric]
-    parts = [metric.sql, *metric.filters, PERIOD_COLUMN]  # a period always applies
+    parts = [metric.sql, *metric.filters]
+    if request.period:  # a period filters on the order date, so it needs the orders table
+        parts.append(PERIOD_COLUMN)
     parts += [layer.dimensions[d].sql for d in request.dimensions]
     parts += [layer.dimensions[f.dimension].sql for f in request.filters]
     return tables_in(*parts)
@@ -90,25 +91,17 @@ def build_joins(request: StructuredRequest, layer: SemanticLayer) -> str:
 # ---------- 4: WHERE ----------
 
 
-def default_period(layer: SemanticLayer) -> tuple[date, date]:
-    found = re.findall(r"\d{4}-\d{2}-\d{2}", layer.defaults["default_period"].means)
-    return date.fromisoformat(found[0]), date.fromisoformat(found[1])
-
-
 def build_period(
     request: StructuredRequest, layer: SemanticLayer, params: dict[str, object]
-) -> tuple[str, str]:
-    """WHERE condition for the period, and its explanation line. The end day is included."""
-    if request.period:
-        start, end = request.period.start, request.period.end
-        line = f"Period: {start} to {end}."
-    else:
-        start, end = default_period(layer)
-        line = f"Period: {start} to {end}. {layer.defaults['default_period'].shown_in_answer}"
+) -> tuple[str | None, str]:
+    """WHERE condition for the period (None = all data), and its explanation line."""
+    if request.period is None:  # no period asked for → all available data (defaults.yaml)
+        return None, layer.defaults["default_period"].shown_in_answer
+    start, end = request.period.start, request.period.end
     params["period_start"] = start
     params["period_end"] = end + timedelta(days=1)  # "before the next day" includes all of `end`
     condition = f"{PERIOD_COLUMN} >= %(period_start)s AND {PERIOD_COLUMN} < %(period_end)s"
-    return condition, line
+    return condition, f"Period: {start} to {end}."
 
 
 def build_filter(index: int, f: Filter, layer: SemanticLayer, params: dict[str, object]) -> str:
@@ -128,7 +121,8 @@ def build_where(
 ) -> tuple[list[str], str]:
     conditions = list(layer.metrics[request.metric].filters)  # e.g. delivered only (D2)
     period_condition, period_line = build_period(request, layer, params)
-    conditions.append(period_condition)
+    if period_condition:
+        conditions.append(period_condition)
     conditions += [build_filter(i, f, layer, params) for i, f in enumerate(request.filters)]
     return conditions, period_line
 
@@ -188,7 +182,7 @@ def compile_request(request: StructuredRequest, layer: SemanticLayer) -> Compile
         "SELECT " + ",\n       ".join(select),
         f"FROM {metric.table}",
         build_joins(request, layer),
-        "WHERE " + "\n  AND ".join(conditions),
+        ("WHERE " + "\n  AND ".join(conditions)) if conditions else "",
     ]
     if request.dimensions:
         lines.append("GROUP BY " + ", ".join(layer.dimensions[d].sql for d in request.dimensions))

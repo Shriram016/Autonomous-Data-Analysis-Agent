@@ -40,8 +40,13 @@ def test_revenue_by_state(layer: SemanticLayer) -> None:
 def test_only_the_joins_that_are_needed(layer: SemanticLayer) -> None:
     q = compile_form(layer, metric="review_count")
     assert "FROM reviews" in q.sql
-    assert "JOIN orders" in q.sql  # the period is on the order date
-    assert "customers" not in q.sql and "order_items" not in q.sql
+    assert "JOIN" not in q.sql and "WHERE" not in q.sql  # one table, no filter: no join
+
+    with_period = compile_form(
+        layer, metric="review_count", period={"start": "2018-01-01", "end": "2018-01-31"}
+    )
+    assert "JOIN orders" in with_period.sql  # the period is on the order date
+    assert "customers" not in with_period.sql and "order_items" not in with_period.sql
 
 
 def test_category_uses_a_left_join(layer: SemanticLayer) -> None:
@@ -52,11 +57,11 @@ def test_category_uses_a_left_join(layer: SemanticLayer) -> None:
 
 def test_defaults_when_the_form_is_short(layer: SemanticLayer) -> None:
     q = compile_form(layer, metric="revenue")
-    assert q.params["period_start"] == date(2017, 1, 1)
-    assert q.params["period_end"] == date(2018, 9, 1)
+    assert "period_start" not in q.params  # no period asked for → all available data
+    assert "order_purchase_timestamp" not in q.sql
     assert q.params["row_limit"] == 1000
     assert "GROUP BY" not in q.sql and "ORDER BY" not in q.sql
-    assert any("complete data" in line for line in q.explanation)
+    assert "Period: all available data (no period was asked for)." in q.explanation
 
 
 def test_filters_become_placeholders(layer: SemanticLayer) -> None:

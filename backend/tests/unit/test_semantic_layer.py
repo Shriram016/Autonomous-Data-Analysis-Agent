@@ -88,6 +88,6 @@ def test_unreachable_table_is_refused(layer_copy: Path) -> None:
 
 
 def test_version_mismatch_is_refused(layer_copy: Path) -> None:
-    edit(layer_copy, "joins.yaml", "version: 0.1.0", "version: 0.2.0")
+    edit(layer_copy, "joins.yaml", "version: 0.2.0", "version: 0.3.0")
     with pytest.raises(SemanticLayerError, match="different versions"):
         load(layer_copy)

@@ -1,7 +1,7 @@
 # Metrics: the numbers the agent can compute. Every metric needs a grain (order | item | payment
 # | review); see dimensions.yaml for the grain tree. Decisions: §0 M0.6 (D1 revenue = item price,
 # D2 delivered orders only). Findings F1–F9: docs/data-profile.md.
-version: 0.1.0
+version: 0.2.0
 
 metrics:
   orders:
@@ -110,7 +110,7 @@ metrics:
     sql: avg(reviews.review_score)
     filters: []
     terms: [review score, rating, satisfaction]
-    shown_in_answer: "Average of review scores (1–5). An order with 2 reviews counts twice."
+    shown_in_answer: "Average of review scores (1 to 5). An order with 2 reviews counts twice."
     why: review_id repeats; a review is a (review_id, order_id) row. No status filter. (F5)
 
   review_count:

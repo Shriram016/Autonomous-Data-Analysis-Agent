@@ -589,7 +589,10 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    `total_paid` (payment grain) cannot split by category or seller. 🔒 **D2 default status
 >    filter = delivered orders only** (final sales; the delivery metrics need a delivery date
 >    anyway, so all order metrics use the same set); override via the `order_status`
->    dimension or an explicit filter; review metrics have no status filter.
+>    dimension or an explicit filter; review metrics have no status filter. 🔒 **D3 no period
+>    = all available data** (changed 2026-10-20 from the 2017-01..2018-08 window: a smaller
+>    default quietly changed totals, against S6); thin months (< 500 orders) are flagged in
+>    month / year answers instead (M1.3). Semantic layer raised to **v0.2.0**.
 >    **Open for M3 (raised 2026-10-19, not locked):** build ingestion as an incremental load
 >    with a watermark and upsert (not full reload + swap), so a real-time source only changes
 >    *when* the load runs. See Q3 in [v3-cross-examination.md](v3-cross-examination.md).

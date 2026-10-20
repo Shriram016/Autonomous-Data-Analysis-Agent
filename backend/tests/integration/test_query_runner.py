@@ -46,6 +46,13 @@ def by_key(result: QueryResult) -> dict[str, Decimal]:
     return {str(row[0]): Decimal(str(row[1])) for row in result.rows}
 
 
+def test_no_period_means_all_data(layer: SemanticLayer) -> None:
+    for metric in ("revenue", "orders", "customers", "review_count"):
+        no_period = single_value(ask(layer, metric=metric))
+        full_range = single_value(ask(layer, metric=metric, period=ALL_DATES))
+        assert no_period == full_range, metric
+
+
 def test_known_totals_match_the_m06_check(layer: SemanticLayer) -> None:
     revenue = single_value(ask(layer, metric="revenue", period=ALL_DATES))
     late = single_value(ask(layer, metric="late_delivery_rate", period=ALL_DATES))
