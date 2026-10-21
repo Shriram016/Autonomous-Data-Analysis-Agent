@@ -17,5 +17,6 @@ def test_real_catalogue() -> None:
     assert len(values["customer_state"]) == 27 and "SP" in values["customer_state"]
     assert values["review_score"] == [1, 2, 3, 4, 5]
     assert "credit_card" in values["payment_type"]
-    assert values["order_status"] == ["delivered"]  # the D2 default: only what a query can match
+    # D2 is a default: a breakdown by status switches it off, so every status with items shows
+    assert {"delivered", "canceled", "shipped"} <= set(values["order_status"])
     assert "seller" not in values  # ~3,000 seller IDs: too many to list

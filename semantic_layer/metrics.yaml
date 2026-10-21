@@ -1,18 +1,19 @@
 # Metrics: the numbers the agent can compute. Every metric needs a grain (order | item | payment
 # | review); see dimensions.yaml for the grain tree. Decisions: §0 M0.6 (D1 revenue = item price,
-# D2 delivered orders only). Findings F1–F9: docs/data-profile.md.
-version: 0.2.0
+# D2 delivered orders only, as a default the question can change). Findings F1–F9: docs/data-profile.md.
+version: 0.3.0
 
 metrics:
   orders:
     label: Orders
-    description: Number of delivered orders.
+    description: Number of orders.
     grain: item  # counted from items with DISTINCT, so item breakdowns don't double count
     table: order_items
     sql: count(DISTINCT order_items.order_id)
-    filters: ["orders.order_status = 'delivered'"]
+    filters: []
+    status: default  # delivered only unless the question names a status (D2)
     terms: [orders, number of orders, order count]
-    shown_in_answer: "Orders = delivered orders. An order with items in 2 categories counts in both."
+    shown_in_answer: "Orders = distinct orders. An order with items in 2 categories counts in both."
     why: count DISTINCT keeps item breakdowns correct. (F3)
 
   revenue:
@@ -21,10 +22,11 @@ metrics:
     grain: item
     table: order_items
     sql: sum(order_items.price)
-    filters: ["orders.order_status = 'delivered'"]
+    filters: []
+    status: default  # delivered only unless the question names a status (D2)
     unit: BRL
     terms: [revenue, sales, turnover, product sales]
-    shown_in_answer: "Revenue = item price, excluding freight, delivered orders only."
+    shown_in_answer: "Revenue = item price, excluding freight."
     why: D1. Product sales work for every breakdown; freight goes to logistics. (F2)
 
   freight:
@@ -33,10 +35,11 @@ metrics:
     grain: item
     table: order_items
     sql: sum(order_items.freight_value)
-    filters: ["orders.order_status = 'delivered'"]
+    filters: []
+    status: default  # delivered only unless the question names a status (D2)
     unit: BRL
     terms: [freight, shipping cost, shipping fees]
-    shown_in_answer: "Freight = shipping fees on delivered orders."
+    shown_in_answer: "Freight = shipping fees paid by customers."
     why: Kept separate from revenue. (F2)
 
   total_paid:
@@ -45,31 +48,34 @@ metrics:
     grain: payment  # one row per payment; an order can have several
     table: payments
     sql: sum(payments.payment_value)
-    filters: ["orders.order_status = 'delivered'"]
+    filters: []
+    status: default  # delivered only unless the question names a status (D2)
     unit: BRL
     terms: [total paid, amount paid, payment value]
-    shown_in_answer: "Total paid = payment value of delivered orders, for whole orders."
+    shown_in_answer: "Total paid = payment value for whole orders."
     why: Equals price + freight for 99.7% of orders; cannot split by category or seller. (F2)
 
   average_order_value:
     label: Average order value
-    description: Revenue per delivered order.
+    description: Revenue per order.
     grain: order
     table: order_items
     sql: sum(order_items.price) / count(DISTINCT order_items.order_id)
-    filters: ["orders.order_status = 'delivered'"]
+    filters: []
+    status: default  # delivered only unless the question names a status (D2)
     unit: BRL
     terms: [average order value, aov, basket size]
-    shown_in_answer: "Average order value = revenue per delivered order."
+    shown_in_answer: "Average order value = revenue per order."
     why: Uses the revenue definition, so the two never disagree. (F2)
 
   customers:
     label: Customers
-    description: Distinct people with a delivered order.
+    description: Distinct people with an order.
     grain: item  # DISTINCT people, so item breakdowns don't double count
     table: order_items
     sql: count(DISTINCT customers.customer_unique_id)
-    filters: ["orders.order_status = 'delivered'"]
+    filters: []
+    status: default  # delivered only unless the question names a status (D2)
     terms: [customers, buyers, number of customers]
     shown_in_answer: "Customers = distinct people (customer_unique_id), not customer IDs."
     why: One person can have several customer_id values. (F4)
@@ -83,6 +89,7 @@ metrics:
     filters:
       - "orders.order_status = 'delivered'"
       - "orders.order_delivered_customer_date IS NOT NULL"
+    status: built_in  # needs a delivery date, so delivered only, always
     unit: ratio
     terms: [late delivery rate, late deliveries, delays]
     shown_in_answer: "Late = delivered after the estimated date (by day), delivered orders only."
@@ -97,6 +104,7 @@ metrics:
     filters:
       - "orders.order_status = 'delivered'"
       - "orders.order_delivered_customer_date IS NOT NULL"
+    status: built_in  # needs a delivery date, so delivered only, always
     unit: days
     terms: [delivery time, days to deliver, shipping time]
     shown_in_answer: "Delivery days = purchase date to delivery date, delivered orders only."

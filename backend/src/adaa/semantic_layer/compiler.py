@@ -3,9 +3,10 @@
 The LLM fills in the form (request.py); it never names tables or writes SQL. This module:
 
 1. looks up every name in the form (metric, dimensions, filters, sort),
-2. applies the grain rule, so nothing is double counted,
+2. applies the status rule (D2) and the grain rule, so nothing is double counted,
 3. collects the tables the definitions need and finds the joins (joins.yaml),
-4. builds WHERE from the metric's own filters, the period and the manager's filters,
+4. builds WHERE from the metric's own filters, the delivered-only default (only when the
+   form names no status), the period and the manager's filters,
 5. adds GROUP BY, ORDER BY and LIMIT,
 6. writes the "how I got this" explanation.
 
@@ -21,6 +22,7 @@ from adaa.semantic_layer.request import MAX_LIMIT, Filter, StructuredRequest
 
 PERIOD_COLUMN = "orders.order_purchase_timestamp"  # a period always means the order date
 SQL_OPERATORS = {"=": "=", "!=": "<>", "in": "IN", "not in": "NOT IN"}
+STATUS_DIMENSION = "order_status"  # naming it in the form switches the D2 default off
 
 
 class CompileError(Exception):
@@ -55,6 +57,28 @@ def look_up_names(request: StructuredRequest, layer: SemanticLayer) -> None:
         )
 
 
+def names_a_status(request: StructuredRequest) -> bool:
+    return STATUS_DIMENSION in request.dimensions + [f.dimension for f in request.filters]
+
+
+def check_status(request: StructuredRequest, layer: SemanticLayer) -> None:
+    """A metric whose definition needs delivered orders can't be split or filtered by status."""
+    metric = layer.metrics[request.metric]
+    if metric.status == "built_in" and names_a_status(request):
+        raise CompileError(
+            f"{metric.label} needs delivered orders (it uses the delivery date), "
+            "so it can't be split or filtered by order status."
+        )
+
+
+def status_default(request: StructuredRequest, layer: SemanticLayer) -> str | None:
+    """D2: the delivered-only condition, when the metric uses the default and the form names
+    no status. A status in the form (a filter or a breakdown) replaces the default."""
+    if layer.metrics[request.metric].status == "default" and not names_a_status(request):
+        return layer.defaults["default_status_filter"].means
+    return None
+
+
 def check_grain(request: StructuredRequest, layer: SemanticLayer) -> None:
     metric = layer.metrics[request.metric]
     for name in request.dimensions + [f.dimension for f in request.filters]:
@@ -73,6 +97,8 @@ def check_grain(request: StructuredRequest, layer: SemanticLayer) -> None:
 def needed_tables(request: StructuredRequest, layer: SemanticLayer) -> set[str]:
     metric = layer.metrics[request.metric]
     parts = [metric.sql, *metric.filters]
+    if default := status_default(request, layer):  # the status lives on the orders table
+        parts.append(default)
     if request.period:  # a period filters on the order date, so it needs the orders table
         parts.append(PERIOD_COLUMN)
     parts += [layer.dimensions[d].sql for d in request.dimensions]
@@ -119,7 +145,9 @@ def build_filter(index: int, f: Filter, layer: SemanticLayer, params: dict[str, 
 def build_where(
     request: StructuredRequest, layer: SemanticLayer, params: dict[str, object]
 ) -> tuple[list[str], str]:
-    conditions = list(layer.metrics[request.metric].filters)  # e.g. delivered only (D2)
+    conditions = list(layer.metrics[request.metric].filters)  # part of the definition
+    if default := status_default(request, layer):  # D2, unless the form names a status
+        conditions.append(default)
     period_condition, period_line = build_period(request, layer, params)
     if period_condition:
         conditions.append(period_condition)
@@ -152,6 +180,11 @@ def build_explanation(
         labels = ", ".join(layer.dimensions[d].label for d in request.dimensions)
         lines.append(f"Broken down by: {labels}.")
     lines.append(period_line)
+    if status_default(request, layer):
+        status = layer.defaults["default_status_filter"].shown_in_answer
+        lines.append(f"{status.removesuffix('.')} (default; ask for a status to change it).")
+    elif layer.metrics[request.metric].status == "default":
+        lines.append("Order status: as asked (the delivered-only default is off).")
     for f in request.filters:
         values = ", ".join(str(v) for v in f.values)
         lines.append(f"Filter: {layer.dimensions[f.dimension].label} {f.op} {values}.")
@@ -168,6 +201,7 @@ def build_explanation(
 
 def compile_request(request: StructuredRequest, layer: SemanticLayer) -> CompiledQuery:
     look_up_names(request, layer)
+    check_status(request, layer)
     check_grain(request, layer)
 
     metric = layer.metrics[request.metric]

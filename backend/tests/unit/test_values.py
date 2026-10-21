@@ -83,3 +83,39 @@ def test_build_catalogue_keeps_small_dimensions_only() -> None:
     assert "seller" not in catalogue.values  # too many values
     assert "month" not in catalogue.values and "year" not in catalogue.values  # dates
     assert catalogue.values["customer_state"] == [f"customer_state_{i}" for i in range(3)]
+
+
+# --- state names (value_labels) ---
+
+STATES = ValueCatalogue(
+    values={"customer_state": ["PA", "RJ", "SP"]},
+    labels={"customer_state": {"PA": "Pará", "RJ": "Rio de Janeiro", "SP": "São Paulo"}},
+)
+
+
+def test_prompt_shows_code_and_name() -> None:
+    assert (
+        STATES.prompt_text() == "- `customer_state`: PA (Pará), RJ (Rio de Janeiro), SP (São Paulo)"
+    )
+
+
+@pytest.mark.parametrize(
+    ("given", "code"),
+    [("Pará", "PA"), ("Sao Paulo", "SP"), ("são paulo", "SP"), ("rio de janeiro", "RJ")],
+)
+def test_state_names_become_codes(given: str, code: str) -> None:
+    form, notes = check_filters(form_with("customer_state", given), STATES)
+    assert form.filters[0].values == [code]
+    assert notes == [f"I read '{given}' as '{code}'."]
+
+
+def test_paris_is_not_para() -> None:
+    with pytest.raises(ValueNotFoundError, match="No customer_state called 'Paris' in the data"):
+        check_filters(form_with("customer_state", "Paris"), STATES)
+
+
+def test_real_layer_labels_both_state_dimensions() -> None:
+    dims = load().dimensions
+    assert dims["customer_state"].value_labels["PA"] == "Pará"
+    assert dims["seller_state"].value_labels == dims["customer_state"].value_labels  # one list
+    assert len(dims["customer_state"].value_labels) == 27

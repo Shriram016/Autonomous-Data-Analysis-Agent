@@ -124,3 +124,43 @@ def test_explanation_lines(layer: SemanticLayer) -> None:
 def test_refusals(layer: SemanticLayer, fields: dict[str, Any], message: str) -> None:
     with pytest.raises(CompileError, match=message):
         compile_form(layer, **fields)
+
+
+# --- D2 status default (semantic layer v0.3.0) ---
+
+
+def test_delivered_is_a_default_when_no_status_is_named(layer: SemanticLayer) -> None:
+    q = compile_form(layer, metric="revenue")
+    assert "orders.order_status = 'delivered'" in q.sql
+    assert "JOIN orders" in q.sql  # the status lives on orders
+    assert "Delivered orders only (default; ask for a status to change it)." in q.explanation
+
+
+def test_a_status_filter_replaces_the_default(layer: SemanticLayer) -> None:
+    q = compile_form(
+        layer,
+        metric="orders",
+        filters=[{"dimension": "order_status", "op": "=", "values": ["canceled"]}],
+    )
+    assert "'delivered'" not in q.sql  # never "delivered AND canceled" (always 0)
+    assert "orders.order_status = %(f0_0)s" in q.sql and q.params["f0_0"] == "canceled"
+    assert "Order status: as asked (the delivered-only default is off)." in q.explanation
+
+
+def test_a_status_breakdown_replaces_the_default(layer: SemanticLayer) -> None:
+    q = compile_form(layer, metric="orders", dimensions=["order_status"])
+    assert "'delivered'" not in q.sql and "GROUP BY orders.order_status" in q.sql
+
+
+@pytest.mark.parametrize("metric", ["late_delivery_rate", "average_delivery_days"])
+def test_delivery_metrics_refuse_a_status(layer: SemanticLayer, metric: str) -> None:
+    with pytest.raises(CompileError, match="needs delivered orders"):
+        compile_form(layer, metric=metric, dimensions=["order_status"])
+    plain = compile_form(layer, metric=metric)
+    assert "orders.order_status = 'delivered'" in plain.sql  # built into the definition
+
+
+def test_review_metrics_have_no_status_rule(layer: SemanticLayer) -> None:
+    q = compile_form(layer, metric="review_count")
+    assert "order_status" not in q.sql
+    assert not any("Delivered" in line or "status" in line for line in q.explanation)

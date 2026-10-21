@@ -31,12 +31,16 @@ EXPECTED = {
 
 
 def metric_sql(layer: SemanticLayer, m: Metric) -> str:
-    needed = tables_in(m.sql, *m.filters) - {m.table}
+    # A question with no status gets the D2 default (v0.3.0: a default, not a fixed filter).
+    filters = [*m.filters]
+    if m.status == "default":
+        filters.append(layer.defaults["default_status_filter"].means)
+    needed = tables_in(m.sql, *filters) - {m.table}
     joins = " ".join(
         f"{'LEFT JOIN' if j.optional else 'JOIN'} {j.to_table} ON {j.condition}"
         for j in layer.join_path(m.table, needed)
     )
-    where = f" WHERE {' AND '.join(m.filters)}" if m.filters else ""
+    where = f" WHERE {' AND '.join(filters)}" if filters else ""
     return f"SELECT {m.sql} FROM {m.table} {joins}{where}"
 
 

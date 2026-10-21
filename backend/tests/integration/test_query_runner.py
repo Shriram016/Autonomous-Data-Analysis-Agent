@@ -120,3 +120,16 @@ def test_answer_request_always_logs_in_as_adaa_query(
     monkeypatch.setattr(runner, "run_query", spy)
     ask(layer, metric="orders")
     assert len(used) == 1 and "user=adaa_query " in used[0]
+
+
+def test_canceled_orders_are_not_zero(layer: SemanticLayer) -> None:
+    """D2 is a default: naming a status replaces it (before v0.3.0 this returned 0)."""
+    canceled = ask(
+        layer,
+        metric="orders",
+        filters=[{"dimension": "order_status", "op": "=", "values": ["canceled"]}],
+    )
+    assert single_value(canceled) == 461  # canceled orders that have items
+    by_status = by_key(ask(layer, metric="orders", dimensions=["order_status"]))
+    assert by_status["canceled"] == 461 and by_status["delivered"] == 96478
+    assert single_value(ask(layer, metric="orders")) == 96478  # no status named → delivered

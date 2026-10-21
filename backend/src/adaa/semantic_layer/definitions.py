@@ -47,7 +47,10 @@ class Metric(BaseModel):
     grain: Grain
     table: str
     sql: str
-    filters: list[str] = []
+    filters: list[str] = []  # always applied: part of the definition
+    # D2: "default" = delivered only unless the form names a status; "built_in" = the
+    # filters already hold it and the form may not name a status; None = no status rule.
+    status: Literal["default", "built_in"] | None = None
     unit: str | None = None
     terms: list[str]
     shown_in_answer: str
@@ -59,6 +62,7 @@ class Dimension(BaseModel):
     grain: Grain
     sql: str
     terms: list[str]
+    value_labels: dict[str, str] = {}  # stored code → name people say, e.g. PA → Pará
     why: str | None = None
 
 

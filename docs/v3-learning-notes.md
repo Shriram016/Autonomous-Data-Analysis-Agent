@@ -332,3 +332,24 @@ on the reply. One definition (the form class) gives both the schema and the chec
 25–67 output, ~$0.00018 per question, 1.8 s per call. The first call took 3.5 s: a new schema
 is compiled once and cached for 24 hours. 1–3 s per LLM call is normal (network, reading the
 prompt, writing tokens one by one); see Q5 in the cross-examination doc.
+
+## M1.3 — Agent (in progress)
+
+### Value linking: the model knows names, not values
+
+The prompt listed `product_category` but not its values, so the model could write "toy" for
+`toys`; the query runs, matches nothing, and returns an empty answer that looks correct. Fix in
+two layers: the real values of each small dimension go in the prompt (read through the normal
+compiler, so only values a query can match), and code checks every filter value after the form
+(close match → replaced and noted; unknown → plain message). State codes got names
+(`PA` = Pará, not Paris), and the model is told to copy an unknown place as written, never to
+guess a code.
+
+### D2 was a default in the design but a fixed rule in the code
+
+The YAML wrote `order_status = 'delivered'` into each metric's own filters, so "canceled
+orders" became `delivered AND canceled` = 0 — a wrong answer that looks right. D2 always said
+"override via the status dimension or a filter". v0.3.0 makes it a default the compiler adds
+only when the form names no status; the two delivery metrics keep it built in and refuse a
+status. Lesson: a design rule is only real when a test proves the code follows it
+(`test_canceled_orders_are_not_zero`: 461, not 0).

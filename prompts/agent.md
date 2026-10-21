@@ -24,9 +24,13 @@ the numbers would be counted twice.
 
 ## Values in the data
 
-A filter value must be one of these real values, written exactly as listed. Turn the
-user's words into the matching value: "toy" → `toys`, "São Paulo" → `SP`, "credit card" →
-`credit_card`. Dimensions not listed here have too many values to list.
+A filter value must be one of these real values, written exactly as listed (the name in
+brackets is only there to help you; write the code before it). Turn the user's words into
+the matching value: "toy" → `toys`, "São Paulo" → `SP`, "credit card" → `credit_card`.
+If the user names a place or value that is not in a list (a city, a country, a category
+that does not exist), copy it exactly as the user wrote it. Never guess a code for it: the
+system will tell the user it is not in the data. Dimensions not listed here have too many
+values to list.
 
 {{values}}
 

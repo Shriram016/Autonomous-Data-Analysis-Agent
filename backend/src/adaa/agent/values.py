@@ -14,6 +14,7 @@ two layers protect against it:
 
 import difflib
 import re
+import unicodedata
 from collections.abc import Callable
 
 from pydantic import BaseModel, ConfigDict
@@ -34,11 +35,17 @@ class ValueCatalogue(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     values: dict[str, list[FilterValue]]  # dimension name → its real values
+    labels: dict[str, dict[str, str]] = {}  # dimension → stored code → name (value_labels)
+
+    def shown(self, dimension: str, value: FilterValue) -> str:
+        """How a value appears in the prompt: 'SP (São Paulo)' when it has a name."""
+        name = self.labels.get(dimension, {}).get(str(value))
+        return f"{value} ({name})" if name else str(value)
 
     def prompt_text(self) -> str:
         return "\n".join(
-            f"- `{name}`: {', '.join(str(v) for v in values)}"
-            for name, values in self.values.items()
+            f"- `{dim}`: {', '.join(self.shown(dim, v) for v in values)}"
+            for dim, values in self.values.items()
         )
 
 
@@ -59,7 +66,8 @@ def build_catalogue(
         if result.row_count <= MAX_VALUES:
             values = [as_value(row[0]) for row in result.rows if row[0] is not None]
             found[name] = sorted(values, key=str)
-    return ValueCatalogue(values=found)
+    labels = {name: d.value_labels for name, d in layer.dimensions.items() if d.value_labels}
+    return ValueCatalogue(values=found, labels=labels)
 
 
 def as_value(cell: object) -> FilterValue:
@@ -67,8 +75,9 @@ def as_value(cell: object) -> FilterValue:
 
 
 def normal(value: FilterValue) -> str:
-    """Loose form for matching: lower case, spaces and hyphens as _, no plural s."""
-    text = re.sub(r"[\s\-]+", "_", str(value).strip().lower())
+    """Loose form for matching: no accents, lower case, spaces and hyphens as _, no plural s."""
+    plain = unicodedata.normalize("NFKD", str(value)).encode("ascii", "ignore").decode()
+    text = re.sub(r"[\s\-]+", "_", plain.strip().lower())
     return text[:-1] if text.endswith("s") and len(text) > 3 else text
 
 
@@ -87,6 +96,8 @@ def check_filters(
             filters.append(f)
             continue
         by_normal = {normal(v): v for v in real}
+        names = catalogue.labels.get(f.dimension, {})
+        by_normal |= {normal(name): code for code, name in names.items() if code in real}
         matched: list[FilterValue] = []
         for value in f.values:
             if value in real:
@@ -97,7 +108,8 @@ def check_filters(
                 if str(value) != str(fixed):  # "5" for 5 is the same value, no note
                     notes.append(f"I read '{value}' as '{fixed}'.")
             else:
-                close = difflib.get_close_matches(str(value), [str(v) for v in real], n=3)
+                shown = [catalogue.shown(f.dimension, v) for v in real]
+                close = difflib.get_close_matches(str(value), shown, n=3)
                 hint = f" Did you mean: {', '.join(close)}?" if close else ""
                 raise ValueNotFoundError(f"No {f.dimension} called '{value}' in the data.{hint}")
         filters.append(f.model_copy(update={"values": matched}))
