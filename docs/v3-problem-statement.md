@@ -483,7 +483,8 @@ first measured runs; baseline revisited if still above.
 2018 with no newer release; recent open alternatives are synthetic (lose the real messiness) or
 lack orders/review text. **Olist re-confirmed** (ADR 0001). "What is today?" for relative dates
 (real calendar vs the data's latest date) and the wake-on-demand vs daily-schedule point are
-**deferred to implementation** (Level 2). **No Level 1 design decisions left.**
+**deferred to implementation** (Level 2). → "Today" rule decided 2026-10-21 (M1.3): "today" =
+the data date (see M1.3 in Next steps). **No Level 1 design decisions left.**
 
 ### Level 1 — Containers (🔒 locked for now)
 
@@ -651,6 +652,70 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    AWS / GCP / Azure / GitHub Actions) instead of a static API key.
 >    M1.2 tasks: all ✅. Later, not M1.2: masking, fallback (`openai_compatible` adapter),
 >    our own retry rules, breaker, rate limiter.
+>    **M1.3 agent (started 2026-10-21):** numbers questions only (other routes later).
+>    🔒 **Prompt (locked 2026-10-21):** `prompts/agent.md` at the repo root (Markdown: sections
+>    help readers and the model); first line `version: x.y.z`, raised when the meaning
+>    changes; `{{name}}` placeholders (a 5-line `string.Template` subclass with its own
+>    pattern, no extra library: `$` as in `R$` and the single braces of JSON examples stay
+>    plain text; chosen over `$name`, which needs `R$$`, Jinja2 and `str.format`) filled
+>    from the semantic layer at run time, so no metric is written twice; SHA-256
+>    fingerprint of the file; every answer records prompt version + fingerprint. From M1.7,
+>    a prompt change must pass the evals. Rejected: string in code (hard to review),
+>    prompt service such as Langfuse (extra service; revisit later), DB table (skips git
+>    review).
+>    🔒 **"Today" rule (locked for now 2026-10-21):** relative dates ("last month", "this
+>    year") are read from the **data date**, not the real calendar (which would give empty
+>    answers). The code computes it: the last day of the last month with ≥ 500 orders (the
+>    D3 thin-month rule) — 2018-08-31 today. The agent prompt gets `{{data_as_of}}`; every
+>    answer shows the assumption ("Data as of 2018-08-31; 'last month' = July 2018"). With the
+>    M3 incremental load the date moves forward by itself. Rejected: real calendar (no data),
+>    always ask (needs the clarify route).
+>    🔒 **LangGraph now (locked 2026-10-21, ADR 0011):** a minimal 3-node graph
+>    `understand` (question → form, via `complete()`) → `query` (form → rows, via
+>    `answer_request()`) → `answer` (rows → text). No branches and no checkpointer yet
+>    (resume comes with M1.4 or later). Reason: a walking skeleton goes through every real
+>    layer, so integration problems appear early; later routes become new nodes and edges.
+>    🔒 **Answer written by the LLM, with a number guardrail (locked 2026-10-21; guardrail moved
+>    from M2 into M1.3):** a second job `answer` (Haiku 5.5, thinking disabled, form with
+>    `answer_text`). The LLM gets the question, the definition used and **at most 20 rows**
+>    (a config setting; note "top 20 of N"). **The code computes and formats every number**
+>    (totals, row count, later shares); prompt rule: use only the given numbers, copy them
+>    exactly, no adding / rounding / comparing / calculating. **Guardrail in code:** every
+>    number in `answer_text` must be in the allowed list (formatted row values, code-computed
+>    facts, dates and years from the question). On failure: **no LLM retry** — show a Python
+>    **template answer** at once, and log the failure (`answer_guardrail_failed`) so the
+>    failures of this component can be counted and tracked. The exact rows and "how I got
+>    this" are always shown below the text. Limit: a real number next to the wrong label is
+>    not caught; the table below and the M1.7 evals cover it.
+>    🔒 **Value linking (locked 2026-10-21):** the model knows column names, not stored values
+>    ("toy" vs `toys`); a wrong value runs and returns an empty answer that looks right. Two
+>    layers: (1) **value catalogue in the prompt** — at agent start the code reads the
+>    distinct values of each dimension through the normal compiler (`adaa_query`, so only
+>    values a query can match), keeps dimensions with ≤ 100 values (states, status, payment
+>    type, review score, ~71 categories; not seller IDs, not month/year), caches them, and
+>    fills `{{values}}` (~600 tokens); (2) **value check in code** after the form: exact →
+>    OK; close (case, spaces/hyphens, plural) → replaced and noted in "how I got this"
+>    ("I read 'toy' as 'toys'"); no match → plain message with the closest real values
+>    (later: the clarify route asks it). Large dimensions later: embedding search (pgvector).
+>    🔒 **State names (locked 2026-10-21):** `dimensions.yaml` gets `value_labels` for
+>    `customer_state` and `seller_state` (27 codes → names, e.g. `PA: Pará`, not Paris). The
+>    prompt shows "SP (São Paulo)"; the value check also accepts names, with or without
+>    accents; prompt rule: a place or value not in the list is copied as written, never
+>    guessed as a code, so the value check stops it with a plain message.
+>    🔒 **D2 fixed in code (2026-10-21):** D2 always said "override via the `order_status`
+>    dimension or an explicit filter", but M0.6 wrote the delivered rule into each metric's
+>    own `filters`, so it could not be overridden ("canceled orders" gave 0). Now: for orders,
+>    revenue, freight, total_paid, average_order_value, customers the delivered rule is a
+>    **default** the compiler adds only when the form has no `order_status` filter or
+>    breakdown; the answer says "Delivered orders only (default)" or "Order status: … (as
+>    asked)". `late_delivery_rate` and `average_delivery_days` keep it **built in** (they need
+>    a delivery date); an `order_status` filter or breakdown on them is refused with a plain
+>    message. The catalogue then lists all 8 statuses. Semantic layer → v0.3.0.
+>    🔒 **`max_attempts` per job (locked 2026-10-21):** a setting in `config/llm.yaml`. `agent`: 2
+>    (no valid form = no answer, so one retry is worth it). `answer`: 1 (any bad reply — wrong
+>    form or a number not in the list — goes straight to the template answer and is logged).
+>    Rule: retry only where a failure blocks the result; where a correct code fallback exists,
+>    use the fallback instead of paying for another call (graceful degradation).
 >    *Decisions still open in M1 (one at a time, when the slice starts):* M1.4 queue library (e.g. arq / RQ / Celery); M1.6 chart library (e.g. Recharts /
 >    ECharts). Cost rule: state what runs and the cost before any real LLM run.
 >

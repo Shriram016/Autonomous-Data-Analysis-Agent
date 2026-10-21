@@ -35,3 +35,16 @@ jobs:
     thinking: disabled
     max_tokens: 2000  # hard cap on output; thinking tokens count toward it
     timeout_seconds: 30
+    # 1 or 2. Retry only where a failure blocks the result (§0 M1.3): no valid form means
+    # no answer, so one retry with the errors is worth it.
+    max_attempts: 2
+
+  answer:  # rows → 1-3 sentences (M1.3)
+    model: claude-haiku-5-5
+    thinking: disabled
+    max_tokens: 500  # a short answer needs few tokens
+    timeout_seconds: 30
+    # No retry: any bad reply (wrong form, or a number not in the data) goes straight to
+    # the template answer made by code, and the failure is logged.
+    max_attempts: 1
+    max_rows: 20  # at most this many data rows are sent to the LLM ("top 20 of N")

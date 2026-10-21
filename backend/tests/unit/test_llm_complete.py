@@ -112,3 +112,13 @@ def test_log_never_holds_the_question_or_reply(caplog: pytest.LogCaptureFixture)
     ask(FakeAdapter(["not json", GOOD]))
     assert "Revenue by state" not in caplog.text
     assert "customer_state" not in caplog.text and "not json" not in caplog.text
+
+
+# --- max_attempts per job (M1.3 step 1) ---
+
+
+def test_answer_job_never_retries() -> None:
+    fake = FakeAdapter(["not json", GOOD])
+    with pytest.raises(LlmOutputError, match="did not match the expected form"):
+        complete("answer", ASK, StructuredRequest, adapter=fake)
+    assert len(fake.calls) == 1  # one paid call only; the caller uses its code fallback

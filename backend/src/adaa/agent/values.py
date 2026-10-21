@@ -1,0 +1,104 @@
+"""Value linking: which values each dimension really holds (§0 M1.3, Value linking).
+
+The model knows dimension names, not the values stored in them: it may write "toy" where the
+data says `toys`. A wrong value still runs and returns an empty answer that looks right, so
+two layers protect against it:
+
+1. The catalogue: the real values of every small dimension, read once through the normal
+   compiler and runner (so as `adaa_query`, and only values a query can actually match),
+   then listed in the agent prompt.
+2. check_filters(): after the form is filled, every filter value is checked against the
+   catalogue. A close value is replaced and noted; an unknown value stops with a plain
+   message that lists the closest real values.
+"""
+
+import difflib
+import re
+from collections.abc import Callable
+
+from pydantic import BaseModel, ConfigDict
+
+from adaa.semantic_layer.definitions import SemanticLayer
+from adaa.semantic_layer.request import FilterValue, StructuredRequest
+from adaa.semantic_layer.runner import QueryResult
+
+MAX_VALUES = 100  # bigger dimensions (seller IDs) stay out of the prompt and the check
+NOT_LISTED = frozenset({"month", "year"})  # dates: the form's `period` handles them
+
+
+class ValueNotFoundError(Exception):
+    """A filter value is not in the data; the message names the closest real values."""
+
+
+class ValueCatalogue(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    values: dict[str, list[FilterValue]]  # dimension name → its real values
+
+    def prompt_text(self) -> str:
+        return "\n".join(
+            f"- `{name}`: {', '.join(str(v) for v in values)}"
+            for name, values in self.values.items()
+        )
+
+
+def build_catalogue(
+    layer: SemanticLayer, ask: Callable[[StructuredRequest], QueryResult]
+) -> ValueCatalogue:
+    """Read each dimension's values with a breakdown query; keep the small dimensions.
+
+    `ask` runs one form (the real runner, or a fake in tests). Each dimension is paired
+    with the first metric the grain rule allows, so the query never double counts.
+    """
+    found: dict[str, list[FilterValue]] = {}
+    for name in layer.dimensions:
+        if name in NOT_LISTED:
+            continue
+        metric = next(m for m in layer.metrics if layer.can_use(m, name))
+        result = ask(StructuredRequest(metric=metric, dimensions=[name], limit=MAX_VALUES + 1))
+        if result.row_count <= MAX_VALUES:
+            values = [as_value(row[0]) for row in result.rows if row[0] is not None]
+            found[name] = sorted(values, key=str)
+    return ValueCatalogue(values=found)
+
+
+def as_value(cell: object) -> FilterValue:
+    return cell if isinstance(cell, str | int | float) else str(cell)
+
+
+def normal(value: FilterValue) -> str:
+    """Loose form for matching: lower case, spaces and hyphens as _, no plural s."""
+    text = re.sub(r"[\s\-]+", "_", str(value).strip().lower())
+    return text[:-1] if text.endswith("s") and len(text) > 3 else text
+
+
+def check_filters(
+    form: StructuredRequest, catalogue: ValueCatalogue
+) -> tuple[StructuredRequest, list[str]]:
+    """The form with every filter value matched to a real value, plus notes for "how".
+
+    Raises ValueNotFoundError for a value with no close match.
+    """
+    notes: list[str] = []
+    filters = []
+    for f in form.filters:
+        real = catalogue.values.get(f.dimension)
+        if real is None:  # not catalogued (e.g. seller IDs): nothing to check against
+            filters.append(f)
+            continue
+        by_normal = {normal(v): v for v in real}
+        matched: list[FilterValue] = []
+        for value in f.values:
+            if value in real:
+                matched.append(value)
+            elif normal(value) in by_normal:
+                fixed = by_normal[normal(value)]
+                matched.append(fixed)
+                if str(value) != str(fixed):  # "5" for 5 is the same value, no note
+                    notes.append(f"I read '{value}' as '{fixed}'.")
+            else:
+                close = difflib.get_close_matches(str(value), [str(v) for v in real], n=3)
+                hint = f" Did you mean: {', '.join(close)}?" if close else ""
+                raise ValueNotFoundError(f"No {f.dimension} called '{value}' in the data.{hint}")
+        filters.append(f.model_copy(update={"values": matched}))
+    return form.model_copy(update={"filters": filters}), notes

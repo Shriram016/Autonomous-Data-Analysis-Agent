@@ -3,8 +3,10 @@
 All app code calls complete(job, messages, form) and gets back a filled, checked form,
 or a clear error. It never returns free text. The reply is checked with Pydantic even
 though strict mode already forces the JSON shape: the form has rules a JSON schema can't
-fully express (the model validators in StructuredRequest, for example). A reply that
-fails the check gets ONE retry with the errors; a second failure raises LlmOutputError.
+fully express (the model validators in StructuredRequest, for example). The job's
+max_attempts decides what a failed check does: with 2, ONE retry with the errors, and a
+second failure raises LlmOutputError; with 1, LlmOutputError at once (the caller has a
+fallback in code, so another paid call is not worth it).
 
 Every call writes one usage log line (logger "adaa.llm"), failures included. The line
 holds names and counts only, never the prompt or reply text: they can hold personal
@@ -88,6 +90,8 @@ def ask_with_one_retry[Form: BaseModel](
     try:
         return form.model_validate_json(replies[-1].text)
     except ValidationError as first_error:
+        if job.settings.max_attempts == 1:
+            raise LlmOutputError("The AI reply did not match the expected form.") from first_error
         retry = [
             *messages,
             Message(role="assistant", content=replies[-1].text),

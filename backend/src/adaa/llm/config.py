@@ -52,6 +52,8 @@ class Job(Strict):
     thinking: Thinking
     max_tokens: PositiveInt
     timeout_seconds: PositiveInt
+    max_attempts: Literal[1, 2]  # 2 = one retry with the errors; never more (§0 M1.3)
+    max_rows: PositiveInt | None = None  # only jobs that read data rows set it
 
 
 class JobSettings(Strict):
