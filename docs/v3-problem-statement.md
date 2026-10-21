@@ -625,6 +625,9 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    (`adapter`, `base_url`, `model`, `api_key_env`); new API style = one new adapter file.
 >    Reasons: we build retry / fallback / breaker / limiter ourselves; two API styles are
 >    enough; LiteLLM's PyPI compromise (2026-03-24) stole `.env` secrets; fewer dependencies.
+>    🔒 **Cost (locked 2026-10-20):** one fixed price per model in `config/llm.yaml` with a
+>    `price_checked` date; every call stores input, output and thinking tokens, so cost can be
+>    recomputed if a price was stale. (The API returns tokens, not dollars.)
 >    M1.2 tasks: (1) provider ✅ (2) model config per job + key in `.env` (key slot added; the
 >    builder adds the key later) (3) add the `anthropic` SDK (4) `llm.complete` — send messages + form schema, check reply (5) one retry with the
 >    error, then a clear error (6) log tokens incl. thinking, cost, time (7) fake LLM for unit

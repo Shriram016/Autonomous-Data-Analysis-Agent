@@ -1,0 +1,37 @@
+# LLM settings: which model each job uses, and how (ADR 0009, §0 M1.2).
+#
+# Change a model or turn thinking on here; no code changes. Loaded and checked by
+# backend/src/adaa/llm/config.py, which refuses to load if a name or value is wrong.
+#
+# Three parts, so each fact lives in one place:
+#   providers — how to reach a company (adapter + the NAME of its key in .env)
+#   models    — each model, its provider and its price
+#   jobs      — each thing the app asks an LLM to do
+
+version: 0.1.0
+
+providers:
+  anthropic:
+    adapter: anthropic
+    api_key_env: ANTHROPIC_API_KEY  # the name of the variable in .env, never the key itself
+
+models:
+  claude-haiku-5-5:
+    provider: anthropic
+    # USD per 1M tokens. Thinking tokens are billed at the output price.
+    # This is the price for prompts up to 100K tokens; above that it is 5x. Our prompts
+    # are ~3K tokens. Every call stores its token counts, so cost can be recomputed
+    # if this price goes stale (§0, Cost).
+    price_per_million:
+      input: 0.10
+      output: 0.50
+    price_checked: 2026-10-20
+
+jobs:
+  agent:  # English question → structured request form (M1.3)
+    model: claude-haiku-5-5
+    # disabled / low / medium / high. Not "off": YAML reads a bare `off` as false.
+    # Start disabled; turn on when evals show failures, and measure if it helps (§0 M1.2).
+    thinking: disabled
+    max_tokens: 2000  # hard cap on output; thinking tokens count toward it
+    timeout_seconds: 30
