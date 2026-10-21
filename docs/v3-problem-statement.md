@@ -627,7 +627,12 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    enough; LiteLLM's PyPI compromise (2026-03-24) stole `.env` secrets; fewer dependencies.
 >    🔒 **Cost (locked 2026-10-20):** one fixed price per model in `config/llm.yaml` with a
 >    `price_checked` date; every call stores input, output and thinking tokens, so cost can be
->    recomputed if a price was stale. (The API returns tokens, not dollars.)
+>    recomputed if a price was stale. (The API returns tokens, not dollars.) Until the
+>    conversation tables exist, usage is one console log line per call (logger `adaa.llm`;
+>    names and counts only, never prompt or reply text). **To do in M1.4 / M1.5:** a durable
+>    usage row per question (tokens incl. thinking, cost, model, attempts) in the database.
+>    **To consider at deployment and in CI:** identity federation (short-lived tokens from
+>    AWS / GCP / Azure / GitHub Actions) instead of a static API key.
 >    M1.2 tasks: (1) provider ✅ (2) model config per job + key in `.env` (key slot added; the
 >    builder adds the key later) (3) add the `anthropic` SDK (4) `llm.complete` — send messages + form schema, check reply (5) one retry with the
 >    error, then a clear error (6) log tokens incl. thinking, cost, time (7) fake LLM for unit

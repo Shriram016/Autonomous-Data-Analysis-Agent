@@ -280,3 +280,25 @@ hybrid question for M3.
 
 **Why one ruff version:** the hook calls the project's own ruff via `uv run`, pinned in
 `uv.lock`, so the hook, the editor and CI never disagree.
+
+## M1.2 — `llm.complete` (in progress)
+
+### Why the logs go to the console, not to a file
+
+The console (stdout) is the pipe, not the storage. In deployment the container runtime catches
+stdout, a log agent (Grafana Alloy, Fluent Bit, CloudWatch agent) ships each line within seconds
+to a central store (Grafana Loki, CloudWatch, Elasticsearch), and the store keeps it after the
+container is gone. A file inside the container dies with the container too, gives one file per
+replica, and needs rotation. Rule name: Twelve-Factor App, "logs are a stream of events".
+Data we must keep (tokens and cost per question) goes to the **database**, not to logs.
+
+### Thinking tokens
+
+Thinking tokens are billed at the output price and are **inside** `output_tokens`, not added on
+top. `thinking_tokens` is stored only to show how much of the output was thinking.
+
+### Identity federation vs API key
+
+Federation: a cloud or CI platform proves who the app is and gets a token that expires in
+minutes, so no permanent key exists. It needs an identity provider (AWS, GCP, Azure, GitHub
+Actions); a laptop has none, so local work uses an API key. Revisit at deployment and in CI.
