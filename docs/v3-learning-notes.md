@@ -281,7 +281,7 @@ hybrid question for M3.
 **Why one ruff version:** the hook calls the project's own ruff via `uv run`, pinned in
 `uv.lock`, so the hook, the editor and CI never disagree.
 
-## M1.2 — `llm.complete` (in progress)
+## M1.2 — `llm.complete`
 
 ### Why the logs go to the console, not to a file
 
@@ -302,3 +302,33 @@ top. `thinking_tokens` is stored only to show how much of the output was thinkin
 Federation: a cloud or CI platform proves who the app is and gets a token that expires in
 minutes, so no permanent key exists. It needs an identity provider (AWS, GCP, Azure, GitHub
 Actions); a laptop has none, so local work uses an API key. Revisit at deployment and in CI.
+
+### The path of one LLM call
+
+```
+complete("agent", messages, StructuredRequest)          llm/complete.py
+  → job settings from config/llm.yaml                    llm/config.py
+  → JSON schema made from the form class
+  → adapter.send(messages, schema, job)                  adapters/anthropic_adapter.py
+       (system prompt split out, schema cleaned, thinking from config) → Claude
+  → Pydantic checks the reply; one retry with the errors if it fails
+  → one usage log line → LlmResult(output=form, usage, attempts, model, seconds)
+```
+
+Nothing calls this with a real question yet: M1.3 (the agent) joins it to the M1.1 numbers
+path. The **fake adapter** stays: it makes the `complete()` tests free, fast, repeatable, and
+able to create failures on purpose (bad JSON, outage) that a real model cannot.
+
+### Why check the reply if strict mode forces the shape
+
+Strict mode guarantees valid JSON in the schema's shape. But strict mode does not accept some
+rules (`minLength`, `maxItems`, `minimum`…), so the adapter removes them from the copy it sends,
+and the form's own validators can't be expressed in a schema at all. Pydantic checks every rule
+on the reply. One definition (the form class) gives both the schema and the check.
+
+### First real run (2026-10-21)
+
+3 questions, all correct on attempt 1. ~1,560 input tokens per question (prompt + schema),
+25–67 output, ~$0.00018 per question, 1.8 s per call. The first call took 3.5 s: a new schema
+is compiled once and cached for 24 hours. 1–3 s per LLM call is normal (network, reading the
+prompt, writing tokens one by one); see Q5 in the cross-examination doc.

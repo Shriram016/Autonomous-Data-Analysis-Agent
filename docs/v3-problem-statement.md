@@ -607,7 +607,20 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    definitions and joins found automatically, every value a placeholder, "how I got this"
 >    explanation; `runner.py` — always `adaa_query`, plain timeout / unavailable messages; 73
 >    tests; `check_compiler.py` prints 5 sample forms. D3 (no period = all data) made during
->    M1.1. **Next: M1.2 `llm.complete`** (first LLM cost).
+>    M1.1.
+>    ✅ **M1.2 `llm.complete`** (2026-10-21, commits `419d122`…`2d44237` + record): `config/llm.yaml`
+>    (providers / models with price + `price_checked` / jobs: `agent` → Haiku 5.5, thinking
+>    `disabled`, `max_tokens` 2000, timeout 30 s) loaded and checked by `llm/config.py`;
+>    `llm/types.py` (Usage — thinking tokens inside output tokens; AdapterReply;
+>    LlmResult[Form]; errors); `adapters/base.py` (Message, Adapter protocol);
+>    `adapters/fake.py` (scripted replies, fault injection); `adapters/anthropic_adapter.py`
+>    (official SDK 1.17.0, schema cleaned for strict mode, SDK errors → plain messages);
+>    `complete.py` (schema from the form, Pydantic check, one retry with the errors, outage not
+>    retried, one usage log line per call). 88 unit tests. **First real run**
+>    (`check_llm.py`, 3 questions): all correct on attempt 1, ~1,560 input / 25–67 output
+>    tokens per question, ~$0.00018 per question, $0.00054 total, 1.8 s per call (3.5 s for
+>    the first: schema compiled once, cached 24 h). **Next: M1.3 agent** (English → form →
+>    answer).
 >    🔒 **M1.2 provider / model (locked 2026-10-20):** **direct API now**; a cloud platform
 >    (Bedrock / Vertex / Azure) is decided with deployment — a config change behind `llm.complete`.
 >    **Primary: Claude Haiku 5.5** ($0.10 / $0.50 per 1M tokens up to 100K-token prompts; no
@@ -636,11 +649,8 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    `anthropic_adapter.py` so the two don't stack. SDK 1.x uses `httpx2`, not `httpx`.
 >    **To consider at deployment and in CI:** identity federation (short-lived tokens from
 >    AWS / GCP / Azure / GitHub Actions) instead of a static API key.
->    M1.2 tasks: (1) provider ✅ (2) model config per job + key in `.env` (key slot added; the
->    builder adds the key later) (3) add the `anthropic` SDK (4) `llm.complete` — send messages + form schema, check reply (5) one retry with the
->    error, then a clear error (6) log tokens incl. thinking, cost, time (7) fake LLM for unit
->    tests (8) `dev_checks/check_llm.py` — one real call after cost approval (9) record +
->    commit after confirm. Later, not M1.2: masking, fallback, breaker, rate limiter.
+>    M1.2 tasks: all ✅. Later, not M1.2: masking, fallback (`openai_compatible` adapter),
+>    our own retry rules, breaker, rate limiter.
 >    *Decisions still open in M1 (one at a time, when the slice starts):* M1.4 queue library (e.g. arq / RQ / Celery); M1.6 chart library (e.g. Recharts /
 >    ECharts). Cost rule: state what runs and the cost before any real LLM run.
 >

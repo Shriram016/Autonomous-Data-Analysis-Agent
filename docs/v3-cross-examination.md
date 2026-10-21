@@ -194,3 +194,33 @@ keys → a gateway. It still plugs in as one more adapter behind `llm.complete`.
 **Interview one-liner:** "The port is ours; adapters are cheap. Two API styles cover almost every
 provider, so swapping a model is a config line, and I didn't take on a dependency whose main
 features I was building myself anyway."
+
+---
+
+## Q5. One LLM call takes 1–3 seconds. Isn't that too slow? How would you make it faster?
+
+**Short answer:** 1–3 s is normal for one LLM API call; most of it is the model working. ADAA
+measured ~1.8 s per call (3.5 s for the first, while a new schema was compiled and cached).
+
+**Where the time goes (rough):** network round trip and TLS (~0.1–0.3 s), provider queue
+(~0–0.3 s), reading the prompt (~0.3–0.6 s for ~1,560 tokens), writing the output one token at
+a time (~0.3–0.7 s for 25–67 tokens), small extra for strict JSON.
+
+**Why it is acceptable for ADAA:** a question is 1–3 LLM calls plus a fast SQL query, ~3–8 s
+in total; progress streams to the screen (SSE), so the page never looks frozen; quick routes
+answer simple cases with no LLM call.
+
+| Lever | Gain | Cost |
+|---|---|---|
+| Stream the answer text | First words in < 1 s (perceived speed) | UI work |
+| Faster provider (e.g. Groq) | Often several times faster output | Different model; check quality with evals |
+| Shorter prompt / output | Less reading and writing time | Prompt work |
+| Prompt caching | Faster reading of a long repeated prompt | Short prompts may not qualify |
+| Fewer LLM calls per question | Largest gain | Design work (routing, quick routes) |
+
+**What to measure:** total time per call (done) and **time to first token** (later, in
+observability), per job and model, as p50 / p95, not averages.
+
+**Interview one-liner:** "An LLM call is a few seconds by nature, so I design around it:
+stream progress, skip the LLM where a rule can answer, cut calls per question, and measure
+time-to-first-token at p95 before reaching for a faster model."
