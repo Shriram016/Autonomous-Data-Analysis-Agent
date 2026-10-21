@@ -21,6 +21,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ValidationError
 
+from adaa.llm.adapters.anthropic_adapter import AnthropicAdapter
 from adaa.llm.adapters.base import Adapter, Message
 from adaa.llm.config import JobSettings, LlmConfig, get_config
 from adaa.llm.types import (
@@ -44,8 +45,10 @@ NO_USAGE = Usage(input_tokens=0, output_tokens=0, thinking_tokens=0, cost_usd=0.
 
 
 def adapter_for(job: JobSettings) -> Adapter:
-    """The real adapter the config names. The anthropic adapter arrives in step 6."""
-    raise LlmUnavailableError(f"The '{job.provider.adapter}' adapter is not built yet.")
+    """The real adapter the config names."""
+    match job.provider.adapter:
+        case "anthropic":
+            return AnthropicAdapter()
 
 
 def total_usage(replies: list[AdapterReply]) -> Usage:

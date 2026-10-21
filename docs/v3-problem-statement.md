@@ -631,6 +631,9 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    conversation tables exist, usage is one console log line per call (logger `adaa.llm`;
 >    names and counts only, never prompt or reply text). **To do in M1.4 / M1.5:** a durable
 >    usage row per question (tokens incl. thinking, cost, model, attempts) in the database.
+>    **SDK retries:** the `anthropic` SDK retries 429 / 5xx / timeouts by itself (2 retries);
+>    kept until our own retry rules exist, then `SDK_MAX_RETRIES = 0` in
+>    `anthropic_adapter.py` so the two don't stack. SDK 1.x uses `httpx2`, not `httpx`.
 >    **To consider at deployment and in CI:** identity federation (short-lived tokens from
 >    AWS / GCP / Azure / GitHub Actions) instead of a static API key.
 >    M1.2 tasks: (1) provider ✅ (2) model config per job + key in `.env` (key slot added; the
