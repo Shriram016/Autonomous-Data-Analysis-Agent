@@ -34,6 +34,8 @@ PARENT: dict[str, str | None] = {
     "review": "order",
 }
 
+STATUS_DIMENSION = "order_status"  # naming it in a form switches the D2 default off
+
 TABLE_REF = re.compile(r"\b([a-z_]+)\.[a-z_]+\b")  # "orders.order_status" → "orders"
 
 
@@ -97,6 +99,13 @@ class SemanticLayer(BaseModel):
                 return True
             grain = PARENT[grain]
         return False
+
+    def allows(self, metric: str, dimension: str) -> bool:
+        """Every rule the compiler applies: the grain rule, and no status split for a metric
+        whose definition already needs delivered orders (D2 built in)."""
+        if dimension == STATUS_DIMENSION and self.metrics[metric].status == "built_in":
+            return False
+        return self.can_use(metric, dimension)
 
     def join_path(self, start: str, needed: set[str]) -> list[Join]:
         """The joins that reach every needed table from `start`, following many-to-one only."""

@@ -23,7 +23,7 @@ def test_real_agent_prompt_is_filled_from_the_semantic_layer() -> None:
     assert "{{" not in prompt.text  # every placeholder filled
     assert "- `revenue` (revenue, sales, turnover, product sales):" in prompt.text
     assert "Today is 2018-08-31." in prompt.text
-    assert "Delivered orders only." in prompt.text  # a default
+    assert "Delivered orders only, unless" in prompt.text  # a default
     assert "- `customer_state`: RJ, SP" in prompt.text  # the value catalogue
     assert "version:" not in prompt.text  # the version line is not sent to the model
 
@@ -32,6 +32,15 @@ def test_allowed_dimensions_follow_the_grain_rule() -> None:
     text = load_prompt("agent", semantic_values(load(), CATALOGUE, AS_OF)).text
     revenue = next(line for line in text.splitlines() if line.startswith("- `revenue`"))
     assert "product_category" in revenue and "payment_type" not in revenue  # double count
+    late = next(line for line in text.splitlines() if line.startswith("- `late_delivery_rate`"))
+    assert "order_status" not in late  # D2 built in: the compiler refuses a status split
+    assert "order_status" in revenue  # D2 default: a status replaces it
+
+
+def test_only_form_defaults_are_listed() -> None:
+    text = load_prompt("agent", semantic_values(load(), CATALOGUE, AS_OF)).text
+    assert "- Delivered orders only, unless the question names an order status." in text
+    assert "500 orders" not in text and "customer_unique_id" not in text  # answer-only
 
 
 def test_real_answer_prompt_loads() -> None:

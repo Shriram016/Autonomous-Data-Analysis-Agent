@@ -17,12 +17,11 @@ become a command (SQL injection). It returns the SQL; running it is runner.py's 
 from dataclasses import dataclass
 from datetime import timedelta
 
-from adaa.semantic_layer.definitions import SemanticLayer, tables_in
+from adaa.semantic_layer.definitions import STATUS_DIMENSION, SemanticLayer, tables_in
 from adaa.semantic_layer.request import MAX_LIMIT, Filter, StructuredRequest
 
 PERIOD_COLUMN = "orders.order_purchase_timestamp"  # a period always means the order date
 SQL_OPERATORS = {"=": "=", "!=": "<>", "in": "IN", "not in": "NOT IN"}
-STATUS_DIMENSION = "order_status"  # naming it in the form switches the D2 default off
 
 
 class CompileError(Exception):

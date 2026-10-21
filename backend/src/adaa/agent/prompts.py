@@ -80,7 +80,7 @@ def semantic_values(
     """The agent prompt's placeholder values, built from the semantic layer and the data."""
     metrics = []
     for name, metric in layer.metrics.items():
-        allowed = [d for d in layer.dimensions if layer.can_use(name, d)]
+        allowed = [d for d in layer.dimensions if layer.allows(name, d)]  # = compiler rules
         metrics.append(
             f"- `{name}` ({', '.join(metric.terms)}): {metric.description}"
             f" Dimensions allowed: {', '.join(allowed)}."
@@ -88,9 +88,13 @@ def semantic_values(
     dimensions = [
         f"- `{name}` ({', '.join(d.terms)}): {d.label}" for name, d in layer.dimensions.items()
     ]
-    # Defaults with terms ("best customers" → ranked by revenue) need a customer ranking the
-    # form can't express yet, so only the always-on defaults go in for now.
-    defaults = [f"- {d.shown_in_answer}" for d in layer.defaults.values() if not d.terms]
+    # Only the defaults that change how the form is filled. The others (thin months, one
+    # customer = one person, "best customers") are about the answer, which shows them.
+    status = layer.defaults["default_status_filter"].shown_in_answer.removesuffix(".")
+    defaults = [
+        f"- {status}, unless the question names an order status.",
+        f"- {layer.defaults['default_period'].shown_in_answer}",
+    ]
     return {
         "metrics": "\n".join(metrics),
         "dimensions": "\n".join(dimensions),

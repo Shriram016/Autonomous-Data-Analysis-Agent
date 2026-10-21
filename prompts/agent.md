@@ -66,5 +66,11 @@ Form: {"metric": "revenue", "dimensions": ["customer_state"], "period": {"start"
 Question: Top 5 product categories by sales
 Form: {"metric": "revenue", "dimensions": ["product_category"], "sort": {"by": "revenue", "direction": "desc"}, "limit": 5}
 
+Question: How many orders were canceled?
+Form: {"metric": "orders", "filters": [{"dimension": "order_status", "op": "=", "values": ["canceled"]}]}
+
+Question: Revenue in São Paulo
+Form: {"metric": "revenue", "filters": [{"dimension": "customer_state", "op": "=", "values": ["SP"]}]}
+
 Question: Late delivery rate per month for orders from SP and RJ
 Form: {"metric": "late_delivery_rate", "dimensions": ["month"], "filters": [{"dimension": "customer_state", "op": "in", "values": ["SP", "RJ"]}]}
