@@ -88,7 +88,7 @@ def test_unreachable_table_is_refused(layer_copy: Path) -> None:
 
 
 def test_version_mismatch_is_refused(layer_copy: Path) -> None:
-    edit(layer_copy, "joins.yaml", "version: 0.3.2", "version: 0.4.0")
+    edit(layer_copy, "joins.yaml", "version: 0.3.3", "version: 0.4.0")
     with pytest.raises(SemanticLayerError, match="different versions"):
         load(layer_copy)
 
@@ -109,4 +109,10 @@ def test_every_metric_has_a_unit() -> None:
 def test_missing_or_unknown_unit_is_refused(layer_copy: Path, old: str, new: str) -> None:
     edit(layer_copy, "metrics.yaml", old, new)
     with pytest.raises(SemanticLayerError, match="unit"):
+        load(layer_copy)
+
+
+def test_unknown_dimension_kind_is_refused(layer_copy: Path) -> None:
+    edit(layer_copy, "dimensions.yaml", "    kind: time\n", "    kind: calendar\n")
+    with pytest.raises(SemanticLayerError, match="kind"):
         load(layer_copy)

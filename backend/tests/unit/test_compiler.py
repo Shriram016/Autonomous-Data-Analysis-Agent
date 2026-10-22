@@ -164,3 +164,26 @@ def test_review_metrics_have_no_status_rule(layer: SemanticLayer) -> None:
     q = compile_form(layer, metric="review_count")
     assert "order_status" not in q.sql
     assert not any("Delivered" in line or "status" in line for line in q.explanation)
+
+
+# --- time breakdowns in date order (semantic layer v0.3.3) ---
+
+
+@pytest.mark.parametrize(
+    ("fields", "order"),
+    [
+        ({"dimensions": ["month"]}, "ORDER BY month ASC, revenue DESC"),
+        ({"dimensions": ["month", "customer_state"]}, "ORDER BY month ASC, revenue DESC"),
+        ({"dimensions": ["year"]}, "ORDER BY year ASC, revenue DESC"),
+        ({"dimensions": ["customer_state"]}, "ORDER BY revenue DESC"),  # unchanged
+        (  # the form's own sort always wins
+            {"dimensions": ["month"], "sort": {"by": "revenue"}, "limit": 5},
+            "ORDER BY revenue DESC",
+        ),
+    ],
+)
+def test_time_breakdowns_are_oldest_first(
+    layer: SemanticLayer, fields: dict[str, Any], order: str
+) -> None:
+    sql = compile_form(layer, metric="revenue", **fields).sql
+    assert sql.splitlines()[-2] == order  # the line before LIMIT

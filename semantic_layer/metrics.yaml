@@ -1,7 +1,7 @@
 # Metrics: the numbers the agent can compute. Every metric needs a grain (order | item | payment
 # | review); see dimensions.yaml for the grain tree. Decisions: §0 M0.6 (D1 revenue = item price,
 # D2 delivered orders only, as a default the question can change). Findings F1–F9: docs/data-profile.md.
-version: 0.3.2
+version: 0.3.3
 
 metrics:
   orders:

@@ -5,7 +5,7 @@
 #                item  payment  review
 # A metric can use a dimension at its own grain or at "order" (above it in the tree).
 # Example: revenue (item) can use category (item) and state (order), not payment type (payment).
-version: 0.3.2
+version: 0.3.3
 
 dimensions:
   month:
@@ -13,6 +13,7 @@ dimensions:
     grain: order
     sql: date_trunc('month', orders.order_purchase_timestamp)
     terms: [month, monthly, per month]
+    kind: time  # a breakdown with no sort is shown oldest first (a trend)
     why: Purchase date is the order date. Months outside 2017-01..2018-08 are thin. (F1)
 
   year:
@@ -20,6 +21,7 @@ dimensions:
     grain: order
     sql: extract(year FROM orders.order_purchase_timestamp)
     terms: [year, yearly, annual]
+    kind: time
 
   customer_state:
     label: Customer state

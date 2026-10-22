@@ -67,6 +67,7 @@ class Dimension(BaseModel):
     sql: str
     terms: list[str]
     value_labels: dict[str, str] = {}  # stored code → name people say, e.g. PA → Pará
+    kind: Literal["time"] | None = None  # time: a breakdown with no sort is oldest first
     why: str | None = None
 
 

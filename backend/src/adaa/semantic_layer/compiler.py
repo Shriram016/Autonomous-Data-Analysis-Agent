@@ -157,15 +157,17 @@ def build_where(
 # ---------- 5: ORDER BY and LIMIT ----------
 
 
-def build_order_and_limit(request: StructuredRequest) -> tuple[str, int]:
+def build_order_and_limit(request: StructuredRequest, layer: SemanticLayer) -> tuple[str, int]:
+    """The form's sort if it has one. Otherwise a breakdown is shown oldest first when it
+    has a time dimension (a trend), then highest value first."""
     limit = request.limit or MAX_LIMIT
     if request.sort:
-        order = f"ORDER BY {request.sort.by} {request.sort.direction.upper()}"
-    elif request.dimensions:
-        order = f"ORDER BY {request.metric} DESC"  # breakdown with no sort: highest first
-    else:
-        order = ""
-    return order, limit
+        return f"ORDER BY {request.sort.by} {request.sort.direction.upper()}", limit
+    if not request.dimensions:
+        return "", limit
+    times = [d for d in request.dimensions if layer.dimensions[d].kind == "time"]
+    keys = [f"{d} ASC" for d in times] + [f"{request.metric} DESC"]
+    return f"ORDER BY {', '.join(keys)}", limit
 
 
 # ---------- 6: explanation ----------
@@ -206,7 +208,7 @@ def compile_request(request: StructuredRequest, layer: SemanticLayer) -> Compile
     metric = layer.metrics[request.metric]
     params: dict[str, object] = {}
     conditions, period_line = build_where(request, layer, params)
-    order, limit = build_order_and_limit(request)
+    order, limit = build_order_and_limit(request, layer)
     params["row_limit"] = limit
 
     select = [f"{layer.dimensions[d].sql} AS {d}" for d in request.dimensions]
