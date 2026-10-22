@@ -593,7 +593,10 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    dimension or an explicit filter; review metrics have no status filter. 🔒 **D3 no period
 >    = all available data** (changed 2026-10-20 from the 2017-01..2018-08 window: a smaller
 >    default quietly changed totals, against S6); thin months (< 500 orders) are flagged in
->    month / year answers instead (M1.3). Semantic layer raised to **v0.2.0**.
+>    month / year answers instead (M1.3). Semantic layer raised to **v0.2.0**. → **Changed
+>    2026-10-22 (M1.3 step 5):** no thin-month note in answers (the builder chose fewer
+>    notes); the 500-order rule now only sets the data date. Known risk: a thin month can
+>    show an extreme value (2016-09 late rate 100%) with no warning; the table shows it.
 >    **Open for M3 (raised 2026-10-19, not locked):** build ingestion as an incremental load
 >    with a watermark and upsert (not full reload + swap), so a real-time source only changes
 >    *when* the load runs. See Q3 in [v3-cross-examination.md](v3-cross-examination.md).
@@ -719,8 +722,11 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    ✅ **M1.3 step 1** (`max_attempts`, `answer` job) and **step 2** (prompt files + loader,
 >    value catalogue, state names, D2 fix → semantic layer v0.3.0; `agent.md` and `answer.md`
 >    reviewed and **locked for now** at v0.1.0, raised on every change after the first real
->    run), commits `0146e20`…`917a72d`. **Next: step 3** (facts, number formatting, template
->    answer).
+>    run), commits `0146e20`…`917a72d`. ✅ **Step 3** (facts, formatting by unit — a unit is
+>    now required for every metric, v0.3.1 — template answer) and ✅ **step 4** (number
+>    guardrail), commits `906a67b`…`9d472a3`. 🔒 **Step 5 notes (locked 2026-10-22):** every
+>    answer shows one code-made line, "Data as of <data date>" (the "today" date, from the
+>    500-order rule); no thin-month note.
 >    *Decisions still open in M1 (one at a time, when the slice starts):* M1.4 queue library (e.g. arq / RQ / Celery); M1.6 chart library (e.g. Recharts /
 >    ECharts). Cost rule: state what runs and the cost before any real LLM run.
 >

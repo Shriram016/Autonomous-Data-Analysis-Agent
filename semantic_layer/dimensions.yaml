@@ -5,7 +5,7 @@
 #                item  payment  review
 # A metric can use a dimension at its own grain or at "order" (above it in the tree).
 # Example: revenue (item) can use category (item) and state (order), not payment type (payment).
-version: 0.3.1
+version: 0.3.2
 
 dimensions:
   month:
