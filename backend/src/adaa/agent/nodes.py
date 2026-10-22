@@ -13,7 +13,9 @@ from adaa.agent.values import ValueNotFoundError, check_filters
 from adaa.llm.adapters.base import Message
 from adaa.llm.complete import complete
 from adaa.llm.types import LlmOutputError, LlmUnavailableError
+from adaa.semantic_layer.compiler import CompileError
 from adaa.semantic_layer.request import StructuredRequest
+from adaa.semantic_layer.runner import DataUnavailableError, QueryTimeoutError
 
 NOT_UNDERSTOOD = "I could not turn the question into a request. Please rephrase it."
 
@@ -42,3 +44,20 @@ def understand(state: AgentState, context: AgentContext) -> dict[str, Any]:
     except ValueNotFoundError as e:
         return {"usage": usage, "error": AgentError(kind="value_not_found", message=str(e))}
     return {"form": form, "value_notes": notes, "usage": usage}
+
+
+def query(state: AgentState, context: AgentContext) -> dict[str, Any]:
+    """Checked form → rows, through the M1.1 path (compiler, then the runner as adaa_query).
+
+    Check 3 runs here: the compiler refuses names that don't exist, a double count, or a
+    status split on a delivery metric. Every error already has a plain M1.1 message.
+    """
+    assert state.form is not None, "query runs only after understand filled the form"
+    try:
+        return {"result": context.ask(state.form)}
+    except CompileError as e:
+        return {"error": AgentError(kind="compile_refused", message=str(e))}
+    except QueryTimeoutError as e:
+        return {"error": AgentError(kind="query_timeout", message=str(e))}
+    except DataUnavailableError as e:
+        return {"error": AgentError(kind="data_unavailable", message=str(e))}
