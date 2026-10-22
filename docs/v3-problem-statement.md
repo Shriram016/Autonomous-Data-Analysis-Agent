@@ -726,7 +726,19 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    now required for every metric, v0.3.1 — template answer) and ✅ **step 4** (number
 >    guardrail), commits `906a67b`…`9d472a3`. 🔒 **Step 5 notes (locked 2026-10-22):** every
 >    answer shows one code-made line, "Data as of <data date>" (the "today" date, from the
->    500-order rule); no thin-month note.
+>    500-order rule); no thin-month note. ✅ **Step 6** (6a time breakdowns in date order,
+>    v0.3.3; 6b `AgentState` as Pydantic, ready for checkpoints; 6c context loaded once per
+>    worker; 6d–6f nodes `understand` / `query` / `answer`; 6g LangGraph 1.2.16 graph and
+>    `ask(question)`), commits `9bcef48`…`6265e0d`; diagram:
+>    https://claude.ai/artifact/GnnQeAyqyQF14sbu34TpYY.
+>    ✅ **M1.3 agent done (2026-10-22). First real run** (`check_agent.py`, 5 questions, real
+>    Claude + Postgres): 5/5 checks passed — total R$ 13,221,498.11; 27 states, SP first;
+>    "toy" → `toys` (R$ 471,286.48); canceled orders 461; "Paris" stopped with
+>    `value_not_found`. All forms on attempt 1; no template needed. ~4,360 input tokens per
+>    agent call (≈85% of cost; prompt caching is a later lever), ~600 per answer call;
+>    ~$0.0005 per question, $0.0027 total; 2–9 s per question. Small wording point for later:
+>    an answer said "top 20 of 27" while naming only 3 states. 192 unit + 25 integration
+>    tests. **Next: M1.4 worker + queue** (queue library decision first).
 >    *Decisions still open in M1 (one at a time, when the slice starts):* M1.4 queue library (e.g. arq / RQ / Celery); M1.6 chart library (e.g. Recharts /
 >    ECharts). Cost rule: state what runs and the cost before any real LLM run.
 >

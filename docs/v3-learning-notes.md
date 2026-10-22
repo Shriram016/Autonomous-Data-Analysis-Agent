@@ -15,6 +15,8 @@ later. Interview-style system-design questions live in [v3-cross-examination.md]
   - How does a copy learn about deletes and updates, not only new rows? (CDC vs watermark loads, tombstones)
   - Synchronous vs asynchronous replication: what is replication lag, and what can be lost on failover?
   - How does CDC work (for example Debezium → Kafka → warehouse)?
+- **Fingerprints (SHA-256)** — raised 2026-10-22 (M1.3): what a hash is, why any one-character
+  edit changes it, why each answer records version + fingerprint (semantic layer, prompts)
 
 ---
 
@@ -333,7 +335,7 @@ on the reply. One definition (the form class) gives both the schema and the chec
 is compiled once and cached for 24 hours. 1–3 s per LLM call is normal (network, reading the
 prompt, writing tokens one by one); see Q5 in the cross-examination doc.
 
-## M1.3 — Agent (in progress)
+## M1.3 — Agent
 
 ### Value linking: the model knows names, not values
 
@@ -353,3 +355,30 @@ orders" became `delivered AND canceled` = 0 — a wrong answer that looks right.
 only when the form names no status; the two delivery metrics keep it built in and refuse a
 status. Lesson: a design rule is only real when a test proves the code follows it
 (`test_canceled_orders_are_not_zero`: 461, not 0).
+
+### The agent graph (step 6)
+
+```
+start → understand → query → answer → finished answer
+            │          │
+            └─ error ──┴──→ stop with a plain message
+```
+
+`understand`: agent prompt + question → form → value check. `query`: compiler → SQL → rows as
+`adaa_query`. `answer`: code formats the numbers, the LLM writes 1–3 sentences, the number
+guardrail checks them; any failure gives the template answer (no retry). The context (semantic
+layer, catalogue, data date, prompts) is loaded once per worker process; each process keeps
+its own copy. The state is a Pydantic model, so a future checkpoint is checked when it is
+loaded. Diagram: https://claude.ai/artifact/GnnQeAyqyQF14sbu34TpYY.
+
+### API, queue and workers (restaurant picture)
+
+The API endpoint is the waiter: it takes the question at once and gives back an order number.
+The Redis queue is the order slips. The workers are the cooks: each takes one slip and runs the
+graph (3–8 s). With 20 users and 4 workers, 4 questions run at a time and the rest wait a few
+seconds; the API never blocks. At the start it can all run on one server.
+
+### First real run (2026-10-22)
+
+5 questions, 5/5 checks, $0.0027. The agent prompt (~4,360 tokens, mostly the value lists) is
+~85% of the cost of a question.
