@@ -65,7 +65,7 @@ def main() -> None:
                 note = "  OK: matches hand-written SQL"
             assert value is not None, f"{name} returned no value"
             shown = f"{value:,}" if isinstance(value, int) else f"{float(value):,.4f}"
-            print(f"{name:22} {shown:>18} {m.unit or '':6}{note}")
+            print(f"{name:22} {shown:>18} {m.unit:6}{note}")
 
     print("\nGrain rule samples:")
     for metric, dim in [

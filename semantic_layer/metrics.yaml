@@ -1,7 +1,7 @@
 # Metrics: the numbers the agent can compute. Every metric needs a grain (order | item | payment
 # | review); see dimensions.yaml for the grain tree. Decisions: §0 M0.6 (D1 revenue = item price,
 # D2 delivered orders only, as a default the question can change). Findings F1–F9: docs/data-profile.md.
-version: 0.3.0
+version: 0.3.1
 
 metrics:
   orders:
@@ -12,6 +12,7 @@ metrics:
     sql: count(DISTINCT order_items.order_id)
     filters: []
     status: default  # delivered only unless the question names a status (D2)
+    unit: count
     terms: [orders, number of orders, order count]
     shown_in_answer: "Orders = distinct orders. An order with items in 2 categories counts in both."
     why: count DISTINCT keeps item breakdowns correct. (F3)
@@ -76,6 +77,7 @@ metrics:
     sql: count(DISTINCT customers.customer_unique_id)
     filters: []
     status: default  # delivered only unless the question names a status (D2)
+    unit: count
     terms: [customers, buyers, number of customers]
     shown_in_answer: "Customers = distinct people (customer_unique_id), not customer IDs."
     why: One person can have several customer_id values. (F4)
@@ -117,6 +119,7 @@ metrics:
     table: reviews
     sql: avg(reviews.review_score)
     filters: []
+    unit: score  # an average from 1 to 5
     terms: [review score, rating, satisfaction]
     shown_in_answer: "Average of review scores (1 to 5). An order with 2 reviews counts twice."
     why: review_id repeats; a review is a (review_id, order_id) row. No status filter. (F5)
@@ -128,6 +131,7 @@ metrics:
     table: reviews
     sql: count(*)
     filters: []
+    unit: count
     terms: [reviews, number of reviews, review count]
     shown_in_answer: "Reviews = review rows (review_id, order_id)."
     why: (F5)

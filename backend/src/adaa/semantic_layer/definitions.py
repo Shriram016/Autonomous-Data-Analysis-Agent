@@ -26,6 +26,8 @@ FILES = ("metrics.yaml", "dimensions.yaml", "joins.yaml", "defaults.yaml")
 KNOWN_TABLES = frozenset(TABLES)
 
 Grain = Literal["order", "item", "payment", "review"]
+# How a metric's number is shown: 96,478 | R$ 5,067,633.16 | 6.77% | 12.5 days | 4.09
+Unit = Literal["count", "BRL", "ratio", "days", "score"]
 # The grain tree: each grain's parent. "order" is the top.
 PARENT: dict[str, str | None] = {
     "order": None,
@@ -53,7 +55,7 @@ class Metric(BaseModel):
     # D2: "default" = delivered only unless the form names a status; "built_in" = the
     # filters already hold it and the form may not name a status; None = no status rule.
     status: Literal["default", "built_in"] | None = None
-    unit: str | None = None
+    unit: Unit  # required: decides how the answer shows the number (agent/facts.py)
     terms: list[str]
     shown_in_answer: str
     why: str | None = None

@@ -88,6 +88,25 @@ def test_unreachable_table_is_refused(layer_copy: Path) -> None:
 
 
 def test_version_mismatch_is_refused(layer_copy: Path) -> None:
-    edit(layer_copy, "joins.yaml", "version: 0.3.0", "version: 0.4.0")
+    edit(layer_copy, "joins.yaml", "version: 0.3.1", "version: 0.4.0")
     with pytest.raises(SemanticLayerError, match="different versions"):
+        load(layer_copy)
+
+
+def test_every_metric_has_a_unit() -> None:
+    units = {name: m.unit for name, m in load().metrics.items()}
+    assert units["orders"] == "count" and units["average_review_score"] == "score"
+    assert units["revenue"] == "BRL" and units["late_delivery_rate"] == "ratio"
+
+
+@pytest.mark.parametrize(
+    ("old", "new"),
+    [
+        ("    unit: score  # an average from 1 to 5\n", ""),  # unit missing
+        ("unit: days", "unit: hours"),  # not in the fixed list
+    ],
+)
+def test_missing_or_unknown_unit_is_refused(layer_copy: Path, old: str, new: str) -> None:
+    edit(layer_copy, "metrics.yaml", old, new)
+    with pytest.raises(SemanticLayerError, match="unit"):
         load(layer_copy)

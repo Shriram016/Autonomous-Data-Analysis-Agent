@@ -716,6 +716,11 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    form or a number not in the list — goes straight to the template answer and is logged).
 >    Rule: retry only where a failure blocks the result; where a correct code fallback exists,
 >    use the fallback instead of paying for another call (graceful degradation).
+>    ✅ **M1.3 step 1** (`max_attempts`, `answer` job) and **step 2** (prompt files + loader,
+>    value catalogue, state names, D2 fix → semantic layer v0.3.0; `agent.md` and `answer.md`
+>    reviewed and **locked for now** at v0.1.0, raised on every change after the first real
+>    run), commits `0146e20`…`917a72d`. **Next: step 3** (facts, number formatting, template
+>    answer).
 >    *Decisions still open in M1 (one at a time, when the slice starts):* M1.4 queue library (e.g. arq / RQ / Celery); M1.6 chart library (e.g. Recharts /
 >    ECharts). Cost rule: state what runs and the cost before any real LLM run.
 >
