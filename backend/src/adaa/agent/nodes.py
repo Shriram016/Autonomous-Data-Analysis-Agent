@@ -5,19 +5,36 @@ merges them into the state. A node that fails returns an `error` (a kind + a pla
 and the graph stops. The nodes add no new checks: they run the existing ones in order.
 """
 
+import logging
 from typing import Any
 
+from pydantic import BaseModel, ConfigDict, Field
+
 from adaa.agent.context import AgentContext
+from adaa.agent.facts import build_facts
 from adaa.agent.state import AgentError, AgentState
 from adaa.agent.values import ValueNotFoundError, check_filters
+from adaa.guardrails.numbers import unknown_numbers
 from adaa.llm.adapters.base import Message
 from adaa.llm.complete import complete
-from adaa.llm.types import LlmOutputError, LlmUnavailableError
+from adaa.llm.config import get_config
+from adaa.llm.types import LlmError, LlmOutputError, LlmUnavailableError
 from adaa.semantic_layer.compiler import CompileError
 from adaa.semantic_layer.request import StructuredRequest
 from adaa.semantic_layer.runner import DataUnavailableError, QueryTimeoutError
 
+log = logging.getLogger("adaa.agent")
+
 NOT_UNDERSTOOD = "I could not turn the question into a request. Please rephrase it."
+DEFAULT_MAX_ROWS = 20
+
+
+class AnswerForm(BaseModel):
+    """What the answer LLM fills: the answer is a field, never free text (ADR 0009)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    answer_text: str = Field(min_length=1)
 
 
 def understand(state: AgentState, context: AgentContext) -> dict[str, Any]:
@@ -61,3 +78,39 @@ def query(state: AgentState, context: AgentContext) -> dict[str, Any]:
         return {"error": AgentError(kind="query_timeout", message=str(e))}
     except DataUnavailableError as e:
         return {"error": AgentError(kind="data_unavailable", message=str(e))}
+
+
+def answer(state: AgentState, context: AgentContext) -> dict[str, Any]:
+    """Rows → answer text. Never stops the graph: the template answer is the fallback.
+
+    The answer job has max_attempts 1, so any failure — the LLM is down, its form is bad,
+    or a number in its text is not in the data — means the template answer at once (no
+    second paid call), and one log line so the failures of this component can be counted.
+    """
+    assert state.form is not None and state.result is not None, "answer runs after query"
+    max_rows = get_config().job_settings("answer").settings.max_rows or DEFAULT_MAX_ROWS
+    facts = build_facts(state.result, state.form, context.layer, max_rows)
+    messages = [
+        Message(role="system", content=context.answer_prompt.text),
+        Message(role="user", content=f"Question: {state.question}\n\n{facts.result_text()}"),
+    ]
+    fallback = {"facts": facts, "answer_text": facts.template_answer, "used_template": True}
+    try:
+        reply = complete("answer", messages, AnswerForm, adapter=context.adapter)
+    except LlmError as e:
+        log.warning("answer_llm_failed reason=%s", type(e).__name__)
+        return fallback
+
+    usage = state.usage + reply.usage
+    period = [str(state.form.period.start), str(state.form.period.end)] if state.form.period else []
+    allowed = [*facts.allowed_numbers, state.question, *period]
+    bad = unknown_numbers(reply.output.answer_text, allowed)
+    if bad:
+        log.warning("answer_guardrail_failed bad_numbers=%d", len(bad))
+        return {**fallback, "usage": usage}
+    return {
+        "facts": facts,
+        "answer_text": reply.output.answer_text,
+        "used_template": False,
+        "usage": usage,
+    }
