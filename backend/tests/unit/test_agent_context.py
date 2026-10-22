@@ -1,20 +1,8 @@
-from datetime import date, datetime
+from datetime import date
 
 from adaa.agent.context import load_context
 from adaa.llm.adapters.fake import FakeAdapter
-from adaa.semantic_layer.request import StructuredRequest
-from adaa.semantic_layer.runner import QueryResult
-
-
-def fake_ask(form: StructuredRequest) -> QueryResult:
-    """Answers the start-up queries: orders by month (data date) and one per dimension."""
-    if form.dimensions == ["month"]:
-        rows: list[tuple[object, ...]] = [(datetime(2018, 8, 1), 6300), (datetime(2018, 9, 1), 16)]
-    elif form.dimensions == ["customer_state"]:
-        rows = [("SP", 1), ("RJ", 1)]
-    else:
-        rows = [(f"{form.dimensions[0]}_value", 1)]
-    return QueryResult(columns=[], rows=rows, explanation=[], row_count=len(rows), elapsed_ms=0)
+from tests.unit.fakes import fake_ask
 
 
 def test_context_is_built_from_the_runner() -> None:
@@ -36,6 +24,5 @@ def test_versions_name_what_produced_the_answer() -> None:
     context = load_context(ask=fake_ask)
     versions = context.versions
     assert versions.semantic_layer == f"{context.layer.version} ({context.layer.fingerprint[:12]})"
-    assert versions.agent_prompt.startswith("0.1.0 (") and versions.answer_prompt.startswith(
-        "0.1.0 ("
-    )
+    assert versions.agent_prompt.startswith("0.1.0 (")
+    assert versions.answer_prompt.startswith("0.1.0 (")
