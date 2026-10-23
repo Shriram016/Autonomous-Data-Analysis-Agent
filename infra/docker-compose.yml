@@ -45,6 +45,8 @@ services:
       context: .. # the repo root: the image needs semantic_layer/, prompts/, config/
       dockerfile: backend/Dockerfile
     restart: unless-stopped
+    # -E: send task events, so Flower (below) can show running / done / failed jobs
+    command: ["celery", "-A", "adaa.worker.tasks", "worker", "--loglevel=INFO", "--concurrency=2", "-E"]
     env_file: ../.env # secrets are read at run time, never stored in the image
     environment:
       # Inside Docker, 127.0.0.1 is the container itself: reach the others by service name.
@@ -62,6 +64,18 @@ services:
       timeout: 10s
       retries: 3
       start_period: 20s
+
+  flower:
+    # Celery's web dashboard, local only: http://127.0.0.1:5555 (queue, running, done, failed).
+    # Starts only when asked: docker compose ... --profile tools up -d flower
+    image: mher/flower:2.0.1
+    profiles: ["tools"]
+    command: ["celery", "--broker=redis://redis:6379/0", "flower", "--port=5555"]
+    ports:
+      - "127.0.0.1:5555:5555" # this machine only
+    depends_on:
+      redis:
+        condition: service_healthy
 
 volumes:
   pgdata:

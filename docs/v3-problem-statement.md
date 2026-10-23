@@ -281,6 +281,11 @@ any preference used is stated in the answer's explanation. No automatic memory.
 
 **Langfuse Cloud** (LLM traces, cost, prompt versions; not self-hosted — too heavy for one VM) + **Grafana Cloud** (hosted Prometheus-style metrics) (system metrics,
 dashboard, alerts), both fed via **OpenTelemetry**. [ADR 0015](adr/0015-langfuse-plus-prometheus-grafana.md).
+**Queue metrics (added 2026-10-23, M1.4; build in M6):** jobs waiting in the queue (depth),
+jobs running, jobs done and failed (counts and rate), job time p50 / p95, oldest waiting job
+age, and workers alive. Alerts: queue depth or oldest-job age above a limit (add workers),
+failed-job rate above a limit, no worker alive. Locally: Flower (Celery's dashboard) and
+`redis-cli LLEN celery`.
 
 ### Level 1 — Caching (🔒 locked)
 
@@ -545,7 +550,8 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    baseline) → M3 reviews + hybrid (ingestion: translate → tag → embed → publish; hybrid
 >    search; quote guardrail) → M4 conversation (follow-ups, memory, preferences, caching) → M5
 >    actions + safety (approval, audit, masking, threat model + attack evals) → M6 production
->    hardening (Keycloak, isolation, quotas, failure handling, Langfuse + Grafana, load + chaos
+>    hardening (Keycloak, isolation, quotas, failure handling, Langfuse + Grafana incl. queue
+>    metrics, load + chaos
 >    tests) → M7 deploy + demo (EC2, wake-on-demand, guest access, video, write-up) → **M8
 >    mandatory cross-examination** + stretch. Smallest impressive version: M0–M3 + simple deploy.
 >
