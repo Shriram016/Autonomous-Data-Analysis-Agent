@@ -759,6 +759,20 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    `PENDING` (it keeps no list of jobs), so `get_result` says `waiting` for all three. Fix in
 >    M1.5: the question row in Postgres is created at submit (with the owner), so "no row" →
 >    `unknown`, and only the owner can fetch the job.
+>    ✅ **M1.4 worker + queue done (2026-10-23)**, commits `24578d4`…`20ff093`: Celery 5.6.3 app
+>    (`worker/celery_app.py`: Redis broker and result backend, `acks_late` +
+>    `task_reject_on_worker_lost`, visibility timeout 300 s, prefetch 1, time limits 150 /
+>    180 s, JSON only, results kept 1 day); task `adaa.answer_question` (`worker/tasks.py`:
+>    runs `ask()`, soft limit → `job_timeout` answer, warm-up per worker process, success log
+>    line without the answer); `worker/jobs.py` (`submit` → job number, `get_result` →
+>    waiting / running / done / failed); Docker worker (`backend/Dockerfile`, compose
+>    `worker` service, service names, health check); Flower on 127.0.0.1:5555 (local,
+>    `tools` profile). **Real run** (`check_worker.py`): 3/3 — normal path waiting → running
+>    → done; **crash test**: every worker process killed mid-job (SIGKILL, `WorkerLostError`),
+>    the same job was received again and finished by a new worker process with the correct
+>    answer. ~$0.002. 208 unit + 25 integration tests. **Next: M1.5 API** (FastAPI: submit +
+>    fetch endpoints; the question row in Postgres with owner, which also closes the
+>    `PENDING` gap; durable usage row).
 >    *Decisions still open in M1 (one at a time, when the slice starts):* M1.6 chart library (e.g. Recharts /
 >    ECharts). Cost rule: state what runs and the cost before any real LLM run.
 >

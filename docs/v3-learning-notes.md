@@ -420,3 +420,13 @@ Browser (React UI) → API (FastAPI) → Redis (queue) → workers ("celery work
 
 In production the API and the workers run on different machines, so each side grows on its
 own: more users → more API containers; a longer queue → more workers.
+
+### The crash test (2026-10-23)
+
+While a question was running, every worker process in the container was killed (SIGKILL).
+The worker log showed: job received → `Process 'ForkPoolWorker-1' exited with signal 9` →
+`WorkerLostError` → the same job id received again → a new process (`ForkPoolWorker-3`)
+finished it with the correct answer. This is `task_acks_late` (the slip stays in Redis until
+the job finishes) plus `task_reject_on_worker_lost` (a lost worker puts the slip back). The
+price: a job can run twice ("at least once"), so a task must be safe to repeat — ours only
+reads data, so a second run is harmless (it costs one more LLM call).

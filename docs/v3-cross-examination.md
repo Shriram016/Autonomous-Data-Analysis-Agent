@@ -224,3 +224,30 @@ observability), per job and model, as p50 / p95, not averages.
 **Interview one-liner:** "An LLM call is a few seconds by nature, so I design around it:
 stream progress, skip the LLM where a rule can answer, cut calls per question, and measure
 time-to-first-token at p95 before reaching for a faster model."
+
+---
+
+## Q6. What happens to a question if the worker crashes in the middle of it?
+
+**Short answer:** it is not lost. ADAA proved this with a test: every worker process was
+killed (SIGKILL) while a question was running; Celery put the job back on the queue, a new
+worker process started, and the same job finished with the correct answer.
+
+**How:** Celery removes a job from Redis only when the job finishes (`task_acks_late`), and
+puts it back when the worker process dies (`task_reject_on_worker_lost`). If the whole
+machine disappears, Redis gives the unfinished job to another worker after the visibility
+timeout (300 s, longer than the slowest question, so a slow job is not run twice by mistake).
+
+**The trade-off — "at least once":** a job can run twice (crash after the work, before the
+acknowledgement). So tasks must be safe to repeat (idempotent). Answering a question only
+reads data, so a repeat costs one extra LLM call and nothing else. Tasks that change things
+(M5 actions) need an idempotency key so a repeat does nothing.
+
+| Option | Pros | Cons |
+|---|---|---|
+| Acknowledge late (chosen) | No lost jobs | A job may run twice |
+| Acknowledge early (Celery default) | Never runs twice | A crash loses the job silently |
+| Checkpoints in Postgres (later, ADR 0011) | Resume from the last finished node, not the start | More code and storage |
+
+**Interview one-liner:** "I chose at-least-once delivery and made the work safe to repeat;
+I proved it by killing every worker mid-job and watching the same job finish on a new one."
