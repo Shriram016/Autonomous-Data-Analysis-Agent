@@ -1,0 +1,24 @@
+# Kept out of every Docker image built from the repo root.
+
+# Secrets: read at run time from .env through docker compose, never baked into an image.
+.env
+.env.*
+
+# Raw data (licence) and local caches
+data/
+**/.venv/
+**/__pycache__/
+**/.mypy_cache/
+**/.pytest_cache/
+**/.ruff_cache/
+
+# Not needed to run the backend
+.git/
+.claude/
+.vscode/
+docs/
+eval/
+frontend/
+backend/tests/
+backend/dev_checks/
+*.md
