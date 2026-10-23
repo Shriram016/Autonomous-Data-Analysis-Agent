@@ -12,8 +12,13 @@ from adaa.settings import get_settings
 
 SLOWEST_QUESTION_S = 100  # 2 agent attempts + answer at 30 s each + a 5 s query, rounded up
 
-app = Celery("adaa", broker=get_settings().redis_url)
+REDIS_URL = get_settings().redis_url
+
+app = Celery("adaa", broker=REDIS_URL, backend=REDIS_URL)  # slips and results both in Redis
 app.conf.update(
+    # --- Finished answers (the "pickup counter") ---
+    result_expires=24 * 60 * 60,  # keep a result 1 day; the permanent record is Postgres (M1.5)
+    task_track_started=True,  # record "running", not only "waiting" and "done"
     # --- Crash safety (off in Celery by default) ---
     task_acks_late=True,  # remove the slip from Redis only AFTER the job finishes
     task_reject_on_worker_lost=True,  # worker died mid-job? put the slip back on the queue

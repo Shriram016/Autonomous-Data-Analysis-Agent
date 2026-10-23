@@ -746,6 +746,13 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    handle: many settings (use only the needed few, each explained); crash safety off by
 >    default → `acks_late` + `task_reject_on_worker_lost`; Redis visibility timeout longer
 >    than the longest question; no Windows support → the worker runs in Docker (Linux).
+>    🔒 **Finished answers kept in Redis for 1 day (locked 2026-10-23, M1.4 step 3):** Celery's
+>    result backend in our Redis is the "pickup counter" until the API collects the answer.
+>    The permanent record (with user and conversation) goes to Postgres in M1.5.
+>    **Known gap → M1.5:** Celery shows an unknown, an expired and a still-queued job all as
+>    `PENDING` (it keeps no list of jobs), so `get_result` says `waiting` for all three. Fix in
+>    M1.5: the question row in Postgres is created at submit (with the owner), so "no row" →
+>    `unknown`, and only the owner can fetch the job.
 >    *Decisions still open in M1 (one at a time, when the slice starts):* M1.6 chart library (e.g. Recharts /
 >    ECharts). Cost rule: state what runs and the cost before any real LLM run.
 >

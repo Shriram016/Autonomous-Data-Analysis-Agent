@@ -15,6 +15,15 @@ later. Interview-style system-design questions live in [v3-cross-examination.md]
   - How does a copy learn about deletes and updates, not only new rows? (CDC vs watermark loads, tombstones)
   - Synchronous vs asynchronous replication: what is replication lag, and what can be lost on failover?
   - How does CDC work (for example Debezium → Kafka → warehouse)?
+- **Celery workers, end to end** — raised 2026-10-23 (M1.4): revisit what we coded
+  (`worker/celery_app.py` settings, `tasks.py`, `jobs.py`) and the wider options:
+  - The job life cycle: queued → `STARTED` → `SUCCESS` / `FAILURE` → result expires; why an
+    unknown or expired job also shows as `PENDING`
+  - Crash safety: `acks_late`, `task_reject_on_worker_lost`, the Redis visibility timeout, and
+    "at least once" delivery (a job can run twice, so tasks should be safe to repeat)
+  - Worker pools (prefork, threads, solo), concurrency, prefetch, soft vs hard time limits
+  - Retries with backoff, task routing to separate queues, rate limits, periodic tasks (beat)
+  - Monitoring (Flower), and how Dramatiq / RQ / arq solve the same problems
 - **Fingerprints (SHA-256)** — raised 2026-10-22 (M1.3): what a hash is, why any one-character
   edit changes it, why each answer records version + fingerprint (semantic layer, prompts)
 

@@ -26,6 +26,7 @@ ErrorKind = Literal[
     "compile_refused",  # the semantic layer can't answer the form (double count, ...)
     "query_timeout",  # the query took longer than the 5 s limit
     "data_unavailable",  # the database could not be reached
+    "job_timeout",  # the whole question passed the worker's soft time limit (M1.4)
 ]
 
 
