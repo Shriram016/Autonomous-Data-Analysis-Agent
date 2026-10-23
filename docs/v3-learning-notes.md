@@ -391,3 +391,32 @@ seconds; the API never blocks. At the start it can all run on one server.
 
 5 questions, 5/5 checks, $0.0027. The agent prompt (~4,360 tokens, mostly the value lists) is
 ~85% of the cost of a question.
+
+## M1.4 — Worker + queue
+
+### Celery is a library, not a server
+
+The queue lives in **Redis**. Celery is a Python library used in two places: the API uses it
+to put a job slip into Redis, and the `celery worker` command starts worker processes that
+take slips from Redis and call our task (`adaa.answer_question`). We never write the "pick a
+job from the queue" loop; Celery's worker does it. The API and the workers never talk to each
+other directly: both talk only to Redis (jobs) and Postgres (data).
+
+```
+Browser (React UI) → API (FastAPI) → Redis (queue) → workers ("celery worker") → Postgres + Claude
+```
+
+### Where each part runs
+
+| Part | Laptop now | Production |
+|---|---|---|
+| UI (React) | browser + local dev server (M1.6) | static files on a CDN (S3 + CloudFront, Vercel) |
+| API (FastAPI) | a process on the laptop (M1.5) | 2+ containers behind a load balancer |
+| Redis (queue) | Docker container `adaa-redis-1` | managed service (e.g. AWS ElastiCache) |
+| Workers | Docker container `adaa-worker-1` (2 processes) | a separate group of containers, scaled by queue length |
+| Postgres (data) | Docker container `adaa-postgres-1` | managed database (e.g. AWS RDS) |
+| Claude | Anthropic's cloud | Anthropic's cloud |
+| Secrets | `.env` file | a secret manager |
+
+In production the API and the workers run on different machines, so each side grows on its
+own: more users → more API containers; a longer queue → more workers.

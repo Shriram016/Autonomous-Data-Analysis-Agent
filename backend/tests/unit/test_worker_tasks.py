@@ -51,3 +51,10 @@ def test_warm_up_loads_the_context(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_the_task_has_a_stable_name() -> None:
     assert tasks.answer_question.name == "adaa.answer_question"  # the API sends jobs by name
+
+
+def test_the_success_log_line_never_holds_the_answer() -> None:
+    from celery.app import trace
+
+    assert "return_value" not in trace.LOG_SUCCESS  # names and run time only
+    assert "%(id)s" in trace.LOG_SUCCESS and "%(runtime)s" in trace.LOG_SUCCESS

@@ -10,6 +10,7 @@ wait for the catalogue and data-date queries.
 
 from typing import Any
 
+from celery.app import trace
 from celery.exceptions import SoftTimeLimitExceeded
 from celery.signals import worker_process_init
 
@@ -19,6 +20,11 @@ from adaa.agent.state import NO_USAGE, FinishedAnswer
 from adaa.worker.celery_app import app
 
 TIMEOUT_TEXT = "That question took too long. Try a narrower time range or fewer breakdowns."
+
+# Celery's "succeeded" log line prints the whole return value: the question, the answer and
+# the table. Our logging rule is names and counts only, never question or answer text (the
+# same rule as llm.complete), so keep the job name, id and run time, and drop the value.
+trace.LOG_SUCCESS = "Task %(name)s[%(id)s] succeeded in %(runtime)ss"
 
 
 @worker_process_init.connect
