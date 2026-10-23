@@ -5,6 +5,7 @@ description = "ADAA V3 backend: API, workers and the LangGraph agent"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "anthropic>=1.17.0",
+    "celery>=5.6.3",
     "langgraph>=1.2.16",
     "psycopg[binary]>=3.3.6",
     "pydantic>=2.7",
@@ -20,6 +21,7 @@ dev = [
     "mypy>=1.11",
     "pre-commit>=3.8",
     "types-pyyaml>=6.0.12.20260906",
+    "celery-types>=0.26.0",
 ]
 
 [tool.uv]

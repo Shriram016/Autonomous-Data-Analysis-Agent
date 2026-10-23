@@ -739,7 +739,14 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    ~$0.0005 per question, $0.0027 total; 2–9 s per question. Small wording point for later:
 >    an answer said "top 20 of 27" while naming only 3 states. 192 unit + 25 integration
 >    tests. **Next: M1.4 worker + queue** (queue library decision first).
->    *Decisions still open in M1 (one at a time, when the slice starts):* M1.4 queue library (e.g. arq / RQ / Celery); M1.6 chart library (e.g. Recharts /
+>    🔒 **M1.4 queue library = Celery (locked 2026-10-22)**, with Redis as the broker (Redis is
+>    the storage, not a choice). Chosen as the industry standard, for learning and CV value,
+>    over Dramatiq (recommended: simpler, crash-safe by default), RQ (simplest; Windows worker
+>    for testing only) and async queues (arq / Taskiq; our code is sync). Known difficulties to
+>    handle: many settings (use only the needed few, each explained); crash safety off by
+>    default → `acks_late` + `task_reject_on_worker_lost`; Redis visibility timeout longer
+>    than the longest question; no Windows support → the worker runs in Docker (Linux).
+>    *Decisions still open in M1 (one at a time, when the slice starts):* M1.6 chart library (e.g. Recharts /
 >    ECharts). Cost rule: state what runs and the cost before any real LLM run.
 >
 >
