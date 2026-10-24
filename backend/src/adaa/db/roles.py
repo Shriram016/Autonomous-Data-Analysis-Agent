@@ -52,21 +52,37 @@ def setup_query_role(conn: psycopg.Connection, password: str) -> None:
     )
 
 
+def setup_app_role(conn: psycopg.Connection, password: str) -> None:
+    """adaa_app: the app's own rows (questions, later conversations). No business data."""
+    create_or_update_login(conn, "adaa_app", password)
+    conn.execute("GRANT USAGE ON SCHEMA conversation TO adaa_app")
+    conn.execute("GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA conversation TO adaa_app")
+    # Alembic migrations run as the owner and create tables later; grant those automatically.
+    # No DELETE: rows are kept (the usage record); deleting is a separate, deliberate job.
+    conn.execute(
+        "ALTER DEFAULT PRIVILEGES FOR ROLE adaa_owner IN SCHEMA conversation "
+        "GRANT SELECT, INSERT, UPDATE ON TABLES TO adaa_app"
+    )
+
+
 def main() -> None:
     settings = get_settings()
     passwords = {
         "ADAA_DB_LOADER_PASSWORD": settings.db_loader_password,
         "ADAA_DB_QUERY_PASSWORD": settings.db_query_password,
+        "ADAA_DB_APP_PASSWORD": settings.db_app_password,
     }
     missing = [name for name, value in passwords.items() if value is None]
     if missing:
         raise SystemExit(f"Set {', '.join(missing)} in .env first.")
-    assert settings.db_loader_password and settings.db_query_password
+    assert settings.db_loader_password and settings.db_query_password and settings.db_app_password
     with psycopg.connect(settings.postgres_conninfo("owner")) as conn:
         setup_loader_role(conn, settings.db_loader_password.get_secret_value())
         setup_query_role(conn, settings.db_query_password.get_secret_value())
+        setup_app_role(conn, settings.db_app_password.get_secret_value())
     print("Role adaa_loader ready: USAGE + CREATE on schemas staging, business.")
     print(f"Role adaa_query ready: SELECT on business only, timeout {QUERY_STATEMENT_TIMEOUT}.")
+    print("Role adaa_app ready: SELECT, INSERT, UPDATE on schema conversation only.")
 
 
 if __name__ == "__main__":

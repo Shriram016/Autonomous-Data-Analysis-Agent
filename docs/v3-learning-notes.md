@@ -24,6 +24,14 @@ later. Interview-style system-design questions live in [v3-cross-examination.md]
   - Worker pools (prefork, threads, solo), concurrency, prefetch, soft vs hard time limits
   - Retries with backoff, task routing to separate queues, rate limits, periodic tasks (beat)
   - Monitoring (Flower), and how Dramatiq / RQ / arq solve the same problems
+- **Alembic and migrations in a deployment pipeline** — raised 2026-10-24 (M1.5):
+  - What a migration is (`upgrade()` / `downgrade()`), the `alembic_version` table, autogenerate
+    and why a person must still check the drafted file
+  - Where `alembic upgrade head` runs: a one-off `migrate` container locally; in production one
+    pipeline step (GitHub Actions → EC2: build → push → migrate once → start API + workers),
+    never inside the API's start-up (several copies would race)
+  - Safe changes with old and new code running side by side (expand → migrate → contract),
+    and Kubernetes / ECS one-off jobs for the same step
 - **Fingerprints (SHA-256)** — raised 2026-10-22 (M1.3): what a hash is, why any one-character
   edit changes it, why each answer records version + fingerprint (semantic layer, prompts)
 

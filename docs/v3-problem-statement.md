@@ -773,6 +773,26 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    answer. ~$0.002. 208 unit + 25 integration tests. **Next: M1.5 API** (FastAPI: submit +
 >    fetch endpoints; the question row in Postgres with owner, which also closes the
 >    `PENDING` gap; durable usage row).
+>    🔒 **M1.5 answer delivery = SSE streaming (locked 2026-10-23):** the UI opens one HTTP
+>    connection; each graph node writes a progress event ("Understanding…", "Running the
+>    query…", "Writing the answer…", then the answer) into **Redis Streams**; the API reads
+>    them and sends them as Server-Sent Events. Stream ids let a reconnecting UI resume with
+>    `Last-Event-ID`. `GET /questions/{id}` stays for a plain check and page reloads.
+>    Rejected: polling (no progress steps, wasted requests), WebSockets (two-way not needed,
+>    more complex). SSE is the common choice for one-way AI answer streaming.
+>    🔒 **Owner before login (locked 2026-10-23, temporary until M6):** every question gets the
+>    fixed owner `local-dev`. The owner column and the owner check are built and tested now;
+>    in M6, Keycloak only changes where the user id comes from (the token), not the table or
+>    the checks.
+>    🔒 **Questions table + migrations (locked 2026-10-24, M1.5 step 1):** `conversation.questions`
+>    — `id` (random UUID), `owner`, `question`, `state` (waiting / running / done / failed,
+>    checked by the database), `answer` (the FinishedAnswer as JSON), `input_tokens`,
+>    `output_tokens`, `thinking_tokens`, `cost_usd` (the durable usage record), `created_at`,
+>    `started_at`, `finished_at`, and two generated columns `wait_seconds` (started −
+>    created: queue time) and `total_seconds` (finished − created: what the user felt, for
+>    p95). Index on (owner, created_at). New role `adaa_app`: read/write the `conversation`
+>    schema only, no business data. Table changes go through **Alembic** migrations (numbered
+>    files; `alembic upgrade head` applies the missing ones on any database).
 >    *Decisions still open in M1 (one at a time, when the slice starts):* M1.6 chart library (e.g. Recharts /
 >    ECharts). Cost rule: state what runs and the cost before any real LLM run.
 >

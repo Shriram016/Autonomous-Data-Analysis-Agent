@@ -22,6 +22,8 @@ RUN uv sync --frozen --no-dev --no-install-project
 
 # 2) The code and the files it reads at run time.
 COPY backend/src ./src
+COPY backend/alembic.ini ./
+COPY backend/migrations ./migrations
 COPY semantic_layer /app/semantic_layer
 COPY prompts /app/prompts
 COPY config /app/config

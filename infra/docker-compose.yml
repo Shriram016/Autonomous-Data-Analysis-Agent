@@ -38,6 +38,22 @@ services:
       timeout: 3s
       retries: 10
 
+  migrate:
+    # One-time job: bring the app's tables up to date (Alembic), then stop.
+    # The worker (and later the API) starts only after it finished successfully.
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    command: ["alembic", "upgrade", "head"]
+    restart: "no"
+    env_file: ../.env
+    environment:
+      ADAA_DB_HOST: postgres
+      ADAA_DB_PORT: "5432"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   worker:
     # The Celery worker (M1.4): takes questions from the Redis queue and runs the agent.
     # Runs in Linux here because Celery does not support Windows.
@@ -58,6 +74,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully # tables are up to date first
     healthcheck:
       test: ["CMD-SHELL", "celery -A adaa.worker.tasks inspect ping --timeout 5"]
       interval: 30s
