@@ -793,6 +793,10 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    p95). Index on (owner, created_at). New role `adaa_app`: read/write the `conversation`
 >    schema only, no business data. Table changes go through **Alembic** migrations (numbered
 >    files; `alembic upgrade head` applies the missing ones on any database).
+>    🔒 **Question length (locked 2026-10-24, M1.5 step 5):** 1–500 characters, checked by the
+>    API before anything runs (no LLM call). A real business question is 1–2 sentences; the
+>    limit caps cost, the room for hidden instructions (prompt injection) and abuse. It does not
+>    judge meaning: off-topic and harmful questions are the refuse / off-topic routes' job.
 >    *Decisions still open in M1 (one at a time, when the slice starts):* M1.6 chart library (e.g. Recharts /
 >    ECharts). Cost rule: state what runs and the cost before any real LLM run.
 >
