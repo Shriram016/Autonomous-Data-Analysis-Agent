@@ -797,6 +797,18 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    API before anything runs (no LLM call). A real business question is 1–2 sentences; the
 >    limit caps cost, the room for hidden instructions (prompt injection) and abuse. It does not
 >    judge meaning: off-topic and harmful questions are the refuse / off-topic routes' job.
+>    ✅ **M1.5 API done (2026-10-24)**, commits `b20df7b`…`3fd38fc` + record: Alembic `0001`
+>    questions table + `adaa_app` role + one-time `migrate` job; `conversation/questions.py`
+>    (create, running, save answer + usage, failed, get with owner check; safe to repeat);
+>    `worker/events.py` (Redis Streams, Last-Event-ID resume, 1-day expiry); worker writes the
+>    row and a step event per node (`ask(on_step=…)`), question id = job id, answers live in
+>    Postgres (the `PENDING` gap is closed); FastAPI `api/app.py` (POST 202 + id, GET with
+>    404 for unknown or not yours, SSE stream with keep-alive, `/health`); `api` service in
+>    Docker on 127.0.0.1:8000 (docs at `/docs`). **Real run** (`check_api.py`): 5/5 — steps
+>    streamed live (understand 0.0 s → query 2.7 s → answer 2.9 s → done 4.3 s); "Paris"
+>    stopped after the first step; row saved with cost, wait 0.015 s, total 4.3 s; random id →
+>    404; 501 characters → 422. ~$0.0011. 219 unit + 37 integration tests. **Next: M1.6 React
+>    page** (chart library decision first).
 >    *Decisions still open in M1 (one at a time, when the slice starts):* M1.6 chart library (e.g. Recharts /
 >    ECharts). Cost rule: state what runs and the cost before any real LLM run.
 >

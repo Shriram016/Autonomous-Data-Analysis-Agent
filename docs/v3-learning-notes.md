@@ -453,3 +453,32 @@ finished it with the correct answer. This is `task_acks_late` (the slip stays in
 the job finishes) plus `task_reject_on_worker_lost` (a lost worker puts the slip back). The
 price: a job can run twice ("at least once"), so a task must be safe to repeat — ours only
 reads data, so a second run is harmless (it costs one more LLM call).
+
+## M1.5 — API
+
+### One question through the whole service
+
+1. UI → `POST /questions` → the API creates the row in Postgres (`waiting`), queues a job with
+   the same id, and answers 202 + the id at once.
+2. UI opens `GET /questions/{id}/events` (SSE).
+3. A worker takes the job: row `running` → a step event before each node (Redis Stream) →
+   saves the answer, tokens and cost in the row (`done`) → publishes `done`.
+4. The API sees `done`, reads the answer from the row (owner check), sends it, closes the stream.
+5. A page reload later: `GET /questions/{id}` reads the answer straight from Postgres.
+
+Where things live: question + answer → Postgres (kept); job slip → Redis queue (removed when
+done); steps → Redis Stream (expires after 1 day).
+
+### SSE (Server-Sent Events)
+
+One HTTP connection the server keeps open and writes small messages into (`id:`, `event:`,
+`data:`). One way only (server → browser), which is all a question needs. If the connection
+drops, the browser reconnects by itself and sends `Last-Event-ID`, so no step is missed. A
+`: still here` comment line every 15 s keeps proxies from closing a quiet stream. WebSockets
+are for two-way traffic (voice, games, chat between people).
+
+### First run through the API (2026-10-24)
+
+5/5. Steps arrived live (understand 0.0 s → query 2.7 s → answer 2.9 s → done 4.3 s). The job
+waited 0.015 s in the queue; the user waited 4.3 s in total. "Paris" stopped after the first
+step. Cost ~$0.0011.
