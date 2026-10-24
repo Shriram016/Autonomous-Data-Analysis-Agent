@@ -24,6 +24,12 @@ later. Interview-style system-design questions live in [v3-cross-examination.md]
   - Worker pools (prefork, threads, solo), concurrency, prefetch, soft vs hard time limits
   - Retries with backoff, task routing to separate queues, rate limits, periodic tasks (beat)
   - Monitoring (Flower), and how Dramatiq / RQ / arq solve the same problems
+- **Docker deployment and CI/CD pipelines** — raised 2026-10-24 (M1.5); part of the plan
+  (M6–M7), to study properly at the end of the build:
+  - Images vs containers, layers and caching, image registries, tags per git commit
+  - Compose locally vs production hosting (one VM, ECS, Kubernetes); health checks, restarts
+  - A GitHub Actions pipeline: tests → build → push → migrate once → roll out → roll back
+  - Secrets in production (a secret manager instead of `.env`), and zero-downtime deploys
 - **Alembic and migrations in a deployment pipeline** — raised 2026-10-24 (M1.5):
   - What a migration is (`upgrade()` / `downgrade()`), the `alembic_version` table, autogenerate
     and why a person must still check the drafted file
@@ -401,6 +407,15 @@ seconds; the API never blocks. At the start it can all run on one server.
 ~85% of the cost of a question.
 
 ## M1.4 — Worker + queue
+
+### Looking inside Redis
+
+`docker exec -it adaa-redis-1 redis-cli` opens Redis's command tool (like `psql`). `KEYS *`
+lists keys (local only, never on a busy production Redis); `TYPE <key>`; `LLEN celery` and
+`LRANGE celery 0 -1` show the waiting job slips; `XRANGE adaa:events:<question id> - +` shows
+one question's progress events; `GET celery-task-meta-<job id>` shows a finished job's result;
+`TTL <key>` shows seconds until it expires. Visual option: RedisInsight (free, official),
+connected to 127.0.0.1:6379.
 
 ### Celery is a library, not a server
 
