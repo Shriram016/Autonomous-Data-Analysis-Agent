@@ -54,6 +54,41 @@ services:
       postgres:
         condition: service_healthy
 
+  api:
+    # The API (M1.5): takes questions, queues them, streams progress (SSE). Never runs the agent.
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    command: ["uvicorn", "adaa.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      ADAA_DB_HOST: postgres
+      ADAA_DB_PORT: "5432"
+      ADAA_REDIS_URL: redis://redis:6379/0
+    ports:
+      - "127.0.0.1:8000:8000" # this machine only
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      # The slim image has no curl, so Python asks /health (200 = Postgres and Redis answer).
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5)",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
   worker:
     # The Celery worker (M1.4): takes questions from the Redis queue and runs the agent.
     # Runs in Linux here because Celery does not support Windows.
