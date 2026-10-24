@@ -1,62 +1,46 @@
-"""Submit and fetch with Celery replaced by small fakes: no worker, no Redis, no cost."""
+"""Submit and fetch with the table and Celery replaced by small fakes: no database, no Redis."""
 
 from types import SimpleNamespace
 from typing import Any
+from uuid import UUID, uuid4
 
 import pytest
 
-from adaa.agent.state import NO_USAGE, FinishedAnswer, Versions
 from adaa.worker import jobs
-from adaa.worker.celery_app import app
 
-ANSWER = FinishedAnswer(
-    question="Total revenue",
-    status="answered",
-    text="Revenue was R$ 100.00.",
-    versions=Versions(
-        semantic_layer="0.3.3 (x)", agent_prompt="0.1.0 (y)", answer_prompt="0.1.0 (z)"
-    ),
-    usage=NO_USAGE,
-)
+QID = uuid4()
 
 
-def fake_result(monkeypatch: pytest.MonkeyPatch, state: str, result: Any = None) -> None:
-    monkeypatch.setattr(
-        jobs, "AsyncResult", lambda job_id, app: SimpleNamespace(state=state, result=result)
-    )
-
-
-def test_submit_returns_the_job_number_at_once(monkeypatch: pytest.MonkeyPatch) -> None:
-    sent: list[str] = []
-
-    def delay(question: str) -> SimpleNamespace:
-        sent.append(question)
-        return SimpleNamespace(id="job-123")
-
-    monkeypatch.setattr(jobs.answer_question, "delay", delay)
-    assert jobs.submit("Total revenue") == "job-123"
-    assert sent == ["Total revenue"]
-
-
-@pytest.mark.parametrize(
-    ("celery_state", "state"),
-    [("PENDING", "waiting"), ("RETRY", "waiting"), ("STARTED", "running"), ("FAILURE", "failed")],
-)
-def test_celery_states_become_plain_states(
-    monkeypatch: pytest.MonkeyPatch, celery_state: str, state: str
+def test_submit_creates_the_row_first_and_uses_its_id_as_the_job_id(
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    fake_result(monkeypatch, celery_state)
-    status = jobs.get_result("job-123")
-    assert status.state == state and status.answer is None
+    order: list[str] = []
+    queued: dict[str, Any] = {}
+
+    def create_question(owner: str, question: str) -> UUID:
+        order.append("row")
+        return QID
+
+    def apply_async(args: tuple[str, str], task_id: str) -> SimpleNamespace:
+        order.append("queue")
+        queued.update(args=args, task_id=task_id)
+        return SimpleNamespace(id=task_id)
+
+    monkeypatch.setattr(jobs.questions, "create_question", create_question)
+    monkeypatch.setattr(jobs.answer_question, "apply_async", apply_async)
+
+    assert jobs.submit("local-dev", "Total revenue") == QID
+    assert order == ["row", "queue"]  # the row exists before any worker can see the job
+    assert queued == {"args": (str(QID), "Total revenue"), "task_id": str(QID)}  # one id
 
 
-def test_done_carries_the_finished_answer(monkeypatch: pytest.MonkeyPatch) -> None:
-    fake_result(monkeypatch, "SUCCESS", ANSWER.model_dump(mode="json"))  # as Redis returns it
-    status = jobs.get_result("job-123")
-    assert status.state == "done" and status.answer == ANSWER
+def test_get_result_reads_the_row_with_the_owner_check(monkeypatch: pytest.MonkeyPatch) -> None:
+    asked: list[tuple[UUID, str]] = []
 
+    def get_question(question_id: UUID, owner: str) -> None:
+        asked.append((question_id, owner))
+        return None  # unknown, or someone else's
 
-def test_results_are_kept_in_redis_for_one_day() -> None:
-    assert app.conf.result_backend == app.conf.broker_url
-    assert app.conf.result_expires == 24 * 60 * 60
-    assert app.conf.task_track_started is True
+    monkeypatch.setattr(jobs.questions, "get_question", get_question)
+    assert jobs.get_result(QID, "someone-else") is None
+    assert asked == [(QID, "someone-else")]

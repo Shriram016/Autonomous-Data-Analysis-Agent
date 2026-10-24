@@ -110,3 +110,17 @@ def test_value_notes_reach_the_how_lines() -> None:
     context, _ = fake_context(toy, sentence("Toys made R$ 100.00."))
     result = ask("Revenue for toy", with_rows(context, query_result((Decimal(100),))))
     assert "I read 'toy' as 'toys'." in result.how
+
+
+def test_the_progress_hook_announces_each_node_in_order() -> None:
+    context, _ = fake_context(REVENUE_BY_STATE, sentence("SP led."))
+    seen: list[str] = []
+    ask("Revenue by state in 2017", with_rows(context), on_step=seen.append)
+    assert seen == ["understand", "query", "answer"]
+
+
+def test_the_progress_hook_stops_with_the_graph() -> None:
+    context, _ = fake_context(LlmUnavailableError("down"))
+    seen: list[str] = []
+    ask("Total revenue", with_rows(context), on_step=seen.append)
+    assert seen == ["understand"]  # the error stopped the graph after the first node

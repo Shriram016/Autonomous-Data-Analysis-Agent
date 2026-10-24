@@ -1,12 +1,13 @@
-"""M1.4 check: questions through the real queue and the Docker worker, plus a crash test.
+"""M1.4–M1.5 check: questions through the real queue and the Docker worker, plus a crash test.
 
-This script plays the API's part: it submits jobs into Redis and polls their state. The
-Celery worker in Docker picks them up by itself. Costs money (~$0.002). Runs only by hand.
-Needs the 3 containers healthy (docker compose ps) and ANTHROPIC_API_KEY in .env.
+This script plays the API's part: it submits questions (a Postgres row + a job in Redis) and
+polls the row. The Celery worker in Docker picks the jobs up by itself and publishes progress
+events, which are printed at the end. Costs money (~$0.002). Runs only by hand. Needs the
+containers healthy (docker compose ps) and ANTHROPIC_API_KEY in .env.
 
-Crash test: while a job is running, every worker process inside the container is killed.
-With task_acks_late + task_reject_on_worker_lost, Celery puts the job back on the queue,
-new worker processes start, and the job still ends "done".
+Crash test: while a question is running, every worker process inside the container is killed.
+With task_acks_late + task_reject_on_worker_lost, Celery puts the job back on the queue, new
+worker processes start, and the question still ends "done".
 
 Run from backend/:  uv run python dev_checks/check_worker.py
 """
@@ -14,8 +15,12 @@ Run from backend/:  uv run python dev_checks/check_worker.py
 import subprocess
 import sys
 import time
+from collections.abc import Callable
+from uuid import UUID
 
-from adaa.worker.jobs import JobStatus, get_result, submit
+from adaa.conversation.questions import LOCAL_OWNER, QuestionRecord
+from adaa.worker import events
+from adaa.worker.jobs import get_result, submit
 
 CONTAINER = "adaa-worker-1"
 WAIT_S = 120
@@ -28,21 +33,30 @@ KILL_WORKERS = (
 )
 
 
-def follow(job_id: str, on_running: object = None) -> tuple[JobStatus, list[str]]:
-    """Poll once a second; return the last status and every state seen, in order."""
-    seen: list[str] = []
+def follow(question_id: UUID, on_running: Callable[[], None] | None = None) -> QuestionRecord:
+    """Poll the row once a second; print each state change; return the last row."""
+    last_state = ""
     deadline = time.monotonic() + WAIT_S
-    while time.monotonic() < deadline:
-        status = get_result(job_id)
-        if not seen or seen[-1] != status.state:
-            seen.append(status.state)
-            print(f"  state: {status.state}")
-            if status.state == "running" and callable(on_running):
+    while True:
+        record = get_result(question_id, LOCAL_OWNER)
+        assert record is not None, "the row is created at submit"
+        if record.state != last_state:
+            last_state = record.state
+            print(f"  state: {record.state}")
+            if record.state == "running" and on_running:
                 on_running()
-        if status.state in ("done", "failed"):
-            return status, seen
+        if record.state in ("done", "failed") or time.monotonic() > deadline:
+            return record
         time.sleep(1)
-    return status, seen
+
+
+def show(question_id: UUID, record: QuestionRecord) -> None:
+    for _, event in events.read(question_id):
+        print(f"  event: {event.kind}{f'  {event.text}' if event.text else ''}")
+    if record.answer:
+        print(f"  answer: {record.answer.text}")
+    times = f"wait {record.wait_seconds} s, total {record.total_seconds} s"
+    print(f"  row: cost ${record.cost_usd}, {times}")
 
 
 def kill_workers() -> None:
@@ -61,35 +75,32 @@ def main() -> None:
     results: list[bool] = []
 
     print("=== Part 1: normal path")
-    for question, name, expect in [
+    cases: list[tuple[str, str, Callable[[QuestionRecord], bool]]] = [
         (
             "What was the total revenue?",
             "answered, R$ 13,221,498.11",
-            lambda s: s.answer.status == "answered" and "R$ 13,221,498.11" in s.answer.text,
+            lambda r: r.answer is not None and "R$ 13,221,498.11" in r.answer.text,
         ),
         (
             "Revenue in Paris",
             "done, with the plain value_not_found message",
-            lambda s: s.answer.status == "failed" and s.answer.error_kind == "value_not_found",
+            lambda r: r.answer is not None and r.answer.error_kind == "value_not_found",
         ),
-    ]:
-        job_id = submit(question)
-        print(f"\n{question}\n  job: {job_id}")
-        status, seen = follow(job_id)
-        if status.answer:
-            print(f"  answer: {status.answer.text}  (${status.answer.usage.cost_usd:.6f})")
-        results.append(
-            check(name, status.state == "done" and status.answer is not None and expect(status))
-        )
+    ]
+    for question, name, expect in cases:
+        question_id = submit(LOCAL_OWNER, question)
+        print(f"\n{question}\n  id: {question_id}")
+        record = follow(question_id)
+        show(question_id, record)
+        results.append(check(name, record.state == "done" and expect(record)))
 
     print("\n=== Part 2: crash test")
     question = "Revenue by customer state in 2017"
-    job_id = submit(question)
-    print(f"{question}\n  job: {job_id}")
-    status, seen = follow(job_id, on_running=kill_workers)
-    if status.answer:
-        print(f"  answer: {status.answer.text}")
-    results.append(check("the job survived the crash and ended done", status.state == "done"))
+    question_id = submit(LOCAL_OWNER, question)
+    print(f"{question}\n  id: {question_id}")
+    record = follow(question_id, on_running=kill_workers)
+    show(question_id, record)
+    results.append(check("the question survived the crash and ended done", record.state == "done"))
 
     print(f"\n{sum(results)} of {len(results)} checks passed.")
 

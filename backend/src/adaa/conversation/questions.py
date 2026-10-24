@@ -26,6 +26,8 @@ from adaa.settings import get_settings
 
 QuestionState = Literal["waiting", "running", "done", "failed"]
 
+LOCAL_OWNER = "local-dev"  # every question's owner until login exists (M6, §0)
+
 
 class QuestionRecord(BaseModel):
     model_config = ConfigDict(frozen=True)

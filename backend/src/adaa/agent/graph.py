@@ -10,7 +10,7 @@ the state lives in memory for one question (checkpoints in Postgres come later).
 """
 
 from collections.abc import Callable
-from functools import partial
+from typing import Any
 
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
@@ -31,11 +31,26 @@ def next_or_stop(next_node: str) -> Callable[[AgentState], str]:
     return route
 
 
-def build_graph(context: AgentContext) -> CompiledStateGraph:
+StepHook = Callable[[str], None]  # called with a node's name just before the node runs
+Node = Callable[[AgentState, AgentContext], dict[str, Any]]
+
+
+def with_hook(name: str, node: Node, context: AgentContext, on_step: StepHook | None) -> Any:
+    """The node, bound to the context, announcing itself first (for progress events)."""
+
+    def run(state: AgentState) -> dict[str, Any]:
+        if on_step:
+            on_step(name)
+        return node(state, context)
+
+    return run
+
+
+def build_graph(context: AgentContext, on_step: StepHook | None = None) -> CompiledStateGraph:
     graph = StateGraph(AgentState)
-    graph.add_node("understand", partial(nodes.understand, context=context))
-    graph.add_node("query", partial(nodes.query, context=context))
-    graph.add_node("answer", partial(nodes.answer, context=context))
+    graph.add_node("understand", with_hook("understand", nodes.understand, context, on_step))
+    graph.add_node("query", with_hook("query", nodes.query, context, on_step))
+    graph.add_node("answer", with_hook("answer", nodes.answer, context, on_step))
 
     graph.add_edge(START, "understand")
     graph.add_conditional_edges("understand", next_or_stop("query"), ["query", END])
@@ -63,8 +78,14 @@ def finish(state: AgentState, context: AgentContext) -> FinishedAnswer:
     )
 
 
-def ask(question: str, context: AgentContext | None = None) -> FinishedAnswer:
-    """One English question in, one finished answer out."""
+def ask(
+    question: str, context: AgentContext | None = None, on_step: StepHook | None = None
+) -> FinishedAnswer:
+    """One English question in, one finished answer out.
+
+    on_step: called with "understand", "query" or "answer" before that node runs; the worker
+    uses it to publish progress events. The nodes themselves know nothing about it.
+    """
     context = context or get_context()
-    final = build_graph(context).invoke(AgentState(question=question))
+    final = build_graph(context, on_step).invoke(AgentState(question=question))
     return finish(AgentState.model_validate(final), context)
