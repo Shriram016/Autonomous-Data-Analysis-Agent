@@ -819,6 +819,11 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    optional `chart` (kind, axis labels, unit, raw numbers) built by code from the raw rows:
 >    1 time breakdown → line (all points, oldest first); 1 category breakdown → bar (top 20);
 >    a single number or 2 breakdowns → no chart (multi-line charts later).
+>    🔒 **Frontend types are generated (locked 2026-10-25):** `openapi-typescript` turns FastAPI's
+>    OpenAPI description into `frontend/src/api-types.ts`, so the Pydantic models are the one
+>    source of truth and a backend change shows up as a type error in the page. Regenerate
+>    after a backend change (two commands, in `frontend/src/api.ts`). The SSE event shapes are
+>    not in OpenAPI and are typed by hand there, using the generated FinishedAnswer.
 >    *Decisions still open in M1 (one at a time, when the slice starts):* M1.6 chart library (e.g. Recharts /
 >    ECharts). Cost rule: state what runs and the cost before any real LLM run.
 >

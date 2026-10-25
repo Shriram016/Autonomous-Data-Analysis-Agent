@@ -1,0 +1,50 @@
+import type { FinishedAnswer } from "../api";
+
+type Props = { answer: FinishedAnswer };
+
+/** The answer: the sentence, (the chart, step 5), the full table, and "How I got this". */
+export function AnswerView({ answer }: Props) {
+  if (answer.status === "failed") {
+    // The agent ran but could not answer (e.g. a place not in the data): a plain message.
+    return <p className="message">{answer.text}</p>;
+  }
+  return (
+    <section className="answer">
+      <p className="answer-text">{answer.text}</p>
+
+      {/* The chart goes here (M1.6 step 5). */}
+
+      {answer.table && (
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                {answer.table.headers.map((header) => (
+                  <th key={header}>{header}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {answer.table.rows.map((row, r) => (
+                <tr key={r}>
+                  {row.map((cell, c) => (
+                    <td key={c}>{cell}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <details className="how">
+        <summary>How I got this</summary>
+        <ul>
+          {answer.how.map((line) => (
+            <li key={line}>{line}</li>
+          ))}
+        </ul>
+      </details>
+    </section>
+  );
+}

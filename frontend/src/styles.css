@@ -1,0 +1,132 @@
+/* One page, one column. Colors are tokens with a dark set, so the page follows the
+   viewer's light or dark system setting. */
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --ink: #1c2330;
+  --muted: #5b6577;
+  --line: #d4d9e2;
+  --accent: #2f5d8a;
+  --accent-soft: #e3ecf5;
+  --warn: #9a3b22;
+  --warn-soft: #f8e6df;
+  --ok: #2d7a4b;
+  --body: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: Consolas, "SFMono-Regular", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #12161d;
+    --surface: #1a2029;
+    --ink: #e4e8ef;
+    --muted: #9aa4b5;
+    --line: #343d4b;
+    --accent: #7fa9d4;
+    --accent-soft: #1f2d3d;
+    --warn: #e59a82;
+    --warn-soft: #3a2420;
+    --ok: #6fc28f;
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.55 var(--body);
+}
+.page {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 32px max(16px, env(safe-area-inset-left, 0px)) 48px;
+  display: grid;
+  gap: 20px;
+}
+header h1 { margin: 0; font-size: 1.6rem; letter-spacing: 0.02em; }
+.subtitle { margin: 4px 0 0; color: var(--muted); }
+
+/* --- question box --- */
+.question-box {
+  display: grid;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+}
+.question-box label { font-weight: 600; }
+.question-row { display: flex; gap: 8px; }
+.question-row input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--ink);
+}
+button {
+  font: inherit;
+  cursor: pointer;
+  border-radius: 8px;
+}
+button[type="submit"] {
+  padding: 10px 18px;
+  border: 0;
+  background: var(--accent);
+  color: var(--surface);
+  font-weight: 600;
+}
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+button:focus-visible, input:focus-visible, summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.question-meta { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.examples { display: flex; gap: 6px; flex-wrap: wrap; }
+.example {
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  background: var(--accent-soft);
+  color: var(--ink);
+  font-size: 0.85rem;
+}
+.counter { color: var(--muted); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+
+/* --- live steps --- */
+.steps { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; color: var(--muted); }
+.steps li { display: flex; gap: 8px; align-items: baseline; }
+.steps .mark { width: 1.2em; text-align: center; }
+.steps .done .mark { color: var(--ok); }
+.steps .active { color: var(--ink); font-weight: 600; }
+.steps.waiting { color: var(--muted); }
+
+/* --- answer --- */
+.answer {
+  display: grid;
+  gap: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 20px;
+}
+.answer-text { margin: 0; font-size: 1.05rem; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { padding: 6px 10px; border-bottom: 1px solid var(--line); text-align: left; }
+td:last-child, th:last-child { text-align: right; }
+th { color: var(--muted); font-weight: 600; font-size: 0.85rem; }
+.how summary { cursor: pointer; color: var(--accent); font-weight: 600; }
+.how ul { margin: 8px 0 0; padding-left: 20px; color: var(--muted); font-size: 0.9rem; }
+
+/* --- a plain failure message --- */
+.message {
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: var(--warn-soft);
+  color: var(--warn);
+}
