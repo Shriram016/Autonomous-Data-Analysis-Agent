@@ -111,13 +111,15 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
 .ms p { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
 .ms.core { border-color: var(--accent); }
 .ms.must { border-color: var(--warn); background: var(--warn-soft); }
+.ms.done { background: var(--ok-soft); }
+.ms.done .id::after { content: " · done"; color: var(--ok); }
 footer { color: var(--muted); font-size: 13px; padding-block: 0 40px; }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
 </style>
 
 <header class="top">
   <div class="wrap">
-    <div class="eyebrow">Autonomous Data Analysis Agent · Version 3 · design locked 2026-10-18</div>
+    <div class="eyebrow">Autonomous Data Analysis Agent · Version 3 · design locked 2026-10-18 · updated 2026-10-25: M1 walking skeleton built</div>
     <h1>Ask the company's data a question. Get an answer you can trust.</h1>
     <p class="thesis">An AI agent that answers a <b>manager's plain-English questions</b> over a company's <b>tables and customer reviews</b>. It <b>shows how it got each answer</b>, <b>asks when a question is unclear</b>, and <b>refuses when the data can't answer</b>. It runs as a deployed, multi-user service.</p>
   </div>
@@ -297,10 +299,11 @@ flowchart LR
     <div class="diagram"><pre class="mermaid">
 flowchart TB
   UI["React UI"] -- "login" --> KC["Keycloak"]
-  UI -- "REST + progress stream (JWT)" --> API["FastAPI&lt;br/&gt;token · quota · approvals · feedback"]
-  API --> R[("Redis&lt;br/&gt;queue · progress · caches · limits")]
+  UI -- "REST + SSE progress (JWT)" --> API["FastAPI&lt;br/&gt;token · quota · approvals · feedback"]
+  API --> R[("Redis&lt;br/&gt;Celery queue · progress streams · caches · limits")]
+  API -- "question row (adaa_app)" --> PG
   R --> W
-  subgraph W["Workers: LangGraph agent"]
+  subgraph W["Celery workers: LangGraph agent"]
     FR["Follow-up rewrite"] --> GI["Guardrails: before"] --> RT["Router"]
     RT --> LP["Bounded loop"]
     RT -- "action" --> AP["Approval pause"]
@@ -309,16 +312,19 @@ flowchart TB
     LP --> GO["Guardrails: after"] --> ANS["Answer + chart spec"]
     RT -- "quick routes" --> ANS
   end
-  W -- "every LLM call" --> LLM["llm.complete&lt;br/&gt;schema · masking · limiter · fallback"]
-  LLM --> EXT[("LLM providers")]
+  W -- "every LLM call" --> LLM["llm.complete&lt;br/&gt;official SDKs, no LiteLLM&lt;br/&gt;schema · masking · limiter · fallback"]
+  LLM --> EXT[("Claude Haiku 5.5&lt;br/&gt;fallback later: Groq")]
   SL & RS -- "adaa_query" --> PG[("Postgres + pgvector")]
+  W -- "answer + usage (adaa_app)" --> PG
   AP -- "adaa_actions" --> PG
+  MIG["migrate (Alembic, once)"] --> PG
   ING["Daily ingestion"] --> PG
   W & API -. "OpenTelemetry" .-> OBS["Langfuse Cloud · Grafana Cloud"]
     </pre></div>
+    <p class="note">Built in M1: the agent graph is understand → query → answer (the router, follow-ups and approvals come later). Every answer carries the plan, the table, a chart when it fits, and the versions used.</p>
     <h3>Containers on one 8 GB server</h3>
     <div class="chips">
-      <span class="chip">proxy</span><span class="chip">api</span><span class="chip">worker ×2+</span><span class="chip">postgres + pgvector</span><span class="chip">redis</span><span class="chip">keycloak</span><span class="chip">otel-collector</span><span class="chip">ingestion (daily)</span><span class="chip">housekeeping (optional)</span>
+      <span class="chip">proxy</span><span class="chip">api</span><span class="chip">worker ×2+ (Celery)</span><span class="chip">migrate (one-time)</span><span class="chip">postgres + pgvector</span><span class="chip">redis</span><span class="chip">keycloak</span><span class="chip">otel-collector</span><span class="chip">ingestion (daily)</span><span class="chip">housekeeping (optional)</span><span class="chip">flower (local only)</span>
     </div>
     <p class="note">Outside the server: React UI (free static hosting), wake-up Lambda, Langfuse Cloud, Grafana Cloud, LLM providers, S3, GitHub Actions.</p>
   </section>
@@ -334,22 +340,24 @@ sequenceDiagram
   participant W as Worker
   participant L as llm.complete
   participant DB as Postgres
-  UI->>API: question + token
-  API->>API: token, quota, exact-question cache
-  API->>Q: queue job
-  API-->>UI: job ID, open progress stream
-  W->>Q: pick job
-  W->>L: rewrite + route = numbers
-  W-->>UI: "Understanding…"
-  W->>L: fill structured request
-  W->>W: semantic layer validates, builds SQL
-  W->>DB: run as adaa_query (5 s cap)
-  W-->>UI: "Running query…"
-  W->>W: every number must be in the result
-  W->>L: write answer
-  W-->>UI: answer + chart + how I got this
+  UI->>API: POST /questions (1–500 chars)
+  API->>DB: question row (waiting)
+  API->>Q: queue job, job id = question id
+  API-->>UI: 202 + id, open SSE stream
+  W->>Q: pick job (acks late: safe if the worker dies)
+  W->>DB: row running
+  W-->>UI: "Understanding the question…"
+  W->>L: fill the form (strict JSON, 1 retry)
+  W->>W: value check: "toy" → toys, "Paris" stops
+  W-->>UI: "Running the query…"
+  W->>DB: compiler SQL as adaa_query (5 s cap)
+  W-->>UI: "Writing the answer…"
+  W->>L: sentence from formatted numbers
+  W->>W: number guardrail, else template answer
+  W->>DB: answer + tokens + cost (done)
+  W-->>UI: done → answer + chart + table + how
     </pre></div>
-    <p class="note">Progress travels worker → Redis → API → UI as server-sent events. A cache hit at the API replies at once.</p>
+    <p class="note">Progress travels worker → Redis Streams → API → UI as server-sent events; a dropped connection resumes with Last-Event-ID. Measured in M1: about 4 s from question to answer.</p>
   </section>
 
   <section class="plate">
@@ -565,16 +573,17 @@ flowchart LR
       <tr><td>Small everywhere</td><td class="num">~$0.002</td><td class="num">~$0.004</td><td><span class="pill ok">under</span></td></tr>
       <tr><td>Mid everywhere</td><td class="num">~$0.015</td><td class="num">~$0.028</td><td><span class="pill bad">over</span></td></tr>
       <tr><td>Large everywhere</td><td class="num">~$0.045</td><td class="num">~$0.08</td><td><span class="pill bad">over</span></td></tr>
+      <tr><td><b>Measured, M1</b> (Claude Haiku 5.5, thinking off)</td><td class="num"><b>~$0.0005</b></td><td class="num">not built yet</td><td><span class="pill ok">under</span></td></tr>
     </table></div>
-    <p class="note">The &lt;$0.01 average works with model tiering, caching, cheap quick routes and prompt caching. Measured per route once built.</p>
+    <p class="note">Measured on the 20-case eval: $0.0107 for 20 questions; ~85% of the cost is the agent prompt (~4,360 tokens), so prompt caching is the next lever.</p>
   </section>
 
   <section class="plate">
-    <div class="tag">Build plan · draft</div>
+    <div class="tag">Build plan · progress</div>
     <h2>Walking skeleton first, then deepen</h2>
     <div class="milestones">
-      <div class="ms core"><div class="id">M0</div><div class="t">Setup + data profiling</div><p>Compose, Olist loaded, semantic-layer draft</p></div>
-      <div class="ms core"><div class="id">M1</div><div class="t">Walking skeleton</div><p>One numbers question end to end</p></div>
+      <div class="ms core done"><div class="id">M0</div><div class="t">Setup + data profiling</div><p>Compose, Olist loaded, semantic layer</p></div>
+      <div class="ms core done"><div class="id">M1</div><div class="t">Walking skeleton</div><p>React → FastAPI → Celery → LangGraph → SQL; eval 20 / 20</p></div>
       <div class="ms core"><div class="id">M2</div><div class="t">Numbers done properly</div><p>Full semantic layer, quick routes, baseline</p></div>
       <div class="ms core"><div class="id">M3</div><div class="t">Reviews + hybrid</div><p>Ingestion, search, quote checks</p></div>
       <div class="ms"><div class="id">M4</div><div class="t">Conversation</div><p>Follow-ups, memory, caching</p></div>
@@ -583,7 +592,7 @@ flowchart LR
       <div class="ms"><div class="id">M7</div><div class="t">Deploy + demo</div><p>EC2, wake-on-demand, guest access</p></div>
       <div class="ms must"><div class="id">M8 · mandatory</div><div class="t">Cross-examination</div><p>Defend every component</p></div>
     </div>
-    <p class="note">Blue border: smallest impressive version (M0–M3 + simple deploy). Order not yet locked.</p>
+    <p class="note">Blue border: smallest impressive version (M0–M3 + simple deploy). Green: done. M1 stack: Claude Haiku 5.5 through official SDKs (no LiteLLM) · LangGraph · Celery + Redis · FastAPI + SSE · Postgres with Alembic migrations · React + Vite + TypeScript + Recharts · eval with hand-written SQL answers.</p>
   </section>
 </div>
 </main>
