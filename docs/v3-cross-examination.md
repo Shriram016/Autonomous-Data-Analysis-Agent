@@ -251,3 +251,37 @@ reads data, so a repeat costs one extra LLM call and nothing else. Tasks that ch
 
 **Interview one-liner:** "I chose at-least-once delivery and made the work safe to repeat;
 I proved it by killing every worker mid-job and watching the same job finish on a new one."
+
+---
+
+## Q7. How do you know the agent gives right answers, and that a change didn't break it?
+
+**Short answer:** an eval set of real questions with independently computed right answers, run
+before every prompt, model or definition change. M1: 20 cases across every kind the agent
+supports (simple, breakdown, period, filter, status, relative date, top, must-stop); first run
+20 / 20, $0.01, about a minute.
+
+**How it is built:** each case has the expected plan (the structured form) and hand-written SQL
+straight from the tables. The SQL runs once and its answer is stored; each run compares the
+agent's table with it (any order unless the question asks for a sort). Must-stop cases (a place
+not in the data, a split the metric can't support) must stop with the right error. The plan is
+compared field by field as a hint, never as the score — two plans can give the same answer.
+Scoring is plain code, not an LLM judge, so it is exact, free and repeatable.
+
+**Why not take the right answers from the system itself?** Then a compiler bug would be on both
+sides and every case would still pass. Independent SQL tests the plan, the compiler and the
+formatting at once.
+
+| Option | Pros | Cons |
+|---|---|---|
+| Hand-written SQL answers (chosen) | Independent; exact; cheap to run | Writing and reviewing the SQL |
+| Answers from our own compiler | Little work | Blind to compiler bugs |
+| LLM judge | Handles open-ended text | Costs money, varies run to run, can be wrong |
+
+**Limits:** 20 clear questions catch big regressions, not small ones; a 100% baseline is not
+proof of quality. The set grows each milestone and gains hard cases (vague wording, follow-ups,
+reviews, attacks), and every production bug becomes a new case.
+
+**Interview one-liner:** "Every change runs against an eval set whose answers come from
+hand-written SQL, not from the system under test; the plan is a diagnostic, the result is the
+score, and the score is code, not another LLM."

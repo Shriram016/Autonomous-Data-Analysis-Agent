@@ -506,3 +506,32 @@ shows as a type error, not a broken page. The number formats are the one rule co
 `npm audit --omit=dev` only checks what users download. The dev tools (Vitest, esbuild) run on
 the builder's machine and had real advisories, found by a full `npm audit`; upgrading Vite and
 Vitest cleared them. Always run the full audit.
+
+## M1.7 — Eval harness
+
+### What an eval set is (and is not)
+
+A sample that covers every KIND of question, not every question (people phrase things in
+endless ways). 20 cases for M1; the same set grows every milestone, old cases stay, and every
+real bug becomes a case. With 20 cases each one is 5%: big drops show, small differences don't.
+
+### Plan vs answer, and why the right answers are hand-written SQL
+
+The form is the LLM's plan; the table is the answer. The answer decides pass / fail; the plan is
+compared as a hint. The right answers come from SQL written straight from the tables — if they
+came from our compiler, a compiler bug would make the expected and the actual answer wrong in the
+same way and the case would still pass (the builder's point). The SQL text itself is never
+compared: two correct queries can look different. First check: the compiler agreed with the
+hand-written SQL on all 18 answerable cases.
+
+### Files and commands
+
+| File | Changes when |
+|---|---|
+| `eval/questions/cases.yaml` | people edit it |
+| `eval/questions/expected_results.json` | `uv run python -m adaa.evals.expected` |
+| `eval/results/<date>_<time>.json` | `uv run python -m adaa.evals.run` (a new file every run) |
+
+### First run (2026-10-25)
+
+20 / 20, no hints, no template answers, $0.0107, p50 2.9 s, p95 3.5 s. A baseline, not proof.

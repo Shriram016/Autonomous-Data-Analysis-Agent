@@ -851,6 +851,25 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    dropped: every case now has an independent answer. First check: the compiler agreed with
 >    the hand-written SQL on all 18 answerable cases. Rows are compared in any order unless
 >    the question asks for a sort. Scoring is code, never an LLM judge.
+>    **To do before the next eval run (raised 2026-10-25 by the builder):** a more readable
+>    results format. For each case, side by side: the question, the ground-truth plan
+>    (`expected_form`), the ground-truth answer (`expected_results.json`), the LLM's plan
+>    (`FinishedAnswer.form`), the LLM's answer (table + sentence), and pass / fail with the
+>    reason. Today's file holds only the sentence, the score and the hints.
+>    ✅ **M1.7 eval harness done (2026-10-25)**, commits `37e15d8`…`cf678bd` + record:
+>    `eval/questions/cases.yaml` (20 cases, hand-written SQL), `evals/expected.py` →
+>    `expected_results.json`, `evals/scoring.py`, `FinishedAnswer.form` (the plan, also an
+>    audit record), `evals/run.py` (report + `eval/results/<date-time>.json`). **First run
+>    (baseline): 20 / 20**, every kind, no form hints, no template answers, $0.0107, p50 2.9 s,
+>    p95 3.5 s; models claude-haiku-5-5; semantic layer 0.3.3, prompts 0.1.0. A baseline on
+>    clear questions, not proof: every later change must keep it, and the set grows.
+>    ✅✅ **M1 WALKING SKELETON DONE (2026-10-25):** one numbers question end to end — React →
+>    FastAPI → Redis queue → Celery worker → LangGraph agent → semantic layer → SQL → streamed
+>    answer with chart — measured by a 20-case eval. 247 unit + 37 integration tests, 11
+>    frontend tests. **Next: M2 — numbers done properly** (full semantic layer, quick routes,
+>    text-to-SQL baseline); start by reading the M2 line in the build plan above and the
+>    noted-for-later items (prompt caching, the `order_status` / thin-month risks, "top 20
+>    of 27" wording, the results-format to-do, Recharts bundle split, frontend pre-commit).
 >    *Decisions still open in M1 (one at a time, when the slice starts):* M1.6 chart library (e.g. Recharts /
 >    ECharts). Cost rule: state what runs and the cost before any real LLM run.
 >
