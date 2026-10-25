@@ -1,0 +1,246 @@
+# ADAA eval cases (§0 M1.7). M1: numbers questions only; the set grows every milestone and
+# old cases stay. Every real bug becomes a case.
+#
+# Each case has a question and EITHER
+#   expected_form + expected_sql  (an answerable question), OR
+#   expected_error                (a question that must stop).
+#
+# expected_form: the right plan; the LLM's form is compared with it (a hint, not the score).
+# expected_sql:  hand-written SQL, straight from the tables and NOT from our compiler, so the
+#                eval also tests the compiler. `uv run python -m adaa.evals.expected` runs it
+#                once and stores the answers in expected_results.json (review the git diff).
+#                Columns: the breakdowns first, then the number. Rules to mirror by hand:
+#                delivered orders only unless the question names a status; orders are
+#                counted through their items; a period means the order purchase date.
+#
+# Relative dates: "today" is the data date, 2018-08-31 (§0 "today" rule).
+
+version: 2
+
+cases:
+  # --- simple: one metric, no breakdown -------------------------------------------------
+  - question: "What was the total revenue?"
+    id: total_revenue
+    kind: simple
+    expected_form: {metric: revenue}
+    expected_sql: |
+      SELECT sum(i.price)
+      FROM order_items i JOIN orders o ON o.order_id = i.order_id
+      WHERE o.order_status = 'delivered'
+
+  - question: "How many customers do we have?"
+    id: number_of_customers
+    kind: simple
+    expected_form: {metric: customers}
+    expected_sql: |
+      SELECT count(DISTINCT c.customer_unique_id)
+      FROM orders o JOIN customers c ON c.customer_id = o.customer_id
+      WHERE o.order_status = 'delivered'
+        AND EXISTS (SELECT 1 FROM order_items i WHERE i.order_id = o.order_id)
+
+  - question: "What is the average review score?"
+    id: average_review_score
+    kind: simple
+    expected_form: {metric: average_review_score}
+    expected_sql: |
+      SELECT avg(review_score) FROM reviews
+
+  - question: "What share of orders arrived late?"
+    id: late_delivery_rate
+    kind: simple
+    expected_form: {metric: late_delivery_rate}
+    expected_sql: |
+      SELECT avg(CASE WHEN order_delivered_customer_date::date
+                           > order_estimated_delivery_date::date THEN 1 ELSE 0 END)
+      FROM orders
+      WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL
+
+  # --- breakdown ---------------------------------------------------------------------------
+  - question: "Show revenue by customer state"
+    id: revenue_by_state
+    kind: breakdown
+    expected_form: {metric: revenue, dimensions: [customer_state]}
+    expected_sql: |
+      SELECT c.customer_state, sum(i.price)
+      FROM order_items i
+        JOIN orders o ON o.order_id = i.order_id
+        JOIN customers c ON c.customer_id = o.customer_id
+      WHERE o.order_status = 'delivered'
+      GROUP BY c.customer_state
+
+  - question: "How much did customers pay with each payment method?"
+    id: paid_by_payment_type
+    kind: breakdown
+    note: total_paid (payments), because item revenue can't be split by payment type
+    expected_form: {metric: total_paid, dimensions: [payment_type]}
+    expected_sql: |
+      SELECT p.payment_type, sum(p.payment_value)
+      FROM payments p JOIN orders o ON o.order_id = p.order_id
+      WHERE o.order_status = 'delivered'
+      GROUP BY p.payment_type
+
+  - question: "Average delivery time per customer state"
+    id: delivery_days_by_state
+    kind: breakdown
+    expected_form: {metric: average_delivery_days, dimensions: [customer_state]}
+    expected_sql: |
+      SELECT c.customer_state,
+             avg(o.order_delivered_customer_date::date - o.order_purchase_timestamp::date)
+      FROM orders o JOIN customers c ON c.customer_id = o.customer_id
+      WHERE o.order_status = 'delivered' AND o.order_delivered_customer_date IS NOT NULL
+      GROUP BY c.customer_state
+
+  # --- period ------------------------------------------------------------------------------
+  - question: "What was the revenue in 2017?"
+    id: revenue_2017
+    kind: period
+    expected_form: {metric: revenue, period: {start: 2017-01-01, end: 2017-12-31}}
+    expected_sql: |
+      SELECT sum(i.price)
+      FROM order_items i JOIN orders o ON o.order_id = i.order_id
+      WHERE o.order_status = 'delivered'
+        AND o.order_purchase_timestamp >= '2017-01-01'
+        AND o.order_purchase_timestamp < '2018-01-01'
+
+  - question: "How many orders were placed in March 2018?"
+    id: orders_march_2018
+    kind: period
+    expected_form: {metric: orders, period: {start: 2018-03-01, end: 2018-03-31}}
+    expected_sql: |
+      SELECT count(DISTINCT i.order_id)
+      FROM order_items i JOIN orders o ON o.order_id = i.order_id
+      WHERE o.order_status = 'delivered'
+        AND o.order_purchase_timestamp >= '2018-03-01'
+        AND o.order_purchase_timestamp < '2018-04-01'
+
+  - question: "Number of reviews in 2018"
+    id: reviews_2018
+    kind: period
+    expected_form: {metric: review_count, period: {start: 2018-01-01, end: 2018-12-31}}
+    expected_sql: |
+      SELECT count(*)
+      FROM reviews r JOIN orders o ON o.order_id = r.order_id
+      WHERE o.order_purchase_timestamp >= '2018-01-01'
+        AND o.order_purchase_timestamp < '2019-01-01'
+
+  # --- filter / value linking -------------------------------------------------------------
+  - question: "Revenue for toy products"
+    id: revenue_toy_products
+    kind: filter
+    note: the user writes "toy"; the data value is `toys`
+    expected_form:
+      metric: revenue
+      filters: [{dimension: product_category, op: "=", values: [toys]}]
+    expected_sql: |
+      SELECT sum(i.price)
+      FROM order_items i
+        JOIN orders o ON o.order_id = i.order_id
+        JOIN products p ON p.product_id = i.product_id
+        LEFT JOIN category_translation t ON t.product_category_name = p.product_category_name
+      WHERE o.order_status = 'delivered'
+        AND coalesce(t.product_category_name_english, p.product_category_name, 'unknown') = 'toys'
+
+  - question: "How many orders came from São Paulo?"
+    id: orders_from_sao_paulo
+    kind: filter
+    note: a state name, not the code SP
+    expected_form:
+      metric: orders
+      filters: [{dimension: customer_state, op: "=", values: [SP]}]
+    expected_sql: |
+      SELECT count(DISTINCT i.order_id)
+      FROM order_items i
+        JOIN orders o ON o.order_id = i.order_id
+        JOIN customers c ON c.customer_id = o.customer_id
+      WHERE o.order_status = 'delivered' AND c.customer_state = 'SP'
+
+  - question: "Total amount paid by credit card"
+    id: paid_by_credit_card
+    kind: filter
+    expected_form:
+      metric: total_paid
+      filters: [{dimension: payment_type, op: "=", values: [credit_card]}]
+    expected_sql: |
+      SELECT sum(p.payment_value)
+      FROM payments p JOIN orders o ON o.order_id = p.order_id
+      WHERE o.order_status = 'delivered' AND p.payment_type = 'credit_card'
+
+  # --- status (the delivered-only default can be changed) ---------------------------------
+  - question: "How many orders were canceled?"
+    id: canceled_orders
+    kind: status
+    expected_form:
+      metric: orders
+      filters: [{dimension: order_status, op: "=", values: [canceled]}]
+    expected_sql: |
+      SELECT count(DISTINCT i.order_id)
+      FROM order_items i JOIN orders o ON o.order_id = i.order_id
+      WHERE o.order_status = 'canceled'
+
+  - question: "Orders by status"
+    id: orders_by_status
+    kind: status
+    expected_form: {metric: orders, dimensions: [order_status]}
+    expected_sql: |
+      SELECT o.order_status, count(DISTINCT i.order_id)
+      FROM order_items i JOIN orders o ON o.order_id = i.order_id
+      GROUP BY o.order_status
+
+  # --- relative date (today = 2018-08-31) --------------------------------------------------
+  - question: "What was the revenue last month?"
+    id: revenue_last_month
+    kind: relative_date
+    note: last month = July 2018
+    expected_form: {metric: revenue, period: {start: 2018-07-01, end: 2018-07-31}}
+    expected_sql: |
+      SELECT sum(i.price)
+      FROM order_items i JOIN orders o ON o.order_id = i.order_id
+      WHERE o.order_status = 'delivered'
+        AND o.order_purchase_timestamp >= '2018-07-01'
+        AND o.order_purchase_timestamp < '2018-08-01'
+
+  - question: "How many orders in the last 3 months?"
+    id: orders_last_3_months
+    kind: relative_date
+    note: June, July and August 2018 (whole months up to today)
+    expected_form: {metric: orders, period: {start: 2018-06-01, end: 2018-08-31}}
+    expected_sql: |
+      SELECT count(DISTINCT i.order_id)
+      FROM order_items i JOIN orders o ON o.order_id = i.order_id
+      WHERE o.order_status = 'delivered'
+        AND o.order_purchase_timestamp >= '2018-06-01'
+        AND o.order_purchase_timestamp < '2018-09-01'
+
+  # --- top / sort --------------------------------------------------------------------------
+  - question: "Top 5 product categories by revenue"
+    id: top_5_categories
+    kind: top
+    expected_form:
+      metric: revenue
+      dimensions: [product_category]
+      sort: {by: revenue, direction: desc}
+      limit: 5
+    expected_sql: |
+      SELECT coalesce(t.product_category_name_english, p.product_category_name, 'unknown'),
+             sum(i.price)
+      FROM order_items i
+        JOIN orders o ON o.order_id = i.order_id
+        JOIN products p ON p.product_id = i.product_id
+        LEFT JOIN category_translation t ON t.product_category_name = p.product_category_name
+      WHERE o.order_status = 'delivered'
+      GROUP BY 1
+      ORDER BY 2 DESC
+      LIMIT 5
+
+  # --- must stop ---------------------------------------------------------------------------
+  - question: "Revenue in Paris"
+    id: revenue_in_paris
+    kind: must_stop
+    note: Paris is not a Brazilian state; never guessed as PA (Pará)
+    expected_error: value_not_found
+
+  - question: "Late delivery rate by order status"
+    id: late_rate_by_status
+    kind: must_stop
+    note: the late rate needs delivered orders, so the compiler refuses a status split
+    expected_error: compile_refused

@@ -835,6 +835,22 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    builder asked questions in the browser end to end; the bar chart rendered. Later: split
 >    the Recharts bundle (page JS 155 KB gzipped), a frontend pre-commit hook. **Next: M1.7
 >    eval harness** (~20 questions, scored automatically).
+>    🔒 **M1.7 eval decisions (locked 2026-10-25):** (1) **~20 questions for M1**, covering every
+>    kind M1 supports (simple, breakdown, period, filter / value linking, status, relative
+>    date, must-stop); the same set **grows every milestone** (old cases stay; every real bug
+>    becomes a case), toward ~100–200. (2) **Score both**: the **result** (rows / numbers)
+>    decides pass or fail; the **form** (the LLM's plan) is compared too and shown as a hint
+>    ("expected period 2017, got 2018"); a must-stop case expects its error kind. (3) **Changed
+>    2026-10-25 by the builder: right answers come from hand-written SQL per case**, written
+>    straight from the tables and not from our compiler — otherwise a compiler bug would make
+>    the expected and the actual answer wrong in the same way and the case would still pass.
+>    `eval/questions/cases.yaml` (people): question, kind, `expected_form`, `expected_sql`, or
+>    `expected_error`. `uv run python -m adaa.evals.expected` runs the SQL once as
+>    `adaa_query` and writes `eval/questions/expected_results.json` (generated, formatted as
+>    the user sees it, one row per line; review the git diff). The separate anchor field was
+>    dropped: every case now has an independent answer. First check: the compiler agreed with
+>    the hand-written SQL on all 18 answerable cases. Rows are compared in any order unless
+>    the question asks for a sort. Scoring is code, never an LLM judge.
 >    *Decisions still open in M1 (one at a time, when the slice starts):* M1.6 chart library (e.g. Recharts /
 >    ECharts). Cost rule: state what runs and the cost before any real LLM run.
 >

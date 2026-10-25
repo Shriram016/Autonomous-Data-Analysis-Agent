@@ -1,0 +1,177 @@
+{
+  "total_revenue": {
+    "headers": ["Revenue"],
+    "rows": [
+      ["R$ 13,221,498.11"]
+    ]
+  },
+  "number_of_customers": {
+    "headers": ["Customers"],
+    "rows": [
+      ["93,358"]
+    ]
+  },
+  "average_review_score": {
+    "headers": ["Average review score"],
+    "rows": [
+      ["4.09"]
+    ]
+  },
+  "late_delivery_rate": {
+    "headers": ["Late-delivery rate"],
+    "rows": [
+      ["6.77%"]
+    ]
+  },
+  "revenue_by_state": {
+    "headers": ["Customer state", "Revenue"],
+    "rows": [
+      ["AC (Acre)", "R$ 15,930.97"],
+      ["AL (Alagoas)", "R$ 78,855.72"],
+      ["AM (Amazonas)", "R$ 22,155.84"],
+      ["AP (Amapá)", "R$ 13,374.81"],
+      ["BA (Bahia)", "R$ 493,584.14"],
+      ["CE (Ceará)", "R$ 219,757.38"],
+      ["DF (Distrito Federal)", "R$ 296,498.41"],
+      ["ES (Espírito Santo)", "R$ 268,643.45"],
+      ["GO (Goiás)", "R$ 282,836.70"],
+      ["MA (Maranhão)", "R$ 117,009.38"],
+      ["MG (Minas Gerais)", "R$ 1,552,481.83"],
+      ["MS (Mato Grosso do Sul)", "R$ 115,429.97"],
+      ["MT (Mato Grosso)", "R$ 152,191.62"],
+      ["PA (Pará)", "R$ 174,470.59"],
+      ["PB (Paraíba)", "R$ 112,586.82"],
+      ["PE (Pernambuco)", "R$ 251,889.49"],
+      ["PI (Piauí)", "R$ 84,721.00"],
+      ["PR (Paraná)", "R$ 666,063.51"],
+      ["RJ (Rio de Janeiro)", "R$ 1,759,651.13"],
+      ["RN (Rio Grande do Norte)", "R$ 82,105.66"],
+      ["RO (Rondônia)", "R$ 45,682.76"],
+      ["RR (Roraima)", "R$ 7,057.47"],
+      ["RS (Rio Grande do Sul)", "R$ 728,897.47"],
+      ["SC (Santa Catarina)", "R$ 507,012.13"],
+      ["SE (Sergipe)", "R$ 56,574.19"],
+      ["SP (São Paulo)", "R$ 5,067,633.16"],
+      ["TO (Tocantins)", "R$ 48,402.51"]
+    ]
+  },
+  "paid_by_payment_type": {
+    "headers": ["Payment type", "Total paid"],
+    "rows": [
+      ["boleto", "R$ 2,769,932.58"],
+      ["credit_card", "R$ 12,101,094.88"],
+      ["debit_card", "R$ 208,421.12"],
+      ["voucher", "R$ 343,013.19"]
+    ]
+  },
+  "delivery_days_by_state": {
+    "headers": ["Customer state", "Average delivery days"],
+    "rows": [
+      ["AC (Acre)", "21.0 days"],
+      ["AL (Alagoas)", "24.5 days"],
+      ["AM (Amazonas)", "26.4 days"],
+      ["AP (Amapá)", "27.2 days"],
+      ["BA (Bahia)", "19.3 days"],
+      ["CE (Ceará)", "21.2 days"],
+      ["DF (Distrito Federal)", "12.9 days"],
+      ["ES (Espírito Santo)", "15.7 days"],
+      ["GO (Goiás)", "15.5 days"],
+      ["MA (Maranhão)", "21.5 days"],
+      ["MG (Minas Gerais)", "11.9 days"],
+      ["MS (Mato Grosso do Sul)", "15.5 days"],
+      ["MT (Mato Grosso)", "18.0 days"],
+      ["PA (Pará)", "23.7 days"],
+      ["PB (Paraíba)", "20.4 days"],
+      ["PE (Pernambuco)", "18.4 days"],
+      ["PI (Piauí)", "19.4 days"],
+      ["PR (Paraná)", "11.9 days"],
+      ["RJ (Rio de Janeiro)", "15.2 days"],
+      ["RN (Rio Grande do Norte)", "19.2 days"],
+      ["RO (Rondônia)", "19.3 days"],
+      ["RR (Roraima)", "29.3 days"],
+      ["RS (Rio Grande do Sul)", "15.2 days"],
+      ["SC (Santa Catarina)", "14.9 days"],
+      ["SE (Sergipe)", "21.5 days"],
+      ["SP (São Paulo)", "8.7 days"],
+      ["TO (Tocantins)", "17.6 days"]
+    ]
+  },
+  "revenue_2017": {
+    "headers": ["Revenue"],
+    "rows": [
+      ["R$ 5,962,902.01"]
+    ]
+  },
+  "orders_march_2018": {
+    "headers": ["Orders"],
+    "rows": [
+      ["7,003"]
+    ]
+  },
+  "reviews_2018": {
+    "headers": ["Reviews"],
+    "rows": [
+      ["53,854"]
+    ]
+  },
+  "revenue_toy_products": {
+    "headers": ["Revenue"],
+    "rows": [
+      ["R$ 471,286.48"]
+    ]
+  },
+  "orders_from_sao_paulo": {
+    "headers": ["Orders"],
+    "rows": [
+      ["40,501"]
+    ]
+  },
+  "paid_by_credit_card": {
+    "headers": ["Total paid"],
+    "rows": [
+      ["R$ 12,101,094.88"]
+    ]
+  },
+  "canceled_orders": {
+    "headers": ["Orders"],
+    "rows": [
+      ["461"]
+    ]
+  },
+  "orders_by_status": {
+    "headers": ["Order status", "Orders"],
+    "rows": [
+      ["approved", "2"],
+      ["canceled", "461"],
+      ["delivered", "96,478"],
+      ["invoiced", "312"],
+      ["processing", "301"],
+      ["shipped", "1,106"],
+      ["unavailable", "6"]
+    ]
+  },
+  "revenue_last_month": {
+    "headers": ["Revenue"],
+    "rows": [
+      ["R$ 867,953.46"]
+    ]
+  },
+  "orders_last_3_months": {
+    "headers": ["Orders"],
+    "rows": [
+      ["18,609"]
+    ]
+  },
+  "top_5_categories": {
+    "headers": ["Product category", "Revenue"],
+    "rows": [
+      ["health_beauty", "R$ 1,233,131.72"],
+      ["watches_gifts", "R$ 1,166,176.98"],
+      ["bed_bath_table", "R$ 1,023,434.76"],
+      ["sports_leisure", "R$ 954,852.55"],
+      ["computers_accessories", "R$ 888,724.61"]
+    ]
+  },
+  "revenue_in_paris": {"error": "value_not_found"},
+  "late_rate_by_status": {"error": "compile_refused"}
+}
