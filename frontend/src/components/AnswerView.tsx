@@ -1,8 +1,9 @@
 import type { FinishedAnswer } from "../api";
+import { AnswerChart } from "./AnswerChart";
 
 type Props = { answer: FinishedAnswer };
 
-/** The answer: the sentence, (the chart, step 5), the full table, and "How I got this". */
+/** The answer: the sentence, the chart (when the result suits one), the table, and "How I got this". */
 export function AnswerView({ answer }: Props) {
   if (answer.status === "failed") {
     // The agent ran but could not answer (e.g. a place not in the data): a plain message.
@@ -12,7 +13,7 @@ export function AnswerView({ answer }: Props) {
     <section className="answer">
       <p className="answer-text">{answer.text}</p>
 
-      {/* The chart goes here (M1.6 step 5). */}
+      {answer.chart && <AnswerChart chart={answer.chart} />}
 
       {answer.table && (
         <div className="table-wrap">
