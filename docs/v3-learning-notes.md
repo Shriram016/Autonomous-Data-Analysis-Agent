@@ -482,3 +482,27 @@ are for two-way traffic (voice, games, chat between people).
 5/5. Steps arrived live (understand 0.0 s → query 2.7 s → answer 2.9 s → done 4.3 s). The job
 waited 0.015 s in the queue; the user waited 4.3 s in total. "Paris" stopped after the first
 step. Cost ~$0.0011.
+
+## M1.6 — React page
+
+### How the page reaches the backend
+
+The browser only knows one address, the Vite dev server (127.0.0.1:5173). The page calls
+`/api/questions`; Vite's proxy passes it to the API on 127.0.0.1:8000 as `/questions`. One
+address means no cross-site (CORS) rules are needed; in production a proxy (Caddy) does the
+same job. The live steps use the browser's own `EventSource`, which reconnects by itself and
+sends `Last-Event-ID`.
+
+### One source of truth for the shapes
+
+The TypeScript types are generated from FastAPI's OpenAPI description (`openapi-typescript`), so
+the Pydantic models decide the shapes on both sides. After a backend change:
+`uv run python -m adaa.api.openapi` (backend) then `npm run types` (frontend). A mismatch then
+shows as a type error, not a broken page. The number formats are the one rule copied by hand
+(`format.ts` ↔ `format_number`); both test files pin the same examples so they can't drift.
+
+### npm audit and dev tools
+
+`npm audit --omit=dev` only checks what users download. The dev tools (Vitest, esbuild) run on
+the builder's machine and had real advisories, found by a full `npm audit`; upgrading Vite and
+Vitest cleared them. Always run the full audit.

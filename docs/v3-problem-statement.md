@@ -824,6 +824,17 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    source of truth and a backend change shows up as a type error in the page. Regenerate
 >    after a backend change (two commands, in `frontend/src/api.ts`). The SSE event shapes are
 >    not in OpenAPI and are typed by hand there, using the generated FinishedAnswer.
+>    ✅ **M1.6 React page done (2026-10-25)**, commits `872c1df`…`6c94e43` + record: backend
+>    `chart` field (`build_chart`); `frontend/` React 18.3.1 + Vite 8.3.4 + TypeScript 5.6.3 +
+>    Vitest 5.0.3, dev server on 127.0.0.1:5173 with `/api` proxied to the API (no CORS);
+>    generated types (`npm run types`); `api.ts` (submit, get, `followQuestion` over
+>    EventSource); page with question box (counter, 3 examples), live steps, answer, chart
+>    (Recharts 3.10.1, same number formats as the table), table, "How I got this", plain
+>    failure messages, `?q=<id>` survives a reload, light and dark styles. Dev tools upgraded
+>    after `npm audit` found issues in Vitest / esbuild → 0 vulnerabilities. **Real run**: the
+>    builder asked questions in the browser end to end; the bar chart rendered. Later: split
+>    the Recharts bundle (page JS 155 KB gzipped), a frontend pre-commit hook. **Next: M1.7
+>    eval harness** (~20 questions, scored automatically).
 >    *Decisions still open in M1 (one at a time, when the slice starts):* M1.6 chart library (e.g. Recharts /
 >    ECharts). Cost rule: state what runs and the cost before any real LLM run.
 >
