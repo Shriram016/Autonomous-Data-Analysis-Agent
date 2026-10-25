@@ -105,6 +105,21 @@ export interface components {
             /** Y */
             y: number;
         };
+        /**
+         * Filter
+         * @description Keep only rows where `dimension` `op` `values`, e.g. product_category in [toys, books].
+         */
+        Filter: {
+            /** Dimension */
+            dimension: string;
+            /**
+             * Op
+             * @enum {string}
+             */
+            op: "=" | "!=" | "in" | "not in";
+            /** Values */
+            values: (string | number)[];
+        };
         /** FinishedAnswer */
         FinishedAnswer: {
             /** Question */
@@ -120,6 +135,7 @@ export interface components {
             error_kind?: ("llm_unavailable" | "llm_output" | "value_not_found" | "compile_refused" | "query_timeout" | "data_unavailable" | "job_timeout") | null;
             table?: components["schemas"]["Table"] | null;
             chart?: components["schemas"]["Chart"] | null;
+            form?: components["schemas"]["StructuredRequest"] | null;
             /**
              * How
              * @default []
@@ -137,6 +153,22 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
+         * Period
+         * @description Order purchase dates from `start` to `end`, both days included.
+         */
+        Period: {
+            /**
+             * Start
+             * Format: date
+             */
+            start: string;
+            /**
+             * End
+             * Format: date
+             */
+            end: string;
         };
         /** QuestionCreated */
         QuestionCreated: {
@@ -189,6 +221,36 @@ export interface components {
             wait_seconds: string | null;
             /** Total Seconds */
             total_seconds: string | null;
+        };
+        /**
+         * Sort
+         * @description Order the rows by the metric or by one of the request's dimensions.
+         */
+        Sort: {
+            /** By */
+            by: string;
+            /**
+             * Direction
+             * @default desc
+             * @enum {string}
+             */
+            direction: "asc" | "desc";
+        };
+        /**
+         * StructuredRequest
+         * @description One numbers question as a form: which metric, broken down how, for which rows.
+         */
+        StructuredRequest: {
+            /** Metric */
+            metric: string;
+            /** Dimensions */
+            dimensions?: string[];
+            /** Filters */
+            filters?: components["schemas"]["Filter"][];
+            period?: components["schemas"]["Period"] | null;
+            sort?: components["schemas"]["Sort"] | null;
+            /** Limit */
+            limit?: number | null;
         };
         /** Table */
         Table: {

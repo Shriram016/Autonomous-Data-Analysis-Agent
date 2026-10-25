@@ -124,3 +124,36 @@ def test_the_progress_hook_stops_with_the_graph() -> None:
     seen: list[str] = []
     ask("Total revenue", with_rows(context), on_step=seen.append)
     assert seen == ["understand"]  # the error stopped the graph after the first node
+
+
+# --- the plan in the finished answer (M1.7) ---
+
+
+def test_an_answer_carries_the_plan() -> None:
+    context, _ = fake_context(REVENUE_BY_STATE, sentence("SP led."))
+    result = ask("Revenue by state in 2017", with_rows(context))
+    assert result.form is not None and result.form.metric == "revenue"
+    assert result.form.dimensions == ["customer_state"]
+
+
+def test_a_compiler_refusal_still_carries_the_plan() -> None:
+    context, _ = fake_context(json.dumps({"metric": "revenue", "dimensions": ["payment_type"]}))
+
+    def refuse(form: StructuredRequest) -> QueryResult:
+        raise CompileError("Revenue can't be split by payment type.")
+
+    result = ask("Revenue by payment type", replace(context, ask=refuse))
+    assert result.status == "failed" and result.form is not None
+    assert result.form.dimensions == ["payment_type"]  # the hint shows what the LLM planned
+
+
+def test_a_value_check_stop_carries_no_plan() -> None:
+    paris = json.dumps(
+        {
+            "metric": "revenue",
+            "filters": [{"dimension": "customer_state", "op": "=", "values": ["Paris"]}],
+        }
+    )
+    context, _ = fake_context(paris)
+    result = ask("Revenue in Paris", with_rows(context))
+    assert result.error_kind == "value_not_found" and result.form is None  # no checked plan

@@ -61,7 +61,12 @@ def build_graph(context: AgentContext, on_step: StepHook | None = None) -> Compi
 
 def finish(state: AgentState, context: AgentContext) -> FinishedAnswer:
     """The final state as the caller sees it."""
-    common = {"question": state.question, "versions": context.versions, "usage": state.usage}
+    common = {
+        "question": state.question,
+        "versions": context.versions,
+        "usage": state.usage,
+        "form": state.form,  # also kept when a later step stopped: that is when it helps most
+    }
     if state.error:
         return FinishedAnswer(
             status="failed", text=state.error.message, error_kind=state.error.kind, **common

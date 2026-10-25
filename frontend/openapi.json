@@ -222,6 +222,52 @@
         ],
         "title": "ChartPoint"
       },
+      "Filter": {
+        "properties": {
+          "dimension": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Dimension"
+          },
+          "op": {
+            "type": "string",
+            "enum": [
+              "=",
+              "!=",
+              "in",
+              "not in"
+            ],
+            "title": "Op"
+          },
+          "values": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Values"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "dimension",
+          "op",
+          "values"
+        ],
+        "title": "Filter",
+        "description": "Keep only rows where `dimension` `op` `values`, e.g. product_category in [toys, books]."
+      },
       "FinishedAnswer": {
         "properties": {
           "question": {
@@ -280,6 +326,16 @@
               }
             ]
           },
+          "form": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StructuredRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "how": {
             "items": {
               "type": "string"
@@ -322,6 +378,28 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "Period": {
+        "properties": {
+          "start": {
+            "type": "string",
+            "format": "date",
+            "title": "Start"
+          },
+          "end": {
+            "type": "string",
+            "format": "date",
+            "title": "End"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "start",
+          "end"
+        ],
+        "title": "Period",
+        "description": "Order purchase dates from `start` to `end`, both days included."
       },
       "QuestionCreated": {
         "properties": {
@@ -474,6 +552,95 @@
           "total_seconds"
         ],
         "title": "QuestionRecord"
+      },
+      "Sort": {
+        "properties": {
+          "by": {
+            "type": "string",
+            "minLength": 1,
+            "title": "By"
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "title": "Direction",
+            "default": "desc"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "by"
+        ],
+        "title": "Sort",
+        "description": "Order the rows by the metric or by one of the request's dimensions."
+      },
+      "StructuredRequest": {
+        "properties": {
+          "metric": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Metric"
+          },
+          "dimensions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 2,
+            "title": "Dimensions"
+          },
+          "filters": {
+            "items": {
+              "$ref": "#/components/schemas/Filter"
+            },
+            "type": "array",
+            "title": "Filters"
+          },
+          "period": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Period"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sort": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Sort"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "limit": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 1000.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Limit"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "metric"
+        ],
+        "title": "StructuredRequest",
+        "description": "One numbers question as a form: which metric, broken down how, for which rows."
       },
       "Table": {
         "properties": {

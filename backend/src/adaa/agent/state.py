@@ -89,6 +89,7 @@ class FinishedAnswer(BaseModel):
     error_kind: ErrorKind | None = None
     table: Table | None = None
     chart: Chart | None = None  # only when the result suits a chart (built by code)
+    form: StructuredRequest | None = None  # the LLM's plan after the value check (audit, evals)
     how: list[str] = []  # "how I got this" + value notes + "Data as of ..."
     used_template: bool = False
     versions: Versions
