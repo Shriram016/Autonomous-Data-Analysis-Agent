@@ -13,7 +13,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
-from adaa.agent.facts import Facts
+from adaa.agent.facts import Chart, Facts
 from adaa.llm.types import Usage
 from adaa.semantic_layer.request import StructuredRequest
 from adaa.semantic_layer.runner import QueryResult
@@ -88,6 +88,7 @@ class FinishedAnswer(BaseModel):
     text: str  # the answer, or the plain error message
     error_kind: ErrorKind | None = None
     table: Table | None = None
+    chart: Chart | None = None  # only when the result suits a chart (built by code)
     how: list[str] = []  # "how I got this" + value notes + "Data as of ..."
     used_template: bool = False
     versions: Versions

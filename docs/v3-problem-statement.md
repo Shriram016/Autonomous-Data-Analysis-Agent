@@ -809,6 +809,16 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    stopped after the first step; row saved with cost, wait 0.015 s, total 4.3 s; random id →
 >    404; 501 characters → 422. ~$0.0011. 219 unit + 37 integration tests. **Next: M1.6 React
 >    page** (chart library decision first).
+>    🔒 **M1.6 chart library = Recharts (locked 2026-10-25):** charts as React components, simple
+>    for a learner, covers M1's two charts. The chart type is chosen by code from the form —
+>    a time breakdown → line, a category breakdown → bar, a single number → no chart — never
+>    by the LLM. Rejected for now: ECharts (more than needed), Chart.js (less natural in
+>    React), Vega-Lite (only if the backend later sends chart descriptions).
+>    🔒 **Charts are automatic (locked 2026-10-25):** the user does not ask for a graph; every
+>    answer whose result suits a chart gets one, next to the table. The finished answer has an
+>    optional `chart` (kind, axis labels, unit, raw numbers) built by code from the raw rows:
+>    1 time breakdown → line (all points, oldest first); 1 category breakdown → bar (top 20);
+>    a single number or 2 breakdowns → no chart (multi-line charts later).
 >    *Decisions still open in M1 (one at a time, when the slice starts):* M1.6 chart library (e.g. Recharts /
 >    ECharts). Cost rule: state what runs and the cost before any real LLM run.
 >

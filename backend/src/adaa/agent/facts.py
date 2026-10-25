@@ -11,6 +11,7 @@ answer LLM fails or breaks the number guardrail. It is not pretty, but it is alw
 
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
@@ -19,6 +20,7 @@ from adaa.semantic_layer.request import MAX_LIMIT, StructuredRequest
 from adaa.semantic_layer.runner import QueryResult
 
 TEMPLATE_ROWS = 5  # rows named in the template sentence; the table below shows them all
+MAX_BARS = 20  # a bar chart shows the top 20; more bars can't be read
 
 
 def format_number(value: object, unit: Unit) -> str:
@@ -129,4 +131,55 @@ def build_facts(
         total_rows=result.row_count,
         total=total,
         template_answer=template_answer(metric.label, headers, rows, result.row_count, total),
+    )
+
+
+# ---------- the chart (§0 M1.6: automatic, chosen by code, never by the LLM) ----------
+
+
+class ChartPoint(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    x: str  # the dimension value as shown in the table, e.g. "2017-03" or "SP (São Paulo)"
+    y: float  # the raw number; the page formats it with `unit`, like the table
+
+
+class Chart(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    kind: Literal["line", "bar"]
+    x_label: str
+    y_label: str
+    unit: Unit
+    points: list[ChartPoint]
+
+
+def build_chart(
+    result: QueryResult, request: StructuredRequest, layer: SemanticLayer
+) -> Chart | None:
+    """A chart when the result suits one: 1 time breakdown → line, 1 category → bar.
+
+    A single number gains nothing from a chart; 2 breakdowns need a chart with several
+    lines or groups, which comes later. The table always shows every row.
+    """
+    if len(request.dimensions) != 1 or result.row_count == 0:
+        return None
+    dimension = request.dimensions[0]
+    metric = layer.metrics[request.metric]
+    kind: Literal["line", "bar"] = "line" if layer.dimensions[dimension].kind == "time" else "bar"
+    points = [
+        ChartPoint(x=format_dimension(row[0], dimension, layer), y=float(str(row[-1])))
+        for row in result.rows
+        if row[-1] is not None
+    ]
+    if kind == "line":
+        points.sort(key=lambda p: p.x)  # a trend reads oldest first, even after "top 5 months"
+    else:
+        points = points[:MAX_BARS]  # rows already come highest first
+    return Chart(
+        kind=kind,
+        x_label=layer.dimensions[dimension].label,
+        y_label=metric.label,
+        unit=metric.unit,
+        points=points,
     )

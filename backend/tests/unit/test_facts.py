@@ -4,7 +4,7 @@ from typing import Any
 
 import pytest
 
-from adaa.agent.facts import build_facts, format_number
+from adaa.agent.facts import MAX_BARS, build_chart, build_facts, format_number
 from adaa.semantic_layer.definitions import SemanticLayer, load
 from adaa.semantic_layer.request import StructuredRequest
 from adaa.semantic_layer.runner import QueryResult
@@ -110,3 +110,36 @@ def test_allowed_numbers_hold_every_shown_number(layer: SemanticLayer) -> None:
     assert all(cell in allowed for row in facts.rows for cell in row)
     assert "25" in allowed and "20" in allowed  # "top 20 of 25" may be quoted
     assert facts.total in allowed
+
+
+# --- the chart (M1.6) ---
+
+
+def test_a_single_number_gets_no_chart(layer: SemanticLayer) -> None:
+    assert build_chart(result((Decimal(5),)), form(metric="revenue"), layer) is None
+
+
+def test_a_time_breakdown_gets_a_line_with_every_point_oldest_first(layer: SemanticLayer) -> None:
+    rows = result(
+        (datetime(2017, 3, 1), Decimal("0.0456")), (datetime(2017, 1, 1), Decimal("0.0293"))
+    )
+    chart = build_chart(rows, form(metric="late_delivery_rate", dimensions=["month"]), layer)
+    assert chart is not None and chart.kind == "line" and chart.unit == "ratio"
+    assert [(p.x, p.y) for p in chart.points] == [("2017-01", 0.0293), ("2017-03", 0.0456)]
+    assert (chart.x_label, chart.y_label) == ("Month", "Late-delivery rate")
+
+
+def test_a_category_breakdown_gets_at_most_20_bars_with_raw_numbers(layer: SemanticLayer) -> None:
+    rows = result(
+        *[("SP", Decimal("2136258.96"))] + [(f"S{i}", Decimal(100 - i)) for i in range(26)]
+    )
+    chart = build_chart(rows, form(metric="revenue", dimensions=["customer_state"]), layer)
+    assert chart is not None and chart.kind == "bar" and chart.unit == "BRL"
+    assert len(chart.points) == MAX_BARS
+    assert chart.points[0].x == "SP (São Paulo)" and chart.points[0].y == 2136258.96  # raw
+
+
+def test_two_breakdowns_get_no_chart_for_now(layer: SemanticLayer) -> None:
+    rows = result((datetime(2017, 1, 1), "SP", Decimal(1)))
+    two = form(metric="revenue", dimensions=["month", "customer_state"])
+    assert build_chart(rows, two, layer) is None

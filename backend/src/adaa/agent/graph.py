@@ -17,7 +17,7 @@ from langgraph.graph.state import CompiledStateGraph
 
 from adaa.agent import nodes
 from adaa.agent.context import AgentContext, get_context
-from adaa.agent.facts import build_facts
+from adaa.agent.facts import build_chart, build_facts
 from adaa.agent.notes import data_note
 from adaa.agent.state import AgentState, FinishedAnswer, Table
 
@@ -72,6 +72,7 @@ def finish(state: AgentState, context: AgentContext) -> FinishedAnswer:
         status="answered",
         text=state.answer_text,
         table=Table(headers=full.headers, rows=full.rows),
+        chart=build_chart(state.result, state.form, context.layer),
         how=[*state.result.explanation, *state.value_notes, data_note(context.data_date)],
         used_template=state.used_template,
         **common,
