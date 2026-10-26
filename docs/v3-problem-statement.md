@@ -880,7 +880,27 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    2017 and 2018" → `compare_to`, not a year breakdown) as its own slice. **To check later
 >    (2026-10-26):** the support counts ("625 of 99,441 orders canceled", "based on N") are not
 >    in the eval table; only the cancellation counts have a test. Add hand-written SQL checks
->    for all 7 in `check_semantic_layer` if needed.
+>    for all 7 in `check_semantic_layer` if needed. **To fix later (raised 2026-10-26 by the
+>    builder): the answer LLM sees only the first 20 rows** (`max_rows`). Eval run
+>    2026-10-26: "average delivery time per customer state" is sorted slowest first, so the
+>    LLM never saw the 7 fastest states (SP 8.7 days) and wrote "among the top 20 shown, Goiás
+>    is the shortest" — true for what it saw, misleading for a manager. The eval passed (it
+>    checks the full table). Other cases may hit the same limit; review them together and
+>    design one fix (e.g. code always passes the highest and lowest rows). Joins the "top 20
+>    of 27" item.
+>    ✅ **M2 step 1 full semantic layer done (2026-10-26)**, commits `5f84000`, `63baabc`,
+>    `003b915`: semantic layer **v0.4.0** — `items_sold`, `active_sellers`,
+>    `cancellation_rate` (new status rule `all`), `low_review_rate`, `repeat_customer_rate`
+>    (two-step metric: `per` / `per_sql`), `quarter`; **period comparison** (🔒 `compare_to`:
+>    the form runs once per period, Python joins the rows and computes change and change %;
+>    a rate changes in points; rows follow the asked period; no time breakdown with it; no
+>    chart; periods are never shortened unless asked, a code-made note says when a period
+>    ends after the data date); **support counts** (🔒 rates "625 of 99,441 orders canceled",
+>    averages "based on N"; to the answer LLM and the guardrail, not the table). The LLM never
+>    calculates: every calculation is a named, tested feature; others are refused. Prompts
+>    agent 0.2.0 and answer 0.2.0. Eval cases v3: 30 (10 new, hand-written SQL); **run: 30 /
+>    30**, $0.0192, p50 2.9 s, p95 4.3 s, no template answers. 286 unit + 41 integration
+>    tests. **Next: M2 step 2 — router + quick routes.**
 >
 >
 > ⚠️ **MANDATORY — DO NOT SKIP: post-build architecture cross-examination.** Once development is

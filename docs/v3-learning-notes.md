@@ -535,3 +535,39 @@ hand-written SQL on all 18 answerable cases.
 ### First run (2026-10-25)
 
 20 / 20, no hints, no template answers, $0.0107, p50 2.9 s, p95 3.5 s. A baseline, not proof.
+
+## M2 step 1 — Full semantic layer
+
+### Why add metrics at all
+
+The agent can only answer what the semantic layer defines. Each rule is written once, so
+"revenue" always means the same thing. A question outside it is refused with a reason, and
+refusals show what to add next (cross-examination Q8). Very large domains split the layer by
+business area or retrieve only the relevant definitions (Q9) — not needed for ADAA.
+
+### Easy vs code metrics
+
+- **YAML only:** items sold, active sellers, low-review rate, quarter.
+- **New status rule `all`:** the cancellation rate counts every status (delivered only would
+  make it 0), so a status filter or split is refused.
+- **Two steps (`per` / `per_sql`):** the repeat-customer rate first counts orders per person,
+  then takes the share of people with 2+. The compiler writes a query inside a query.
+
+### Period comparison (`compare_to`)
+
+The LLM decides *what* (two periods); code decides *how*. The form runs twice, Python joins
+the rows by dimension value and computes change and change %. A rate changes in points. The
+LLM never calculates: every calculation is a named, tested feature; anything else is refused.
+"Compare 2017 and 2018" and "how did it grow" both mean `compare_to`; "revenue by year" is a
+trend (a time breakdown).
+
+### Support counts
+
+A rate alone ("0.63%") hides the size. Code adds the counts behind it ("625 of 99,441 orders
+canceled"; averages: "based on 99,224 reviews"). They go to the answer LLM and the number
+guardrail, not to the table, so the eval is unchanged.
+
+### Run (2026-10-26)
+
+30 / 30, $0.0192, p50 2.9 s, p95 4.3 s. Weak spot found: the answer LLM sees only 20 rows, so
+"fastest state" can be missed (noted in §0 to fix later).
