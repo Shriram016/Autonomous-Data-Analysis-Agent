@@ -130,6 +130,15 @@ def test_new_v040_metrics_on_real_data(layer: SemanticLayer) -> None:
     assert sum(by_status.values()) == 112650  # every item, in every status
 
 
+def test_repeat_customer_rate_on_real_data(layer: SemanticLayer) -> None:
+    """Data profile F4: about 3% of people ordered more than once."""
+    overall = float(single_value(ask(layer, metric="repeat_customer_rate")))
+    assert 0.025 < overall < 0.035
+    by_month = by_key(ask(layer, metric="repeat_customer_rate", dimensions=["month"]))
+    monthly = sorted(by_month.values())
+    assert monthly[len(monthly) // 2] < Decimal(overall)  # median month: fewer buy twice
+
+
 def test_quarters_add_up_to_the_year(layer: SemanticLayer) -> None:
     quarters = ask(layer, metric="revenue", dimensions=["quarter"], period=YEAR_2017)
     assert [row[0] for row in quarters.rows] == ["2017-Q1", "2017-Q2", "2017-Q3", "2017-Q4"]

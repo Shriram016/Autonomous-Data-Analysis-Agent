@@ -173,6 +173,31 @@ def test_cancellation_rate_counts_every_status(layer: SemanticLayer) -> None:
         )
 
 
+def test_repeat_customer_rate_takes_two_steps(layer: SemanticLayer) -> None:
+    q = compile_form(layer, metric="repeat_customer_rate", dimensions=["customer_state"])
+    lines = q.sql.splitlines()
+    assert lines[0] == "SELECT customer_state,"  # outer: the inner query's column names
+    assert "avg((per_value >= 2)::int) AS repeat_customer_rate" in lines[1]
+    assert "customers.customer_unique_id AS per_key" in q.sql  # inner: one row per person
+    assert "count(DISTINCT orders.order_id) AS per_value" in q.sql
+    assert "GROUP BY customers.customer_state, customers.customer_unique_id" in q.sql
+    assert ") AS per_row" in q.sql and "GROUP BY customer_state" in q.sql
+    assert "orders.order_status = 'delivered'" in q.sql  # D2 default, inside the inner query
+    assert q.sql.splitlines()[-2] == "ORDER BY repeat_customer_rate DESC"
+
+
+def test_repeat_customer_rate_with_no_breakdown(layer: SemanticLayer) -> None:
+    q = compile_form(layer, metric="repeat_customer_rate")
+    assert "GROUP BY customers.customer_unique_id" in q.sql
+    assert q.sql.splitlines()[-1] == "LIMIT %(row_limit)s"
+    assert ") AS per_row" in q.sql.splitlines()[-2]  # no outer GROUP BY
+
+
+def test_repeat_customer_rate_refuses_category(layer: SemanticLayer) -> None:
+    with pytest.raises(CompileError, match="can't be split by product category"):
+        compile_form(layer, metric="repeat_customer_rate", dimensions=["product_category"])
+
+
 def test_review_metrics_have_no_status_rule(layer: SemanticLayer) -> None:
     q = compile_form(layer, metric="review_count")
     assert "order_status" not in q.sql

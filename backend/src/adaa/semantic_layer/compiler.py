@@ -102,7 +102,7 @@ def check_grain(request: StructuredRequest, layer: SemanticLayer) -> None:
 
 def needed_tables(request: StructuredRequest, layer: SemanticLayer) -> set[str]:
     metric = layer.metrics[request.metric]
-    parts = [metric.sql, *metric.filters]
+    parts = [metric.sql, *metric.filters, metric.per or "", metric.per_sql or ""]
     if default := status_default(request, layer):  # the status lives on the orders table
         parts.append(default)
     if request.period:  # a period filters on the order date, so it needs the orders table
@@ -204,6 +204,41 @@ def build_explanation(
     return lines
 
 
+# ---------- SELECT … GROUP BY ----------
+
+
+def build_body(
+    request: StructuredRequest, layer: SemanticLayer, conditions: list[str]
+) -> list[str]:
+    """SELECT, FROM, joins, WHERE and GROUP BY. A metric with `per` takes two steps: an inner
+    query with one row per person (per_value), then the metric over those rows."""
+    metric = layer.metrics[request.metric]
+    dims = request.dimensions
+    select = [f"{layer.dimensions[d].sql} AS {d}" for d in dims]
+    group = [layer.dimensions[d].sql for d in dims]
+    where = ("WHERE " + "\n  AND ".join(conditions)) if conditions else ""
+    if metric.per is None:
+        return [
+            "SELECT " + ",\n       ".join([*select, f"{metric.sql} AS {request.metric}"]),
+            f"FROM {metric.table}",
+            build_joins(request, layer),
+            where,
+            ("GROUP BY " + ", ".join(group)) if group else "",
+        ]
+    inner = [*select, f"{metric.per} AS per_key", f"{metric.per_sql} AS per_value"]
+    return [
+        "SELECT " + ",\n       ".join([*dims, f"{metric.sql} AS {request.metric}"]),
+        "FROM (",
+        "  SELECT " + ", ".join(inner),
+        f"  FROM {metric.table}",
+        build_joins(request, layer),
+        f"  {where}" if where else "",
+        "  GROUP BY " + ", ".join([*group, metric.per]),
+        ") AS per_row",
+        ("GROUP BY " + ", ".join(dims)) if dims else "",
+    ]
+
+
 # ---------- the one function other code calls ----------
 
 
@@ -212,22 +247,12 @@ def compile_request(request: StructuredRequest, layer: SemanticLayer) -> Compile
     check_status(request, layer)
     check_grain(request, layer)
 
-    metric = layer.metrics[request.metric]
     params: dict[str, object] = {}
     conditions, period_line = build_where(request, layer, params)
     order, limit = build_order_and_limit(request, layer)
     params["row_limit"] = limit
 
-    select = [f"{layer.dimensions[d].sql} AS {d}" for d in request.dimensions]
-    select.append(f"{metric.sql} AS {request.metric}")
-    lines = [
-        "SELECT " + ",\n       ".join(select),
-        f"FROM {metric.table}",
-        build_joins(request, layer),
-        ("WHERE " + "\n  AND ".join(conditions)) if conditions else "",
-    ]
-    if request.dimensions:
-        lines.append("GROUP BY " + ", ".join(layer.dimensions[d].sql for d in request.dimensions))
+    lines = build_body(request, layer, conditions)
     if order:
         lines.append(order)
     lines.append("LIMIT %(row_limit)s")

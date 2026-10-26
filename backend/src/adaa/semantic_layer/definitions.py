@@ -51,6 +51,10 @@ class Metric(BaseModel):
     grain: Grain
     table: str
     sql: str
+    # Two-step metrics (repeat-customer rate): `per_sql` is computed once per `per` value (one
+    # row per person, named per_value), then `sql` runs over those rows. Both or neither.
+    per: str | None = None
+    per_sql: str | None = None
     filters: list[str] = []  # always applied: part of the definition
     # D2: "default" = delivered only unless the form names a status; "built_in" = the
     # filters already hold it and the form may not name a status; "all" = a share of orders
@@ -181,7 +185,10 @@ def check(layer: SemanticLayer) -> None:
     for name, m in layer.metrics.items():
         if m.table not in KNOWN_TABLES:
             problems.append(f"metric '{name}' has unknown table '{m.table}'")
-        check_tables("metric", name, m.table, [m.sql, *m.filters])
+        two_step = [part for part in (m.per, m.per_sql) if part]
+        if len(two_step) == 1:
+            problems.append(f"metric '{name}' needs both 'per' and 'per_sql', or neither")
+        check_tables("metric", name, m.table, [m.sql, *two_step, *m.filters])
     for name, d in layer.dimensions.items():
         check_tables("dimension", name, None, [d.sql])
 

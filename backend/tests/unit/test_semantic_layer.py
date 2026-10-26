@@ -128,6 +128,12 @@ def test_missing_or_unknown_unit_is_refused(layer_copy: Path, old: str, new: str
         load(layer_copy)
 
 
+def test_per_without_per_sql_is_refused(layer_copy: Path) -> None:
+    edit(layer_copy, "metrics.yaml", "    per_sql: count(DISTINCT orders.order_id)", "")
+    with pytest.raises(SemanticLayerError, match="both 'per' and 'per_sql'"):
+        load(layer_copy)
+
+
 def test_unknown_dimension_kind_is_refused(layer_copy: Path) -> None:
     edit(layer_copy, "dimensions.yaml", "    kind: time\n", "    kind: calendar\n")
     with pytest.raises(SemanticLayerError, match="kind"):

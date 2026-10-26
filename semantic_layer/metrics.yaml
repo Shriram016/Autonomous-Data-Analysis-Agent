@@ -188,3 +188,21 @@ metrics:
     terms: [low review rate, bad reviews, unhappy customers]
     shown_in_answer: "Low-review rate = reviews with score 1 or 2 / all reviews."
     why: A share is easier to compare than an average score. No status filter. (F5)
+
+  repeat_customer_rate:
+    label: Repeat-customer rate
+    description: Share of customers with 2 or more orders in the period.
+    grain: order  # one person, several categories: so no item breakdowns
+    table: orders
+    per: customers.customer_unique_id  # step 1: one row per person
+    per_sql: count(DISTINCT orders.order_id)  # that person's orders
+    sql: avg((per_value >= 2)::int)  # step 2: share of people with 2+
+    filters: []
+    status: default  # delivered only unless the question names a status (D2)
+    unit: ratio
+    terms: [repeat customer rate, repeat customers, returning customers]
+    shown_in_answer: "Repeat-customer rate = people with 2+ orders in the period / all people with an order in the period."
+    why: >
+      Counts only orders inside the question's period and filters, like every other metric.
+      By month it is lower (most months about 1%): few people order twice in one month.
+      Correct, not a bug. (F4)

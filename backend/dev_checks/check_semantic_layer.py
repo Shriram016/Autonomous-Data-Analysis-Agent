@@ -42,6 +42,11 @@ EXPECTED = {
     "low_review_rate": (
         "SELECT count(*) FILTER (WHERE review_score IN (1, 2))::numeric / count(*) FROM reviews"
     ),
+    "repeat_customer_rate": (
+        "SELECT avg((n >= 2)::int) FROM (SELECT c.customer_unique_id, count(*) AS n "
+        "FROM orders o JOIN customers c USING (customer_id) "
+        "WHERE o.order_status = 'delivered' GROUP BY c.customer_unique_id) AS people"
+    ),
 }
 
 
@@ -50,12 +55,15 @@ def metric_sql(layer: SemanticLayer, m: Metric) -> str:
     filters = [*m.filters]
     if m.status == "default":
         filters.append(layer.defaults["default_status_filter"].means)
-    needed = tables_in(m.sql, *filters) - {m.table}
+    needed = tables_in(m.sql, m.per or "", m.per_sql or "", *filters) - {m.table}
     joins = " ".join(
         f"{'LEFT JOIN' if j.optional else 'JOIN'} {j.to_table} ON {j.condition}"
         for j in layer.join_path(m.table, needed)
     )
     where = f" WHERE {' AND '.join(filters)}" if filters else ""
+    if m.per:  # two steps: one row per person, then the metric over those rows
+        inner = f"SELECT {m.per_sql} AS per_value FROM {m.table} {joins}{where} GROUP BY {m.per}"
+        return f"SELECT {m.sql} FROM ({inner}) AS per_row"
     return f"SELECT {m.sql} FROM {m.table} {joins}{where}"
 
 
