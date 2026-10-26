@@ -2,7 +2,8 @@
 
 from datetime import datetime
 
-from adaa.agent.context import AgentContext, load_context
+from adaa.agent.context import AgentContext, RouteFn, load_context
+from adaa.agent.router import Route, RouteDecision
 from adaa.llm.adapters.fake import FakeAdapter
 from adaa.semantic_layer.request import StructuredRequest
 from adaa.semantic_layer.runner import QueryResult
@@ -25,7 +26,16 @@ def fake_ask(form: StructuredRequest) -> QueryResult:
     return query_result((f"{form.dimensions[0]}_value", 1))
 
 
-def fake_context(*replies: str | Exception) -> tuple[AgentContext, FakeAdapter]:
-    """A context whose LLM gives these scripted replies, in order."""
+def fixed_route(route: Route = "numbers") -> RouteFn:
+    """A router that always picks `route`, with no LLM call (the router has its own tests)."""
+    return lambda question: RouteDecision(route=route, source="test")
+
+
+def fake_context(
+    *replies: str | Exception, route: RouteFn | None = None
+) -> tuple[AgentContext, FakeAdapter]:
+    """A context whose LLM gives these scripted replies, in order. The router picks
+    `numbers` unless a test passes its own `route`."""
     adapter = FakeAdapter(list(replies))
-    return load_context(ask=fake_ask, adapter=adapter), adapter
+    context = load_context(ask=fake_ask, adapter=adapter, route=route or fixed_route())
+    return context, adapter

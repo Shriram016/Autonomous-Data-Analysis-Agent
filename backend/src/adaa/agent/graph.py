@@ -1,12 +1,14 @@
 """The agent graph and its one entry point, ask(question) (§0 M1.3, ADR 0011).
 
-    start → understand → query → answer → end
-                │          │
-                └─ error ──┴──→ end
+    start → route ─ numbers ─→ understand → query → answer → end
+                │                  │          │
+                │                  └─ error ──┴──→ end
+                └─ clarify / refuse / off_topic / metadata → reply → end
 
-A minimal LangGraph graph: three nodes, and a stop edge after each node that can fail.
-The answer node never fails (the template answer is its fallback). No checkpointer yet:
-the state lives in memory for one question (checkpoints in Postgres come later).
+A small LangGraph graph: a branch after the router (M2 step 2), and a stop edge after each
+node that can fail. The route, answer and reply nodes never fail (the router falls back to
+numbers; the answer to the template). No checkpointer yet: the state lives in memory for
+one question (checkpoints in Postgres come later).
 """
 
 from collections.abc import Callable
@@ -46,13 +48,26 @@ def with_hook(name: str, node: Node, context: AgentContext, on_step: StepHook | 
     return run
 
 
+def after_route(state: AgentState) -> str:
+    """The router's branch: a numbers question goes on to the form; the rest get a reply."""
+    assert state.route is not None
+    return "understand" if state.route.route == "numbers" else "reply"
+
+
 def build_graph(context: AgentContext, on_step: StepHook | None = None) -> CompiledStateGraph:
     graph = StateGraph(AgentState)
-    graph.add_node("understand", with_hook("understand", nodes.understand, context, on_step))
-    graph.add_node("query", with_hook("query", nodes.query, context, on_step))
-    graph.add_node("answer", with_hook("answer", nodes.answer, context, on_step))
+    for name, node in [
+        ("route", nodes.route),
+        ("reply", nodes.reply),
+        ("understand", nodes.understand),
+        ("query", nodes.query),
+        ("answer", nodes.answer),
+    ]:
+        graph.add_node(name, with_hook(name, node, context, on_step))
 
-    graph.add_edge(START, "understand")
+    graph.add_edge(START, "route")
+    graph.add_conditional_edges("route", after_route, ["understand", "reply"])
+    graph.add_edge("reply", END)
     graph.add_conditional_edges("understand", next_or_stop("query"), ["query", END])
     graph.add_conditional_edges("query", next_or_stop("answer"), ["answer", END])
     graph.add_edge("answer", END)
@@ -66,11 +81,16 @@ def finish(state: AgentState, context: AgentContext) -> FinishedAnswer:
         "versions": context.versions,
         "usage": state.usage,
         "form": state.form,  # also kept when a later step stopped: that is when it helps most
+        "route": state.route.route if state.route else None,
+        "route_confidence": state.route.confidence if state.route else None,
     }
     if state.error:
         return FinishedAnswer(
             status="failed", text=state.error.message, error_kind=state.error.kind, **common
         )
+    if state.route and state.route.route != "numbers":  # a quick route: text only
+        assert state.answer_text is not None
+        return FinishedAnswer(status="answered", text=state.answer_text, **common)
     assert state.form and state.result and state.facts and state.answer_text is not None
     full = build_facts(state.result, state.form, context.layer, max_rows=state.result.row_count)
     note = partial_period_note(state.form, context.data_date)  # made by code, after the guardrail

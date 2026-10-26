@@ -30,6 +30,8 @@ CRASH_TEXT = "Something went wrong while answering. Please try again."
 
 # What the user sees while each graph node runs.
 STEP_TEXT = {
+    "route": "Reading your question…",
+    "reply": "Writing the reply…",
     "understand": "Understanding the question…",
     "query": "Running the query…",
     "answer": "Writing the answer…",

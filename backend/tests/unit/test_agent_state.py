@@ -59,7 +59,7 @@ def test_answer_turns_into_json_and_back_with_no_loss() -> None:
 def test_state_starts_with_only_the_question() -> None:
     state = AgentState(question="Total revenue")
     assert state.form is None and state.value_notes == [] and state.error is None
-    assert state.usage.cost_usd == 0 and state.state_version == 1
+    assert state.usage.cost_usd == 0 and state.state_version == 2 and state.route is None
 
 
 def test_state_is_checked_at_run_time() -> None:

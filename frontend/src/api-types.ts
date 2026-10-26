@@ -129,6 +129,10 @@ export interface components {
              * @enum {string}
              */
             status: "answered" | "failed";
+            /** Route */
+            route?: ("numbers" | "clarify" | "refuse" | "off_topic" | "metadata") | null;
+            /** Route Confidence */
+            route_confidence?: number | null;
             /** Text */
             text: string;
             /** Error Kind */
@@ -298,6 +302,8 @@ export interface components {
             agent_prompt: string;
             /** Answer Prompt */
             answer_prompt: string;
+            /** Router Prompt */
+            router_prompt?: string | null;
         };
     };
     responses: never;

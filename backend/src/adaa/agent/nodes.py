@@ -1,4 +1,5 @@
-"""The three nodes of the agent graph: understand → query → answer (§0 M1.3, step 6).
+"""The nodes of the agent graph: route, then understand → query → answer, or reply
+(§0 M1.3 step 6; route and reply: M2 step 2).
 
 Each node takes the state and the context and returns ONLY the fields it fills; the graph
 merges them into the state. A node that fails returns an `error` (a kind + a plain message)
@@ -35,6 +36,30 @@ class AnswerForm(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     answer_text: str = Field(min_length=1)
+
+
+def route(state: AgentState, context: AgentContext) -> dict[str, Any]:
+    """Question → route (agent/router.py). Never stops the graph: when every router option
+    fails, the router itself answers `numbers`, the M1 behaviour."""
+    decision = context.route(state.question)
+    return {"route": decision, "usage": state.usage + decision.usage}
+
+
+# One fixed reply per quick route. PLACEHOLDERS: slice 2c makes each one useful (clarify
+# options as full questions, refuse with the closest answerable question, metadata from
+# the semantic layer).
+QUICK_REPLIES = {
+    "clarify": "Your question can mean several things. Please say more exactly what to show.",
+    "refuse": "The store's data can't answer that question.",
+    "off_topic": "I answer questions about the store's orders, revenue, deliveries and reviews.",
+    "metadata": "I answer questions about the store's orders, revenue, deliveries and reviews.",
+}
+
+
+def reply(state: AgentState, context: AgentContext) -> dict[str, Any]:
+    """A quick route's reply: no form, no SQL."""
+    assert state.route is not None and state.route.route != "numbers"
+    return {"answer_text": QUICK_REPLIES[state.route.route]}
 
 
 def understand(state: AgentState, context: AgentContext) -> dict[str, Any]:

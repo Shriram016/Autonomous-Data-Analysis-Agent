@@ -6,11 +6,13 @@ from decimal import Decimal
 
 from adaa.agent.context import AgentContext
 from adaa.agent.graph import ask
-from adaa.llm.types import LlmUnavailableError
+from adaa.agent.nodes import QUICK_REPLIES
+from adaa.agent.router import RouteDecision
+from adaa.llm.types import LlmUnavailableError, Usage
 from adaa.semantic_layer.compiler import CompileError
 from adaa.semantic_layer.request import StructuredRequest
 from adaa.semantic_layer.runner import QueryResult
-from tests.unit.fakes import fake_context, query_result
+from tests.unit.fakes import fake_context, fixed_route, query_result
 
 REVENUE_BY_STATE = json.dumps(
     {
@@ -116,14 +118,14 @@ def test_the_progress_hook_announces_each_node_in_order() -> None:
     context, _ = fake_context(REVENUE_BY_STATE, sentence("SP led."))
     seen: list[str] = []
     ask("Revenue by state in 2017", with_rows(context), on_step=seen.append)
-    assert seen == ["understand", "query", "answer"]
+    assert seen == ["route", "understand", "query", "answer"]
 
 
 def test_the_progress_hook_stops_with_the_graph() -> None:
     context, _ = fake_context(LlmUnavailableError("down"))
     seen: list[str] = []
     ask("Total revenue", with_rows(context), on_step=seen.append)
-    assert seen == ["understand"]  # the error stopped the graph after the first node
+    assert seen == ["route", "understand"]  # the error stopped the graph after understand
 
 
 # --- the plan in the finished answer (M1.7) ---
@@ -183,3 +185,45 @@ def test_a_comparison_past_the_data_date_gets_the_note() -> None:
     )
     assert result.table is not None
     assert result.table.headers == ["Revenue 2018", "Revenue 2017", "Change", "Change %"]
+
+
+# --- the router branch (M2 step 2b) ---
+
+
+def test_every_question_is_routed_first() -> None:
+    steps: list[str] = []
+    context, _ = fake_context(REVENUE_BY_STATE, sentence("SP led 2017 with R$ 2,136,258.96."))
+    result = ask("Revenue by state in 2017", with_rows(context), on_step=steps.append)
+    assert steps == ["route", "understand", "query", "answer"]
+    assert result.route == "numbers" and result.table is not None  # the M1 flow, unchanged
+
+
+def test_a_quick_route_replies_without_a_form_or_sql() -> None:
+    def no_sql(form: StructuredRequest) -> QueryResult:
+        raise AssertionError("a quick route never runs SQL")
+
+    steps: list[str] = []
+    context, adapter = fake_context(route=fixed_route("off_topic"))
+    result = ask("Write me a poem", replace(context, ask=no_sql), on_step=steps.append)
+    assert steps == ["route", "reply"]
+    assert result.status == "answered" and result.route == "off_topic"
+    assert result.text == QUICK_REPLIES["off_topic"]
+    assert result.table is None and result.chart is None and result.form is None
+    assert adapter.calls == []  # no form call, no answer call
+
+
+def test_the_router_cost_is_in_the_question_total() -> None:
+    routed = RouteDecision(
+        route="refuse",
+        confidence=0.88,
+        source="route_jev",
+        usage=Usage(input_tokens=300, output_tokens=0, cost_usd=0.0000126),
+    )
+    context, _ = fake_context(route=lambda question: routed)
+    result = ask("What was our profit?", context)
+    assert result.usage.input_tokens == 300 and result.route_confidence == 0.88
+
+
+def test_the_versions_name_the_router_prompt() -> None:
+    context, _ = fake_context()
+    assert (context.versions.router_prompt or "").startswith("0.1.0 (")

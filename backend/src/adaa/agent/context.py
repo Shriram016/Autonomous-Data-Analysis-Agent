@@ -21,6 +21,7 @@ from functools import cache
 
 from adaa.agent.notes import find_data_date
 from adaa.agent.prompts import Prompt, load_prompt, semantic_values
+from adaa.agent.router import RouteDecision, RouterTexts, build_router_texts, route_question
 from adaa.agent.state import Versions
 from adaa.agent.values import ValueCatalogue, build_catalogue
 from adaa.llm.adapters.base import Adapter
@@ -29,6 +30,7 @@ from adaa.semantic_layer.request import StructuredRequest
 from adaa.semantic_layer.runner import QueryResult, answer_request
 
 Ask = Callable[[StructuredRequest], QueryResult]  # runs one form and returns its rows
+RouteFn = Callable[[str], RouteDecision]  # picks one question's route
 
 
 @dataclass(frozen=True)
@@ -38,7 +40,9 @@ class AgentContext:
     data_date: date
     agent_prompt: Prompt  # filled: metrics, dimensions, values, data date
     answer_prompt: Prompt
+    router_texts: RouterTexts  # the router's prompt (Haiku) and instructions (Jev)
     ask: Ask  # real: the M1.1 runner as adaa_query; tests: a fake
+    route: RouteFn  # real: route_question (Jev, then Haiku); tests: a fixed route
     adapter: Adapter | None = None  # None: the adapter config/llm.yaml names; tests: fake
 
     @property
@@ -50,21 +54,29 @@ class AgentContext:
             semantic_layer=short(self.layer.version, self.layer.fingerprint),
             agent_prompt=short(self.agent_prompt.version, self.agent_prompt.fingerprint),
             answer_prompt=short(self.answer_prompt.version, self.answer_prompt.fingerprint),
+            router_prompt=short(
+                self.router_texts.prompt.version, self.router_texts.prompt.fingerprint
+            ),
         )
 
 
-def load_context(ask: Ask | None = None, adapter: Adapter | None = None) -> AgentContext:
+def load_context(
+    ask: Ask | None = None, adapter: Adapter | None = None, route: RouteFn | None = None
+) -> AgentContext:
     layer = load()
     run = ask or (lambda form: answer_request(form, layer))
     catalogue = build_catalogue(layer, run)
     data_date = find_data_date(layer, run)
+    texts = build_router_texts(layer, data_date)
     return AgentContext(
         layer=layer,
         catalogue=catalogue,
         data_date=data_date,
         agent_prompt=load_prompt("agent", semantic_values(layer, catalogue, data_date)),
         answer_prompt=load_prompt("answer", {}),
+        router_texts=texts,
         ask=run,
+        route=route or (lambda question: route_question(question, texts, adapter=adapter)),
         adapter=adapter,
     )
 

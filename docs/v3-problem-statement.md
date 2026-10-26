@@ -924,6 +924,28 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    says the key is added, run a real Jev test (state the cost first). Until then the order
 >    stays `[route_jev, route_haiku]`: with no key the Jev adapter fails at once (no network
 >    call, `router_fallback … reason=MissingKeyError`) and Haiku routes.
+>    ✅ **2a router component** (`34494a2`) · ✅ **2b graph** (start → route → numbers flow, or
+>    reply; `RouteDecision` in the state, router cost in the question total, `route` and
+>    `route_confidence` in `FinishedAnswer`, router prompt in `Versions`; placeholder
+>    replies until 2c).
+>    **Quick-route replies (🔒 2026-10-26, for 2c):** after the router, a `reply` LLM step
+>    runs for clarify, refuse and metadata only (off_topic: fixed code text + example
+>    questions; numbers: unchanged). **3 separate prompts and 3 forms** (`clarify.md`,
+>    `refuse.md`, `metadata.md`), run by **one shared `reply` node** and one job config:
+>    clarify `{message, options: 2–3 full questions}`; refuse `{missing_data, suggestion:
+>    one full question}`; metadata `{topic: data_overview | date_range | definition, metric
+>    | null}` → code writes the reply from the semantic layer (facts never from the LLM).
+>    Pydantic checks each form; a failure → a code-made fallback reply, no retry, logged.
+>    `FinishedAnswer.suggestions` (full questions) shown as buttons; a click sends a new
+>    question, so no memory is needed until M4 (typed replies to clarify come in M4).
+>    **Decide later (raised 2026-10-26 by the builder): usage per LLM call.** Today
+>    `conversation.questions` keeps one row per question with the totals only; each call's
+>    job, model, tokens, cost and time are only in the `llm_call` log lines. Option: an
+>    `llm_calls` table (one row per call, linked to the question: job, model, tokens, cost,
+>    seconds, outcome), written from the one place every call passes (`llm.complete`, the
+>    router's `log_call`), so 3 components today or 10 later need no schema change; the
+>    question total = the sum of its rows. Production systems keep such a table (billing,
+>    quotas, audit) and also send traces to a tool (Langfuse, planned M6).
 >
 >
 > ⚠️ **MANDATORY — DO NOT SKIP: post-build architecture cross-examination.** Once development is

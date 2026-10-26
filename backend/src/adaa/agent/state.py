@@ -1,9 +1,9 @@
 """The shapes the agent graph uses (§0 M1.3, step 6).
 
-AgentState is the shared notebook the three nodes pass along (understand → query → answer):
-each node reads it and returns only the fields it fills; LangGraph merges them in. It lives
-in the worker's memory for one question and is then thrown away (checkpoints in Postgres
-come later, ADR 0011).
+AgentState is the shared notebook the nodes pass along (route, then understand → query →
+answer for a numbers question, or reply for a quick route): each node reads it and returns
+only the fields it fills; LangGraph merges them in. It lives in the worker's memory for one
+question and is then thrown away (checkpoints in Postgres come later, ADR 0011).
 
 FinishedAnswer is what the caller gets: the API (M1.5) and the page (M1.6) use it, and later
 it becomes a row in the database. It is a Pydantic model, so it turns into JSON and back.
@@ -14,6 +14,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict
 
 from adaa.agent.facts import Chart, Facts
+from adaa.agent.router import Route, RouteDecision
 from adaa.llm.types import Usage
 from adaa.semantic_layer.request import StructuredRequest
 from adaa.semantic_layer.runner import QueryResult
@@ -51,13 +52,14 @@ class AgentState(BaseModel):
 
     model_config = ConfigDict(extra="forbid")  # a misspelt field is an error, not ignored
 
-    state_version: int = 1  # raise when a field changes meaning; a migration can check it
+    state_version: int = 2  # raise when a field changes meaning; a migration can check it
     question: str  # set by the caller
+    route: RouteDecision | None = None  # route (v2: the router, M2 step 2)
     form: StructuredRequest | None = None  # understand
     value_notes: list[str] = []  # understand: "I read 'toy' as 'toys'."
     result: QueryResult | None = None  # query
     facts: Facts | None = None  # answer
-    answer_text: str | None = None  # answer: the LLM sentence, or the template
+    answer_text: str | None = None  # answer: the LLM sentence, or the template; reply
     used_template: bool = False  # answer: True when the LLM or the guardrail failed
     usage: Usage = NO_USAGE  # every LLM call adds to it
     error: AgentError | None = None  # any node; the graph stops when it is set
@@ -78,6 +80,7 @@ class Versions(BaseModel):
     semantic_layer: str
     agent_prompt: str
     answer_prompt: str
+    router_prompt: str | None = None  # None in answers saved before the router (M2 step 2)
 
 
 class FinishedAnswer(BaseModel):
@@ -85,6 +88,8 @@ class FinishedAnswer(BaseModel):
 
     question: str
     status: Literal["answered", "failed"]
+    route: Route | None = None  # None in answers saved before the router (M2 step 2)
+    route_confidence: float | None = None  # from Jev only
     text: str  # the answer, or the plain error message
     error_kind: ErrorKind | None = None
     table: Table | None = None

@@ -51,14 +51,15 @@ def test_the_row_and_the_events_follow_the_question(calls: list[tuple[str, Any]]
     ]
     assert kinds == [
         ("running", None),
-        ("event", "step"),
-        ("event", "step"),
-        ("event", "step"),
+        ("event", "step"),  # route
+        ("event", "step"),  # understand
+        ("event", "step"),  # query
+        ("event", "step"),  # answer
         ("saved", None),
         ("event", "done"),
     ]
     texts = [value.text for name, value in calls if name == "event" and value.kind == "step"]
-    assert texts == list(tasks.STEP_TEXT.values())
+    assert texts == [tasks.STEP_TEXT[n] for n in ("route", "understand", "query", "answer")]
     saved = next(value for name, value in calls if name == "saved")
     assert isinstance(saved, FinishedAnswer) and saved.text == "Revenue was R$ 100.00."
     assert calls[0] == ("running", QID)

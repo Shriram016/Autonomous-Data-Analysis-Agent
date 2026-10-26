@@ -282,6 +282,35 @@
             ],
             "title": "Status"
           },
+          "route": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "numbers",
+                  "clarify",
+                  "refuse",
+                  "off_topic",
+                  "metadata"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Route"
+          },
+          "route_confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Route Confidence"
+          },
           "text": {
             "type": "string",
             "title": "Text"
@@ -764,6 +793,17 @@
           "answer_prompt": {
             "type": "string",
             "title": "Answer Prompt"
+          },
+          "router_prompt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Router Prompt"
           }
         },
         "type": "object",
