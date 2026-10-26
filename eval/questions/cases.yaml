@@ -1,5 +1,5 @@
-# ADAA eval cases (§0 M1.7). M1: numbers questions only; the set grows every milestone and
-# old cases stay. Every real bug becomes a case.
+# ADAA eval cases (§0 M1.7). Numbers questions only; the set grows every milestone and old
+# cases stay. Every real bug becomes a case. v3 (M2 step 1): new metrics, quarter, compare.
 #
 # Each case has a question and EITHER
 #   expected_form + expected_sql  (an answerable question), OR
@@ -15,7 +15,7 @@
 #
 # Relative dates: "today" is the data date, 2018-08-31 (§0 "today" rule).
 
-version: 2
+version: 3
 
 cases:
   # --- simple: one metric, no breakdown -------------------------------------------------
@@ -232,7 +232,147 @@ cases:
       ORDER BY 2 DESC
       LIMIT 5
 
+  # --- v3: semantic layer v0.4.0 (M2 step 1) ----------------------------------------------
+  - question: "How many items did we sell?"
+    id: items_sold
+    kind: simple
+    note: items (units), not orders
+    expected_form: {metric: items_sold}
+    expected_sql: |
+      SELECT count(*)
+      FROM order_items i JOIN orders o ON o.order_id = i.order_id
+      WHERE o.order_status = 'delivered'
+
+  - question: "How many sellers made a sale in 2017?"
+    id: active_sellers_2017
+    kind: period
+    expected_form: {metric: active_sellers, period: {start: 2017-01-01, end: 2017-12-31}}
+    expected_sql: |
+      SELECT count(DISTINCT i.seller_id)
+      FROM order_items i JOIN orders o ON o.order_id = i.order_id
+      WHERE o.order_status = 'delivered'
+        AND o.order_purchase_timestamp >= '2017-01-01'
+        AND o.order_purchase_timestamp < '2018-01-01'
+
+  - question: "What is the cancellation rate?"
+    id: cancellation_rate
+    kind: simple
+    note: a share of ALL orders, so no delivered-only default
+    expected_form: {metric: cancellation_rate}
+    expected_sql: |
+      SELECT count(*) FILTER (WHERE order_status = 'canceled')::numeric / count(*)
+      FROM orders
+
+  - question: "What share of reviews give 1 or 2 stars?"
+    id: low_review_rate
+    kind: simple
+    expected_form: {metric: low_review_rate}
+    expected_sql: |
+      SELECT count(*) FILTER (WHERE review_score <= 2)::numeric / count(*)
+      FROM reviews
+
+  - question: "What share of customers ordered more than once?"
+    id: repeat_customer_rate
+    kind: simple
+    note: one customer = one person (customer_unique_id); delivered orders
+    expected_form: {metric: repeat_customer_rate}
+    expected_sql: |
+      SELECT count(*) FILTER (WHERE n >= 2)::numeric / count(*)
+      FROM (
+        SELECT c.customer_unique_id, count(*) AS n
+        FROM orders o JOIN customers c ON c.customer_id = o.customer_id
+        WHERE o.order_status = 'delivered'
+        GROUP BY c.customer_unique_id
+      ) AS people
+
+  - question: "Revenue per quarter in 2017"
+    id: revenue_by_quarter_2017
+    kind: breakdown
+    expected_form:
+      metric: revenue
+      dimensions: [quarter]
+      period: {start: 2017-01-01, end: 2017-12-31}
+    expected_sql: |
+      SELECT extract(year FROM o.order_purchase_timestamp)::int || '-Q'
+             || extract(quarter FROM o.order_purchase_timestamp)::int,
+             sum(i.price)
+      FROM order_items i JOIN orders o ON o.order_id = i.order_id
+      WHERE o.order_status = 'delivered'
+        AND o.order_purchase_timestamp >= '2017-01-01'
+        AND o.order_purchase_timestamp < '2018-01-01'
+      GROUP BY 1
+
+  # --- compare two periods -----------------------------------------------------------------
+  - question: "Revenue 2018 vs 2017"
+    id: revenue_2018_vs_2017
+    kind: compare
+    note: 2018 data ends in August; the answer says so, the numbers are not shortened
+    expected_form:
+      metric: revenue
+      period: {start: 2018-01-01, end: 2018-12-31}
+      compare_to: {start: 2017-01-01, end: 2017-12-31}
+    expected_sql: |
+      WITH y AS (
+        SELECT sum(i.price) FILTER (WHERE o.order_purchase_timestamp >= '2018-01-01'
+                                      AND o.order_purchase_timestamp < '2019-01-01') AS now,
+               sum(i.price) FILTER (WHERE o.order_purchase_timestamp >= '2017-01-01'
+                                      AND o.order_purchase_timestamp < '2018-01-01') AS before
+        FROM order_items i JOIN orders o ON o.order_id = i.order_id
+        WHERE o.order_status = 'delivered'
+      )
+      SELECT now, before, now - before, (now - before) / before FROM y
+
+  - question: "Compare the late delivery rate in 2018 with 2017"
+    id: late_rate_2018_vs_2017
+    kind: compare
+    note: a rate changes in points, so there is no change %
+    expected_form:
+      metric: late_delivery_rate
+      period: {start: 2018-01-01, end: 2018-12-31}
+      compare_to: {start: 2017-01-01, end: 2017-12-31}
+    expected_sql: |
+      WITH late AS (
+        SELECT extract(year FROM order_purchase_timestamp) AS year,
+               avg(CASE WHEN order_delivered_customer_date::date
+                             > order_estimated_delivery_date::date THEN 1 ELSE 0 END) AS rate
+        FROM orders
+        WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL
+        GROUP BY 1
+      )
+      SELECT n.rate, b.rate, n.rate - b.rate
+      FROM late n JOIN late b ON n.year = 2018 AND b.year = 2017
+
+  - question: "How did revenue change in each customer state from 2017 to 2018?"
+    id: revenue_change_by_state
+    kind: compare
+    expected_form:
+      metric: revenue
+      dimensions: [customer_state]
+      period: {start: 2018-01-01, end: 2018-12-31}
+      compare_to: {start: 2017-01-01, end: 2017-12-31}
+    expected_sql: |
+      WITH s AS (
+        SELECT c.customer_state AS state,
+               sum(i.price) FILTER (WHERE o.order_purchase_timestamp >= '2018-01-01'
+                                      AND o.order_purchase_timestamp < '2019-01-01') AS now,
+               sum(i.price) FILTER (WHERE o.order_purchase_timestamp >= '2017-01-01'
+                                      AND o.order_purchase_timestamp < '2018-01-01') AS before
+        FROM order_items i
+          JOIN orders o ON o.order_id = i.order_id
+          JOIN customers c ON c.customer_id = o.customer_id
+        WHERE o.order_status = 'delivered'
+        GROUP BY 1
+      )
+      SELECT state, now, before, now - before, (now - before) / before
+      FROM s WHERE now IS NOT NULL
+
   # --- must stop ---------------------------------------------------------------------------
+  - question: "Cancellation rate by order status"
+    id: cancellation_rate_by_status
+    kind: must_stop
+    note: the rate already counts every status, so the compiler refuses a status split
+    expected_error: compile_refused
+
   - question: "Revenue in Paris"
     id: revenue_in_paris
     kind: must_stop

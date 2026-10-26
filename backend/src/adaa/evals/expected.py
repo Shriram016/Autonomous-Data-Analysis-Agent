@@ -16,7 +16,7 @@ from typing import Any
 
 import psycopg
 
-from adaa.agent.facts import format_dimension, format_number
+from adaa.agent.facts import build_headers, format_row
 from adaa.evals.cases import EvalCase, load_cases
 from adaa.semantic_layer.definitions import SemanticLayer, load
 from adaa.settings import REPO_ROOT, get_settings
@@ -31,15 +31,11 @@ def expected_answer(
         return {"error": case.expected_error}
     assert case.expected_form and case.expected_sql
     form = case.expected_form
-    metric = layer.metrics[form.metric]
     rows = conn.execute(case.expected_sql).fetchall()
-    return {
-        "headers": [layer.dimensions[d].label for d in form.dimensions] + [metric.label],
-        "rows": [
-            [format_dimension(v, d, layer) for v, d in zip(row[:-1], form.dimensions, strict=True)]
-            + [format_number(row[-1], metric.unit)]
-            for row in rows
-        ],
+    return {  # the same formatting as the answer table; a comparison's SQL returns
+        # (breakdowns…, value, earlier value, change[, change %]), computed by hand
+        "headers": build_headers(form, layer),
+        "rows": [format_row(tuple(row), form, layer) for row in rows],
     }
 
 

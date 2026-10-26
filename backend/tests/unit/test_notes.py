@@ -2,7 +2,7 @@ from datetime import date, datetime
 
 import pytest
 
-from adaa.agent.notes import NoDataError, data_note, find_data_date
+from adaa.agent.notes import NoDataError, data_note, find_data_date, partial_period_note
 from adaa.semantic_layer.definitions import load
 from adaa.semantic_layer.request import StructuredRequest
 from adaa.semantic_layer.runner import QueryResult
@@ -42,3 +42,27 @@ def test_no_full_month_is_a_clear_error() -> None:
 
 def test_note_text() -> None:
     assert data_note(date(2018, 8, 31)) == "Data as of 2018-08-31."
+
+
+@pytest.mark.parametrize(
+    ("fields", "note"),
+    [
+        ({"metric": "revenue"}, None),  # no period: all data, no note
+        ({"metric": "revenue", "period": {"start": "2017-01-01", "end": "2017-12-31"}}, None),
+        (
+            {"metric": "revenue", "period": {"start": "2018-01-01", "end": "2018-12-31"}},
+            "Data is complete only until 2018-08-31, so 2018 is not a full period.",
+        ),
+        (
+            {
+                "metric": "revenue",
+                "period": {"start": "2018-01-01", "end": "2018-12-31"},
+                "compare_to": {"start": "2017-01-01", "end": "2017-12-31"},
+            },
+            "Data is complete only until 2018-08-31, so 2018 is not a full period.",
+        ),
+    ],
+)
+def test_partial_period_note(fields: dict[str, object], note: str | None) -> None:
+    form = StructuredRequest.model_validate(fields)
+    assert partial_period_note(form, date(2018, 8, 31)) == note

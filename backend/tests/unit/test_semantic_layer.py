@@ -138,3 +138,9 @@ def test_unknown_dimension_kind_is_refused(layer_copy: Path) -> None:
     edit(layer_copy, "dimensions.yaml", "    kind: time\n", "    kind: calendar\n")
     with pytest.raises(SemanticLayerError, match="kind"):
         load(layer_copy)
+
+
+def test_support_part_needs_its_label(layer_copy: Path) -> None:
+    edit(layer_copy, "metrics.yaml", "      part_label: canceled\n", "")
+    with pytest.raises(SemanticLayerError, match="both part_sql and part_label"):
+        load(layer_copy)

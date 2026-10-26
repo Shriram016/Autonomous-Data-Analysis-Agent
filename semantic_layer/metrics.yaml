@@ -65,6 +65,9 @@ metrics:
     filters: []
     status: default  # delivered only unless the question names a status (D2)
     unit: BRL
+    support:  # an average: only the whole, "based on N orders"
+      whole_sql: count(DISTINCT order_items.order_id)
+      whole_label: orders
     terms: [average order value, aov, basket size]
     shown_in_answer: "Average order value = revenue per order."
     why: Uses the revenue definition, so the two never disagree. (F2)
@@ -93,6 +96,11 @@ metrics:
       - "orders.order_delivered_customer_date IS NOT NULL"
     status: built_in  # needs a delivery date, so delivered only, always
     unit: ratio
+    support:  # the counts shown next to the rate
+      part_sql: count(*) FILTER (WHERE orders.order_delivered_customer_date::date > orders.order_estimated_delivery_date::date)
+      whole_sql: count(*)
+      part_label: late
+      whole_label: delivered orders
     terms: [late delivery rate, late deliveries, delays]
     shown_in_answer: "Late = delivered after the estimated date (by day), delivered orders only."
     why: The estimate is a date, so the compare is by day. (F7)
@@ -108,6 +116,9 @@ metrics:
       - "orders.order_delivered_customer_date IS NOT NULL"
     status: built_in  # needs a delivery date, so delivered only, always
     unit: days
+    support:
+      whole_sql: count(*)
+      whole_label: delivered orders
     terms: [delivery time, days to deliver, shipping time]
     shown_in_answer: "Delivery days = purchase date to delivery date, delivered orders only."
     why: (F7)
@@ -120,6 +131,9 @@ metrics:
     sql: avg(reviews.review_score)
     filters: []
     unit: score  # an average from 1 to 5
+    support:
+      whole_sql: count(*)
+      whole_label: reviews
     terms: [review score, rating, satisfaction]
     shown_in_answer: "Average of review scores (1 to 5). An order with 2 reviews counts twice."
     why: review_id repeats; a review is a (review_id, order_id) row. No status filter. (F5)
@@ -173,6 +187,11 @@ metrics:
     filters: []
     status: all  # a share of every order, so no delivered-only default
     unit: ratio
+    support:
+      part_sql: count(*) FILTER (WHERE orders.order_status = 'canceled')
+      whole_sql: count(*)
+      part_label: canceled
+      whole_label: orders
     terms: [cancellation rate, cancellations, canceled share]
     shown_in_answer: "Cancellation rate = canceled orders / all orders (every status)."
     why: Delivered only would make it 0. 'unavailable' is not counted as canceled. (F3)
@@ -185,6 +204,11 @@ metrics:
     sql: avg((reviews.review_score <= 2)::int)
     filters: []
     unit: ratio
+    support:
+      part_sql: count(*) FILTER (WHERE reviews.review_score <= 2)
+      whole_sql: count(*)
+      part_label: with 1 or 2 stars
+      whole_label: reviews
     terms: [low review rate, bad reviews, unhappy customers]
     shown_in_answer: "Low-review rate = reviews with score 1 or 2 / all reviews."
     why: A share is easier to compare than an average score. No status filter. (F5)
@@ -200,6 +224,11 @@ metrics:
     filters: []
     status: default  # delivered only unless the question names a status (D2)
     unit: ratio
+    support:
+      part_sql: count(*) FILTER (WHERE per_value >= 2)  # over the per-person rows
+      whole_sql: count(*)
+      part_label: with 2+ orders
+      whole_label: people
     terms: [repeat customer rate, repeat customers, returning customers]
     shown_in_answer: "Repeat-customer rate = people with 2+ orders in the period / all people with an order in the period."
     why: >

@@ -610,6 +610,16 @@
               }
             ]
           },
+          "compare_to": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Period"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "sort": {
             "anyOf": [
               {

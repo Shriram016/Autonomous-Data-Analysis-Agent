@@ -18,7 +18,7 @@ from langgraph.graph.state import CompiledStateGraph
 from adaa.agent import nodes
 from adaa.agent.context import AgentContext, get_context
 from adaa.agent.facts import build_chart, build_facts
-from adaa.agent.notes import data_note
+from adaa.agent.notes import data_note, partial_period_note
 from adaa.agent.state import AgentState, FinishedAnswer, Table
 
 
@@ -73,9 +73,10 @@ def finish(state: AgentState, context: AgentContext) -> FinishedAnswer:
         )
     assert state.form and state.result and state.facts and state.answer_text is not None
     full = build_facts(state.result, state.form, context.layer, max_rows=state.result.row_count)
+    note = partial_period_note(state.form, context.data_date)  # made by code, after the guardrail
     return FinishedAnswer(
         status="answered",
-        text=state.answer_text,
+        text=f"{state.answer_text} {note}" if note else state.answer_text,
         table=Table(headers=full.headers, rows=full.rows),
         chart=build_chart(state.result, state.form, context.layer),
         how=[*state.result.explanation, *state.value_notes, data_note(context.data_date)],

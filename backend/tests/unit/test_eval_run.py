@@ -64,7 +64,7 @@ def test_cost_and_versions_are_recorded() -> None:
     r = report()
     assert r.cost_usd == round(sum(x.cost_usd for x in r.results), 6) and r.cost_usd > 0
     assert r.models == {"agent": "claude-haiku-5-5", "answer": "claude-haiku-5-5"}
-    assert r.versions.agent_prompt.startswith("0.1.0 (")
+    assert r.versions.agent_prompt.startswith("0.2.0 (")
 
 
 def test_a_run_is_saved_and_reads_back(tmp_path: Path) -> None:

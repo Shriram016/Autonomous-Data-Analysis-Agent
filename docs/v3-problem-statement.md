@@ -873,6 +873,15 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    *Decisions still open in M1 (one at a time, when the slice starts):* M1.6 chart library (e.g. Recharts /
 >    ECharts). Cost rule: state what runs and the cost before any real LLM run.
 >
+>    **M2 order (🔒 2026-10-26, changed by the builder):** step 1 full semantic layer → 2 router
+>    + quick routes → 3 text-to-SQL baseline → 4 prompt caching → 5 eval results format (moved
+>    last; eval runs until then use the current report). **Later task (raised 2026-10-26):**
+>    test many more question wordings against the form and the LLM (e.g. "compare SP and RJ in
+>    2017 and 2018" → `compare_to`, not a year breakdown) as its own slice. **To check later
+>    (2026-10-26):** the support counts ("625 of 99,441 orders canceled", "based on N") are not
+>    in the eval table; only the cancellation counts have a test. Add hand-written SQL checks
+>    for all 7 in `check_semantic_layer` if needed.
+>
 >
 > ⚠️ **MANDATORY — DO NOT SKIP: post-build architecture cross-examination.** Once development is
 > complete, and before calling V3 done, the builder manually inspects **every component** in the

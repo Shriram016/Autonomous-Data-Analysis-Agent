@@ -248,6 +248,7 @@ export interface components {
             /** Filters */
             filters?: components["schemas"]["Filter"][];
             period?: components["schemas"]["Period"] | null;
+            compare_to?: components["schemas"]["Period"] | null;
             sort?: components["schemas"]["Sort"] | null;
             /** Limit */
             limit?: number | null;

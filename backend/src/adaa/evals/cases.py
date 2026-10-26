@@ -14,6 +14,7 @@ import yaml
 from pydantic import BaseModel, ConfigDict, model_validator
 
 from adaa.agent.state import ErrorKind
+from adaa.semantic_layer.compare import split_comparison
 from adaa.semantic_layer.compiler import CompileError, compile_request
 from adaa.semantic_layer.definitions import SemanticLayer
 from adaa.semantic_layer.request import StructuredRequest
@@ -22,7 +23,15 @@ from adaa.settings import REPO_ROOT
 CASES_FILE = REPO_ROOT / "eval" / "questions" / "cases.yaml"
 
 CaseKind = Literal[
-    "simple", "breakdown", "period", "filter", "status", "relative_date", "top", "must_stop"
+    "simple",
+    "breakdown",
+    "period",
+    "filter",
+    "status",
+    "relative_date",
+    "top",
+    "compare",
+    "must_stop",
 ]
 
 
@@ -82,8 +91,11 @@ def check_cases(cases: EvalSet, layer: SemanticLayer) -> list[str]:
     for case in cases.cases:
         if case.expected_form is None:
             continue
+        form = case.expected_form
         try:
-            compile_request(case.expected_form, layer)
+            forms = split_comparison(form, layer) if form.compare_to else (form,)
+            for one in forms:
+                compile_request(one, layer)
         except CompileError as e:
             problems.append(f"case '{case.id}': {e}")
     return problems

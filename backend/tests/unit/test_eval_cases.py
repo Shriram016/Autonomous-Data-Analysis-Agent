@@ -9,11 +9,11 @@ from adaa.semantic_layer.definitions import load
 
 def test_the_real_cases_load_and_every_expected_form_compiles() -> None:
     cases = load_cases()
-    assert len(cases.cases) == 20
+    assert len(cases.cases) == 30  # v3: 20 from M1 + 10 from M2 step 1
     assert check_cases(cases, load()) == []
 
 
-def test_every_m1_kind_is_covered() -> None:
+def test_every_kind_is_covered() -> None:
     kinds = Counter(case.kind for case in load_cases().cases)
     assert set(kinds) == {
         "simple",
@@ -23,6 +23,7 @@ def test_every_m1_kind_is_covered() -> None:
         "status",
         "relative_date",
         "top",
+        "compare",
         "must_stop",
     }
 

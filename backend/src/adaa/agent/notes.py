@@ -12,6 +12,7 @@ import calendar
 from collections.abc import Callable
 from datetime import date, datetime
 
+from adaa.agent.facts import period_label
 from adaa.semantic_layer.definitions import SemanticLayer
 from adaa.semantic_layer.request import StructuredRequest
 from adaa.semantic_layer.runner import QueryResult
@@ -37,3 +38,15 @@ def find_data_date(layer: SemanticLayer, ask: Callable[[StructuredRequest], Quer
 
 def data_note(data_date: date) -> str:
     return f"Data as of {data_date.isoformat()}."
+
+
+def partial_period_note(form: StructuredRequest, data_date: date) -> str | None:
+    """A sentence for the answer when an asked period runs past the data date (2026-10-26):
+    "revenue in 2018" covers January–August only. The numbers are not changed."""
+    late = [p for p in (form.period, form.compare_to) if p and p.end > data_date]
+    if not late:
+        return None
+    return (
+        f"Data is complete only until {data_date.isoformat()}, "
+        f"so {period_label(late[0])} is not a full period."
+    )

@@ -24,5 +24,5 @@ def test_versions_name_what_produced_the_answer() -> None:
     context = load_context(ask=fake_ask)
     versions = context.versions
     assert versions.semantic_layer == f"{context.layer.version} ({context.layer.fingerprint[:12]})"
-    assert versions.agent_prompt.startswith("0.1.0 (")
-    assert versions.answer_prompt.startswith("0.1.0 (")
+    assert versions.agent_prompt.startswith("0.2.0 (")
+    assert versions.answer_prompt.startswith("0.2.0 (")

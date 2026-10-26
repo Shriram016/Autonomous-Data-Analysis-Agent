@@ -157,3 +157,29 @@ def test_a_value_check_stop_carries_no_plan() -> None:
     context, _ = fake_context(paris)
     result = ask("Revenue in Paris", with_rows(context))
     assert result.error_kind == "value_not_found" and result.form is None  # no checked plan
+
+
+def test_a_comparison_past_the_data_date_gets_the_note() -> None:
+    form = json.dumps(
+        {
+            "metric": "revenue",
+            "period": {"start": "2018-01-01", "end": "2018-12-31"},
+            "compare_to": {"start": "2017-01-01", "end": "2017-12-31"},
+        }
+    )
+    rows = QueryResult(
+        columns=["revenue", "previous", "change", "change_pct"],
+        rows=[(Decimal(150), Decimal(100), Decimal(50), Decimal("0.5"))],
+        explanation=[],
+        row_count=1,
+        elapsed_ms=10,
+    )
+    context, _ = fake_context(form, sentence("Revenue rose 50.0% to R$ 150.00."))
+    result = ask("Revenue 2018 vs 2017", with_rows(context, rows))
+    assert result.used_template is False and result.chart is None
+    assert result.text == (
+        "Revenue rose 50.0% to R$ 150.00. "
+        "Data is complete only until 2018-08-31, so 2018 is not a full period."
+    )
+    assert result.table is not None
+    assert result.table.headers == ["Revenue 2018", "Revenue 2017", "Change", "Change %"]

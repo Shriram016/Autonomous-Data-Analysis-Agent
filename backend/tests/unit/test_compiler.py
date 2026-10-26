@@ -226,3 +226,31 @@ def test_time_breakdowns_are_oldest_first(
 ) -> None:
     sql = compile_form(layer, metric="revenue", **fields).sql
     assert sql.splitlines()[-2] == order  # the line before LIMIT
+
+
+# --- support counts for rates (M2 step 1, slice D) ---
+
+
+def test_a_rate_also_returns_its_counts(layer: SemanticLayer) -> None:
+    q = compile_form(layer, metric="cancellation_rate")
+    assert q.with_support is True
+    assert "count(*) FILTER (WHERE orders.order_status = 'canceled') AS support_part" in q.sql
+    assert "count(*) AS support_whole" in q.sql
+    assert q.columns == ["cancellation_rate"]  # the counts are not result columns
+
+
+def test_a_two_step_rate_counts_people_in_the_outer_query(layer: SemanticLayer) -> None:
+    q = compile_form(layer, metric="repeat_customer_rate")
+    outer = q.sql.split("FROM (")[0]
+    assert "count(*) FILTER (WHERE per_value >= 2) AS support_part" in outer
+
+
+def test_a_sum_metric_has_no_counts(layer: SemanticLayer) -> None:
+    q = compile_form(layer, metric="revenue")
+    assert q.with_support is False and "support_" not in q.sql
+
+
+def test_an_average_returns_only_its_whole_count(layer: SemanticLayer) -> None:
+    q = compile_form(layer, metric="average_order_value")
+    assert "NULL AS support_part" in q.sql
+    assert "count(DISTINCT order_items.order_id) AS support_whole" in q.sql

@@ -34,6 +34,9 @@ class CompiledQuery:
     params: dict[str, object]
     columns: list[str]  # result column names, in order: dimensions first, then the metric
     explanation: list[str]  # the "how I got this" lines
+    # True: the SQL returns 2 more columns after `columns`, a rate's part and whole counts
+    # (definitions.Support). The runner moves them out of the rows into QueryResult.support.
+    with_support: bool = False
 
 
 # ---------- 1–2: names and grain ----------
@@ -103,6 +106,8 @@ def check_grain(request: StructuredRequest, layer: SemanticLayer) -> None:
 def needed_tables(request: StructuredRequest, layer: SemanticLayer) -> set[str]:
     metric = layer.metrics[request.metric]
     parts = [metric.sql, *metric.filters, metric.per or "", metric.per_sql or ""]
+    if metric.support:
+        parts += [metric.support.part_sql or "", metric.support.whole_sql]
     if default := status_default(request, layer):  # the status lives on the orders table
         parts.append(default)
     if request.period:  # a period filters on the order date, so it needs the orders table
@@ -217,9 +222,15 @@ def build_body(
     select = [f"{layer.dimensions[d].sql} AS {d}" for d in dims]
     group = [layer.dimensions[d].sql for d in dims]
     where = ("WHERE " + "\n  AND ".join(conditions)) if conditions else ""
+    values = [f"{metric.sql} AS {request.metric}"]
+    if metric.support:  # the counts behind a rate, after the metric
+        values += [
+            f"{metric.support.part_sql or 'NULL'} AS support_part",  # NULL: an average
+            f"{metric.support.whole_sql} AS support_whole",
+        ]
     if metric.per is None:
         return [
-            "SELECT " + ",\n       ".join([*select, f"{metric.sql} AS {request.metric}"]),
+            "SELECT " + ",\n       ".join([*select, *values]),
             f"FROM {metric.table}",
             build_joins(request, layer),
             where,
@@ -227,7 +238,7 @@ def build_body(
         ]
     inner = [*select, f"{metric.per} AS per_key", f"{metric.per_sql} AS per_value"]
     return [
-        "SELECT " + ",\n       ".join([*dims, f"{metric.sql} AS {request.metric}"]),
+        "SELECT " + ",\n       ".join([*dims, *values]),
         "FROM (",
         "  SELECT " + ", ".join(inner),
         f"  FROM {metric.table}",
@@ -243,6 +254,7 @@ def build_body(
 
 
 def compile_request(request: StructuredRequest, layer: SemanticLayer) -> CompiledQuery:
+    assert request.compare_to is None, "a comparison is split into 2 forms first (compare.py)"
     look_up_names(request, layer)
     check_status(request, layer)
     check_grain(request, layer)
@@ -262,4 +274,5 @@ def compile_request(request: StructuredRequest, layer: SemanticLayer) -> Compile
         params=params,
         columns=[*request.dimensions, request.metric],
         explanation=build_explanation(request, layer, period_line),
+        with_support=layer.metrics[request.metric].support is not None,
     )

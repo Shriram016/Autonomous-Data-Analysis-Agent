@@ -40,6 +40,9 @@ def form_hints(expected: StructuredRequest | None, got: StructuredRequest | None
     def period(form: StructuredRequest) -> str:
         return f"{form.period.start} to {form.period.end}" if form.period else "none (all data)"
 
+    def compare_to(form: StructuredRequest) -> str:
+        return f"{form.compare_to.start} to {form.compare_to.end}" if form.compare_to else "none"
+
     def sort(form: StructuredRequest) -> str:
         return f"{form.sort.by} {form.sort.direction}" if form.sort else "none"
 
@@ -48,6 +51,7 @@ def form_hints(expected: StructuredRequest | None, got: StructuredRequest | None
         ("breakdown", sorted(expected.dimensions), sorted(got.dimensions)),
         ("filters", filters(expected), filters(got)),
         ("period", period(expected), period(got)),
+        ("compare_to", compare_to(expected), compare_to(got)),
         ("sort", sort(expected), sort(got)),
         ("limit", expected.limit, got.limit),
     ]

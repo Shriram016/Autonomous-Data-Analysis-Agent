@@ -13,10 +13,10 @@ import hashlib
 import re
 from collections import deque
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Self
 
 import yaml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from adaa.ingestion.load_olist import TABLES
 from adaa.settings import REPO_ROOT
@@ -45,6 +45,28 @@ class SemanticLayerError(Exception):
     """A definition in the YAML files is wrong; the layer does not load."""
 
 
+class Support(BaseModel):
+    """The counts behind a rate or an average, shown next to it for context:
+    a rate has a part and a whole ("625 of 99,441 orders canceled"); an average has only
+    the whole ("based on 99,224 reviews")."""
+
+    whole_sql: str  # e.g. count(*)
+    whole_label: str  # orders
+    part_sql: str | None = None  # e.g. count(*) FILTER (WHERE orders.order_status = 'canceled')
+    part_label: str | None = None  # canceled
+
+    @model_validator(mode="after")
+    def part_needs_both(self) -> Self:
+        if (self.part_sql is None) != (self.part_label is None):
+            raise ValueError("support needs both part_sql and part_label, or neither")
+        return self
+
+    def text(self, part: object, whole: object) -> str:
+        if self.part_sql is None:
+            return f"based on {int(str(whole)):,} {self.whole_label}"
+        return f"{int(str(part)):,} of {int(str(whole)):,} {self.whole_label} {self.part_label}"
+
+
 class Metric(BaseModel):
     label: str
     description: str
@@ -62,6 +84,7 @@ class Metric(BaseModel):
     # None = no status rule.
     status: Literal["default", "built_in", "all"] | None = None
     unit: Unit  # required: decides how the answer shows the number (agent/facts.py)
+    support: Support | None = None  # a rate's counts, for context in the answer
     terms: list[str]
     shown_in_answer: str
     why: str | None = None
@@ -188,7 +211,8 @@ def check(layer: SemanticLayer) -> None:
         two_step = [part for part in (m.per, m.per_sql) if part]
         if len(two_step) == 1:
             problems.append(f"metric '{name}' needs both 'per' and 'per_sql', or neither")
-        check_tables("metric", name, m.table, [m.sql, *two_step, *m.filters])
+        support = [m.support.part_sql or "", m.support.whole_sql] if m.support else []
+        check_tables("metric", name, m.table, [m.sql, *two_step, *support, *m.filters])
     for name, d in layer.dimensions.items():
         check_tables("dimension", name, None, [d.sql])
 

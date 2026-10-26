@@ -126,6 +126,7 @@ def test_new_v040_metrics_on_real_data(layer: SemanticLayer) -> None:
     """Values from data-profile.md: 625 of 99,441 orders canceled (F3); 112,650 items."""
     rate = single_value(ask(layer, metric="cancellation_rate"))
     assert round(float(rate), 6) == round(625 / 99441, 6)
+    assert ask(layer, metric="cancellation_rate").support == [(625, 99441)]  # slice D
     by_status = by_key(ask(layer, metric="items_sold", dimensions=["order_status"]))
     assert sum(by_status.values()) == 112650  # every item, in every status
 
@@ -137,6 +138,33 @@ def test_repeat_customer_rate_on_real_data(layer: SemanticLayer) -> None:
     by_month = by_key(ask(layer, metric="repeat_customer_rate", dimensions=["month"]))
     monthly = sorted(by_month.values())
     assert monthly[len(monthly) // 2] < Decimal(overall)  # median month: fewer buy twice
+
+
+def test_comparison_matches_two_separate_questions(layer: SemanticLayer) -> None:
+    sp_rj = [{"dimension": "customer_state", "op": "in", "values": ["SP", "RJ"]}]
+    both = ask(
+        layer,
+        metric="revenue",
+        dimensions=["customer_state"],
+        filters=sp_rj,
+        period=YEAR_2017,
+        compare_to={"start": "2016-01-01", "end": "2016-12-31"},
+    )
+    y2016 = by_key(
+        ask(
+            layer,
+            metric="revenue",
+            dimensions=["customer_state"],
+            filters=sp_rj,
+            period={"start": "2016-01-01", "end": "2016-12-31"},
+        )
+    )
+    assert both.columns == ["customer_state", "revenue", "previous", "change", "change_pct"]
+    for state, *values in both.rows:
+        now, before, diff, pct = (Decimal(str(v)) for v in values)
+        assert before == y2016[str(state)]
+        assert diff == now - before and pct == diff / before
+    assert both.explanation[-2] == "Compared with: 2016-01-01 to 2016-12-31."
 
 
 def test_quarters_add_up_to_the_year(layer: SemanticLayer) -> None:

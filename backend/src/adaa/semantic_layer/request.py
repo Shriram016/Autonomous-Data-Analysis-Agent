@@ -68,6 +68,7 @@ class StructuredRequest(BaseModel):
     dimensions: list[str] = Field(default_factory=list, max_length=MAX_DIMENSIONS)
     filters: list[Filter] = Field(default_factory=list)
     period: Period | None = None  # None → the semantic layer's default period
+    compare_to: Period | None = None  # an earlier period: show both values and the change
     sort: Sort | None = None
     limit: int | None = Field(default=None, ge=1, le=MAX_LIMIT)
 
@@ -75,4 +76,10 @@ class StructuredRequest(BaseModel):
     def no_repeated_dimension(self) -> Self:
         if len(set(self.dimensions)) != len(self.dimensions):
             raise ValueError(f"a dimension is repeated: {self.dimensions}")
+        return self
+
+    @model_validator(mode="after")
+    def compare_needs_a_period(self) -> Self:
+        if self.compare_to and self.period is None:
+            raise ValueError("compare_to needs a period: the period to compare it with")
         return self

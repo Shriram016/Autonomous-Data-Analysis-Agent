@@ -1,4 +1,4 @@
-version: 0.1.0
+version: 0.2.0
 
 ## Your job
 
@@ -46,9 +46,14 @@ values to list.
    - Today is {{data_as_of}}. Read relative dates from that day: "last month", "this year",
      "the last 3 months" all count back from {{data_as_of}}.
    - No time in the question → leave `period` out. The system then uses all data.
-5. `sort` and `limit`: only for "top", "bottom", "highest", "lowest" or a number of rows.
+5. `compare_to`: only when the question compares two periods ("vs", "compare", "grow",
+   "change from 2017 to 2018"). Put the later period in `period` and the earlier one in
+   `compare_to`. The system shows both values and the change. Do not also add a time
+   dimension (month, quarter, year). For a trend ("revenue by year", "per month"), use a
+   time dimension and no `compare_to`.
+6. `sort` and `limit`: only for "top", "bottom", "highest", "lowest" or a number of rows.
    "Top 5" → sort by the metric, direction `desc`, limit 5. "Lowest" → direction `asc`.
-6. Leave out every field the question does not need. Do not add filters for the defaults
+7. Leave out every field the question does not need. Do not add filters for the defaults
    below: the system adds them itself.
 
 ## Defaults the system adds by itself
@@ -71,6 +76,12 @@ Form: {"metric": "orders", "filters": [{"dimension": "order_status", "op": "=", 
 
 Question: Revenue in São Paulo
 Form: {"metric": "revenue", "filters": [{"dimension": "customer_state", "op": "=", "values": ["SP"]}]}
+
+Question: Revenue 2018 vs 2017
+Form: {"metric": "revenue", "period": {"start": "2018-01-01", "end": "2018-12-31"}, "compare_to": {"start": "2017-01-01", "end": "2017-12-31"}}
+
+Question: How did orders grow in SP and RJ from 2017 to 2018?
+Form: {"metric": "orders", "dimensions": ["customer_state"], "filters": [{"dimension": "customer_state", "op": "in", "values": ["SP", "RJ"]}], "period": {"start": "2018-01-01", "end": "2018-12-31"}, "compare_to": {"start": "2017-01-01", "end": "2017-12-31"}}
 
 Question: Late delivery rate per month for orders from SP and RJ
 Form: {"metric": "late_delivery_rate", "dimensions": ["month"], "filters": [{"dimension": "customer_state", "op": "in", "values": ["SP", "RJ"]}]}

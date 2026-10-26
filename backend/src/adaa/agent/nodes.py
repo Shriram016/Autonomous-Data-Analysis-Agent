@@ -102,7 +102,8 @@ def answer(state: AgentState, context: AgentContext) -> dict[str, Any]:
         return fallback
 
     usage = state.usage + reply.usage
-    period = [str(state.form.period.start), str(state.form.period.end)] if state.form.period else []
+    periods = [p for p in (state.form.period, state.form.compare_to) if p]
+    period = [str(day) for p in periods for day in (p.start, p.end)]
     allowed = [*facts.allowed_numbers, state.question, *period]
     bad = unknown_numbers(reply.output.answer_text, allowed)
     if bad:

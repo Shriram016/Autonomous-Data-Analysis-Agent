@@ -19,7 +19,7 @@ def write(folder: Path, text: str) -> Path:
 
 def test_real_agent_prompt_is_filled_from_the_semantic_layer() -> None:
     prompt = load_prompt("agent", semantic_values(load(), CATALOGUE, AS_OF))
-    assert prompt.version == "0.1.0" and len(prompt.fingerprint) == 64
+    assert prompt.version == "0.2.0" and len(prompt.fingerprint) == 64
     assert "{{" not in prompt.text  # every placeholder filled
     assert "- `revenue` (revenue, sales, turnover, product sales):" in prompt.text
     assert "Today is 2018-08-31." in prompt.text
@@ -45,7 +45,7 @@ def test_only_form_defaults_are_listed() -> None:
 
 def test_real_answer_prompt_loads() -> None:
     prompt = load_prompt("answer", {})
-    assert prompt.version == "0.1.0" and "Never calculate" in prompt.text
+    assert prompt.version == "0.2.0" and "Never calculate" in prompt.text
 
 
 def test_missing_value_is_a_clear_error() -> None:
