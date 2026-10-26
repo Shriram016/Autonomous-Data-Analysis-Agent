@@ -13,6 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from adaa.agent.context import AgentContext
 from adaa.agent.facts import build_facts
+from adaa.agent.replies import make_reply
 from adaa.agent.state import AgentError, AgentState
 from adaa.agent.values import ValueNotFoundError, check_filters
 from adaa.guardrails.numbers import unknown_numbers
@@ -45,21 +46,23 @@ def route(state: AgentState, context: AgentContext) -> dict[str, Any]:
     return {"route": decision, "usage": state.usage + decision.usage}
 
 
-# One fixed reply per quick route. PLACEHOLDERS: slice 2c makes each one useful (clarify
-# options as full questions, refuse with the closest answerable question, metadata from
-# the semantic layer).
-QUICK_REPLIES = {
-    "clarify": "Your question can mean several things. Please say more exactly what to show.",
-    "refuse": "The store's data can't answer that question.",
-    "off_topic": "I answer questions about the store's orders, revenue, deliveries and reviews.",
-    "metadata": "I answer questions about the store's orders, revenue, deliveries and reviews.",
-}
-
-
 def reply(state: AgentState, context: AgentContext) -> dict[str, Any]:
-    """A quick route's reply: no form, no SQL."""
+    """A quick route's reply (agent/replies.py): no form, no SQL. Never stops the graph:
+    when the LLM fails, a code-made fallback reply is used."""
     assert state.route is not None and state.route.route != "numbers"
-    return {"answer_text": QUICK_REPLIES[state.route.route]}
+    result = make_reply(
+        state.route.route,
+        state.question,
+        context.reply_prompts,
+        context.layer,
+        context.data_facts,
+        adapter=context.adapter,
+    )
+    return {
+        "answer_text": result.text,
+        "suggestions": result.suggestions,
+        "usage": state.usage + result.usage,
+    }
 
 
 def understand(state: AgentState, context: AgentContext) -> dict[str, Any]:

@@ -311,6 +311,14 @@
             ],
             "title": "Route Confidence"
           },
+          "suggestions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Suggestions",
+            "default": []
+          },
           "text": {
             "type": "string",
             "title": "Text"
@@ -804,6 +812,17 @@
               }
             ],
             "title": "Router Prompt"
+          },
+          "reply_prompts": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reply Prompts"
           }
         },
         "type": "object",

@@ -6,7 +6,7 @@ from decimal import Decimal
 
 from adaa.agent.context import AgentContext
 from adaa.agent.graph import ask
-from adaa.agent.nodes import QUICK_REPLIES
+from adaa.agent.replies import EXAMPLES, OFF_TOPIC_TEXT
 from adaa.agent.router import RouteDecision
 from adaa.llm.types import LlmUnavailableError, Usage
 from adaa.semantic_layer.compiler import CompileError
@@ -207,7 +207,8 @@ def test_a_quick_route_replies_without_a_form_or_sql() -> None:
     result = ask("Write me a poem", replace(context, ask=no_sql), on_step=steps.append)
     assert steps == ["route", "reply"]
     assert result.status == "answered" and result.route == "off_topic"
-    assert result.text == QUICK_REPLIES["off_topic"]
+    assert result.text == OFF_TOPIC_TEXT
+    assert len(result.suggestions) == 3 and set(result.suggestions) <= set(EXAMPLES)
     assert result.table is None and result.chart is None and result.form is None
     assert adapter.calls == []  # no form call, no answer call
 
@@ -219,9 +220,11 @@ def test_the_router_cost_is_in_the_question_total() -> None:
         source="route_jev",
         usage=Usage(input_tokens=300, output_tokens=0, cost_usd=0.0000126),
     )
-    context, _ = fake_context(route=lambda question: routed)
+    refused = json.dumps({"missing_data": "The data has no costs.", "suggestion": "Revenue?"})
+    context, _ = fake_context(refused, route=lambda question: routed)
     result = ask("What was our profit?", context)
-    assert result.usage.input_tokens == 300 and result.route_confidence == 0.88
+    assert result.usage.input_tokens == 300 + 1_000  # router + the reply call (fake: 1,000)
+    assert result.route_confidence == 0.88 and result.suggestions == ["Revenue?"]
 
 
 def test_the_versions_name_the_router_prompt() -> None:

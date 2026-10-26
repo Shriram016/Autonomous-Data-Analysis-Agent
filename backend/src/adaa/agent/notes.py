@@ -36,6 +36,16 @@ def find_data_date(layer: SemanticLayer, ask: Callable[[StructuredRequest], Quer
     return date(last.year, last.month, calendar.monthrange(last.year, last.month)[1])
 
 
+def find_data_span(ask: Callable[[StructuredRequest], QueryResult]) -> tuple[date, date]:
+    """The first and the last month with any order, thin ones included (metadata replies)."""
+    result = ask(StructuredRequest(metric="orders", dimensions=["month"]))
+    months = [month for month, _ in result.rows if isinstance(month, datetime | date)]
+    if not months:
+        raise NoDataError("No month has any orders.")
+    first, last = min(months), max(months)
+    return date(first.year, first.month, 1), date(last.year, last.month, 1)
+
+
 def data_note(data_date: date) -> str:
     return f"Data as of {data_date.isoformat()}."
 

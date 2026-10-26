@@ -74,20 +74,28 @@ def load_prompt(name: str, values: dict[str, str], prompts_dir: Path = PROMPTS_D
     )
 
 
+def metric_lines(layer: SemanticLayer) -> str:
+    """One line per metric, with the dimensions it allows (the compiler's own rules)."""
+    lines = []
+    for name, metric in layer.metrics.items():
+        allowed = [d for d in layer.dimensions if layer.allows(name, d)]
+        lines.append(
+            f"- `{name}` ({', '.join(metric.terms)}): {metric.description}"
+            f" Dimensions allowed: {', '.join(allowed)}."
+        )
+    return "\n".join(lines)
+
+
+def dimension_lines(layer: SemanticLayer) -> str:
+    return "\n".join(
+        f"- `{name}` ({', '.join(d.terms)}): {d.label}" for name, d in layer.dimensions.items()
+    )
+
+
 def semantic_values(
     layer: SemanticLayer, catalogue: ValueCatalogue, data_as_of: date
 ) -> dict[str, str]:
     """The agent prompt's placeholder values, built from the semantic layer and the data."""
-    metrics = []
-    for name, metric in layer.metrics.items():
-        allowed = [d for d in layer.dimensions if layer.allows(name, d)]  # = compiler rules
-        metrics.append(
-            f"- `{name}` ({', '.join(metric.terms)}): {metric.description}"
-            f" Dimensions allowed: {', '.join(allowed)}."
-        )
-    dimensions = [
-        f"- `{name}` ({', '.join(d.terms)}): {d.label}" for name, d in layer.dimensions.items()
-    ]
     # Only the defaults that change how the form is filled. The others (thin months, one
     # customer = one person, "best customers") are about the answer, which shows them.
     status = layer.defaults["default_status_filter"].shown_in_answer.removesuffix(".")
@@ -96,8 +104,8 @@ def semantic_values(
         f"- {layer.defaults['default_period'].shown_in_answer}",
     ]
     return {
-        "metrics": "\n".join(metrics),
-        "dimensions": "\n".join(dimensions),
+        "metrics": metric_lines(layer),
+        "dimensions": dimension_lines(layer),
         "defaults": "\n".join(defaults),
         "values": catalogue.prompt_text(),
         "data_as_of": data_as_of.isoformat(),

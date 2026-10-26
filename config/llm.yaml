@@ -48,6 +48,13 @@ jobs:
     model: typesafe/jev-1.14
     timeout_seconds: 5  # a classifier: fast, or fall back
 
+  reply:  # quick routes (clarify, refuse, metadata) → that route's form (M2 step 2c)
+    model: claude-haiku-5-5
+    thinking: disabled
+    max_tokens: 400  # a short message and 1–3 suggestion questions
+    timeout_seconds: 15
+    max_attempts: 1  # no retry: a code-made fallback reply is shown, and the failure logged
+
   route_haiku:  # question → route (fallback); no confidence
     model: claude-haiku-5-5
     thinking: disabled

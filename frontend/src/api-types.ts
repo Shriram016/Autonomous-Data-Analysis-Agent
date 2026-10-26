@@ -133,6 +133,11 @@ export interface components {
             route?: ("numbers" | "clarify" | "refuse" | "off_topic" | "metadata") | null;
             /** Route Confidence */
             route_confidence?: number | null;
+            /**
+             * Suggestions
+             * @default []
+             */
+            suggestions: string[];
             /** Text */
             text: string;
             /** Error Kind */
@@ -304,6 +309,8 @@ export interface components {
             answer_prompt: string;
             /** Router Prompt */
             router_prompt?: string | null;
+            /** Reply Prompts */
+            reply_prompts?: string | null;
         };
     };
     responses: never;

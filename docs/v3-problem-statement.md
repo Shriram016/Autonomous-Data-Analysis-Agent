@@ -938,6 +938,21 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    Pydantic checks each form; a failure → a code-made fallback reply, no retry, logged.
 >    `FinishedAnswer.suggestions` (full questions) shown as buttons; a click sends a new
 >    question, so no memory is needed until M4 (typed replies to clarify come in M4).
+>    **2c decision 1 (🔒):** suggestion buttons under a quick reply; a click = a separate new
+>    question (new ID, no memory). **2c decision 2 (🔒, builder's choice):** the LLM writes
+>    the suggestion questions as text, with the metrics, breakdowns and data range in its
+>    prompt; **no form check** before showing them. A clicked suggestion that ends in a
+>    refusal shows in the refusal tracking. If bad suggestions become a problem: the same
+>    reply call also returns each suggestion's form, and code compiles it (no extra LLM
+>    call) and hides the ones that fail. **2c decision 3 (🔒):** metadata = the LLM picks
+>    the topic, code writes the reply from the semantic layer: `data_overview` (data range,
+>    metric and breakdown labels), `date_range` (first and last month, and the data date
+>    used as "today"), `definition` (the metric's description + `shown_in_answer`); an
+>    unknown metric → "I have no metric called X" + the overview; "how did you get the
+>    last answer?" needs memory → M4. **2c decision 4 (🔒):** off_topic = a fixed code text
+>    ("I can only answer questions about the store's data …") + **3 example buttons picked at
+>    random from 6** tested examples in one place in code (no LLM, free); 2d's eval runs all
+>    6 so each one is known to work.
 >    **Decide later (raised 2026-10-26 by the builder): usage per LLM call.** Today
 >    `conversation.questions` keeps one row per question with the totals only; each call's
 >    job, model, tokens, cost and time are only in the `llm_call` log lines. Option: an

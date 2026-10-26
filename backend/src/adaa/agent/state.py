@@ -60,6 +60,7 @@ class AgentState(BaseModel):
     result: QueryResult | None = None  # query
     facts: Facts | None = None  # answer
     answer_text: str | None = None  # answer: the LLM sentence, or the template; reply
+    suggestions: list[str] = []  # reply: full questions shown as buttons
     used_template: bool = False  # answer: True when the LLM or the guardrail failed
     usage: Usage = NO_USAGE  # every LLM call adds to it
     error: AgentError | None = None  # any node; the graph stops when it is set
@@ -81,6 +82,7 @@ class Versions(BaseModel):
     agent_prompt: str
     answer_prompt: str
     router_prompt: str | None = None  # None in answers saved before the router (M2 step 2)
+    reply_prompts: str | None = None  # clarify, refuse, metadata (M2 step 2c)
 
 
 class FinishedAnswer(BaseModel):
@@ -90,6 +92,7 @@ class FinishedAnswer(BaseModel):
     status: Literal["answered", "failed"]
     route: Route | None = None  # None in answers saved before the router (M2 step 2)
     route_confidence: float | None = None  # from Jev only
+    suggestions: list[str] = []  # quick routes: full questions, shown as buttons
     text: str  # the answer, or the plain error message
     error_kind: ErrorKind | None = None
     table: Table | None = None

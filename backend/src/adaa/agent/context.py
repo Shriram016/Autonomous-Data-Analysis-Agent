@@ -19,8 +19,9 @@ from dataclasses import dataclass
 from datetime import date
 from functools import cache
 
-from adaa.agent.notes import find_data_date
+from adaa.agent.notes import find_data_date, find_data_span
 from adaa.agent.prompts import Prompt, load_prompt, semantic_values
+from adaa.agent.replies import DataFacts, ReplyPrompts, build_reply_prompts
 from adaa.agent.router import RouteDecision, RouterTexts, build_router_texts, route_question
 from adaa.agent.state import Versions
 from adaa.agent.values import ValueCatalogue, build_catalogue
@@ -41,6 +42,8 @@ class AgentContext:
     agent_prompt: Prompt  # filled: metrics, dimensions, values, data date
     answer_prompt: Prompt
     router_texts: RouterTexts  # the router's prompt (Haiku) and instructions (Jev)
+    reply_prompts: ReplyPrompts  # the quick routes' prompts: clarify, refuse, metadata
+    data_facts: DataFacts  # first and last month, data date: for the metadata replies
     ask: Ask  # real: the M1.1 runner as adaa_query; tests: a fake
     route: RouteFn  # real: route_question (Jev, then Haiku); tests: a fixed route
     adapter: Adapter | None = None  # None: the adapter config/llm.yaml names; tests: fake
@@ -57,6 +60,14 @@ class AgentContext:
             router_prompt=short(
                 self.router_texts.prompt.version, self.router_texts.prompt.fingerprint
             ),
+            reply_prompts=", ".join(
+                f"{p.name} {short(p.version, p.fingerprint)}"
+                for p in (
+                    self.reply_prompts.clarify,
+                    self.reply_prompts.refuse,
+                    self.reply_prompts.metadata,
+                )
+            ),
         )
 
 
@@ -68,6 +79,8 @@ def load_context(
     catalogue = build_catalogue(layer, run)
     data_date = find_data_date(layer, run)
     texts = build_router_texts(layer, data_date)
+    first_month, last_month = find_data_span(run)
+    facts = DataFacts(first_month=first_month, last_month=last_month, data_date=data_date)
     return AgentContext(
         layer=layer,
         catalogue=catalogue,
@@ -75,6 +88,8 @@ def load_context(
         agent_prompt=load_prompt("agent", semantic_values(layer, catalogue, data_date)),
         answer_prompt=load_prompt("answer", {}),
         router_texts=texts,
+        reply_prompts=build_reply_prompts(layer, facts),
+        data_facts=facts,
         ask=run,
         route=route or (lambda question: route_question(question, texts, adapter=adapter)),
         adapter=adapter,

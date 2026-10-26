@@ -90,7 +90,9 @@ def finish(state: AgentState, context: AgentContext) -> FinishedAnswer:
         )
     if state.route and state.route.route != "numbers":  # a quick route: text only
         assert state.answer_text is not None
-        return FinishedAnswer(status="answered", text=state.answer_text, **common)
+        return FinishedAnswer(
+            status="answered", text=state.answer_text, suggestions=state.suggestions, **common
+        )
     assert state.form and state.result and state.facts and state.answer_text is not None
     full = build_facts(state.result, state.form, context.layer, max_rows=state.result.row_count)
     note = partial_period_note(state.form, context.data_date)  # made by code, after the guardrail
