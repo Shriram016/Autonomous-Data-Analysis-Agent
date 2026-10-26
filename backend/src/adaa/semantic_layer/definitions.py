@@ -37,6 +37,8 @@ PARENT: dict[str, str | None] = {
 }
 
 STATUS_DIMENSION = "order_status"  # naming it in a form switches the D2 default off
+DATE_PLACEHOLDER = "{date}"  # in a time dimension's SQL: the counted metric's own date column
+ORDER_DATE = "orders.order_purchase_timestamp"
 
 TABLE_REF = re.compile(r"\b([a-z_]+)\.[a-z_]+\b")  # "orders.order_status" → "orders"
 
@@ -73,6 +75,14 @@ class Metric(BaseModel):
     grain: Grain
     table: str
     sql: str
+    # v0.5.0 (§0 M2 3c): the date a period and the month / quarter / year breakdowns use —
+    # the counted table's own date (reviews: the review date). Items and payments have none,
+    # so they use the order date.
+    date_column: str = ORDER_DATE
+    # v0.5.0: True for a metric that counts DISTINCT ids (orders, customers). It may follow a
+    # one-to-many join (joins.yaml `fans_out`), e.g. orders → order_items for "orders by
+    # category", because each id is still counted once. Every other metric may not.
+    fan_out_safe: bool = False
     # Two-step metrics (repeat-customer rate): `per_sql` is computed once per `per` value (one
     # row per person, named per_value), then `sql` runs over those rows. Both or neither.
     per: str | None = None
@@ -105,6 +115,7 @@ class Join(BaseModel):
     to_table: str = Field(alias="to")
     condition: str  # not "on": YAML reads a bare `on` key as the boolean true
     optional: bool = False
+    fans_out: bool = False  # one row → many rows: only fan_out_safe metrics may follow it
 
 
 class Default(BaseModel):
@@ -122,9 +133,26 @@ class SemanticLayer(BaseModel):
     joins: list[Join]
     defaults: dict[str, Default]
 
+    def dimension_sql(self, metric: str, dimension: str) -> str:
+        """A dimension's SQL for this metric: a time dimension uses the metric's own date."""
+        sql = self.dimensions[dimension].sql
+        return sql.replace(DATE_PLACEHOLDER, self.metrics[metric].date_column)
+
     def can_use(self, metric: str, dimension: str) -> bool:
-        """Grain rule: a dimension at the metric's own grain or above it never double counts."""
-        grain: str | None = self.metrics[metric].grain
+        """Grain rule: a dimension at the metric's own grain or above it never double counts.
+        A fan_out_safe metric (counts DISTINCT ids) may use any dimension it can reach."""
+        m = self.metrics[metric]
+        if m.fan_out_safe:
+            try:
+                self.join_path(
+                    m.table,
+                    tables_in(self.dimension_sql(metric, dimension)) - {m.table},
+                    fan_out=True,
+                )
+            except SemanticLayerError:
+                return False
+            return True
+        grain: str | None = m.grain
         target = self.dimensions[dimension].grain
         while grain is not None:
             if grain == target:
@@ -139,11 +167,13 @@ class SemanticLayer(BaseModel):
             return False
         return self.can_use(metric, dimension)
 
-    def join_path(self, start: str, needed: set[str]) -> list[Join]:
-        """The joins that reach every needed table from `start`, following many-to-one only."""
+    def join_path(self, start: str, needed: set[str], fan_out: bool = False) -> list[Join]:
+        """The joins that reach every needed table from `start`, following many-to-one only
+        (and one-to-many too when `fan_out`: only for metrics that count DISTINCT ids)."""
         edges: dict[str, list[Join]] = {}
         for join in self.joins:
-            edges.setdefault(join.from_table, []).append(join)
+            if fan_out or not join.fans_out:
+                edges.setdefault(join.from_table, []).append(join)
         came_by: dict[str, Join | None] = {start: None}
         queue = deque([start])
         while queue:  # breadth-first: shortest path to each table
@@ -194,14 +224,16 @@ def check(layer: SemanticLayer) -> None:
             if table not in KNOWN_TABLES:
                 problems.append(f"join uses unknown table '{table}'")
 
-    def check_tables(kind: str, name: str, start: str | None, sql_parts: list[str]) -> None:
+    def check_tables(
+        kind: str, name: str, start: str | None, sql_parts: list[str], fan_out: bool = False
+    ) -> None:
         used = tables_in(*sql_parts)
         unknown = used - KNOWN_TABLES
         if unknown:
             problems.append(f"{kind} '{name}' uses unknown table(s) {sorted(unknown)}")
         elif start is not None:
             try:
-                layer.join_path(start, used - {start})
+                layer.join_path(start, used - {start}, fan_out=fan_out)
             except SemanticLayerError as e:
                 problems.append(f"{kind} '{name}': {e}")
 
@@ -212,9 +244,12 @@ def check(layer: SemanticLayer) -> None:
         if len(two_step) == 1:
             problems.append(f"metric '{name}' needs both 'per' and 'per_sql', or neither")
         support = [m.support.part_sql or "", m.support.whole_sql] if m.support else []
-        check_tables("metric", name, m.table, [m.sql, *two_step, *support, *m.filters])
+        parts = [m.sql, m.date_column, *two_step, *support, *m.filters]
+        check_tables("metric", name, m.table, parts, fan_out=m.fan_out_safe)
     for name, d in layer.dimensions.items():
         check_tables("dimension", name, None, [d.sql])
+        if (DATE_PLACEHOLDER in d.sql) != (d.kind == "time"):
+            problems.append(f"dimension '{name}': only a time dimension uses {DATE_PLACEHOLDER}")
 
     owners: dict[str, str] = {}
     entries = [

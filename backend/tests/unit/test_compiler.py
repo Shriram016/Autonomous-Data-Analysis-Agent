@@ -45,8 +45,8 @@ def test_only_the_joins_that_are_needed(layer: SemanticLayer) -> None:
     with_period = compile_form(
         layer, metric="review_count", period={"start": "2018-01-01", "end": "2018-01-31"}
     )
-    assert "JOIN orders" in with_period.sql  # the period is on the order date
-    assert "customers" not in with_period.sql and "order_items" not in with_period.sql
+    assert "JOIN" not in with_period.sql  # v0.5.0: a review's own date, so still one table
+    assert "reviews.review_creation_date >= %(period_start)s" in with_period.sql
 
 
 def test_category_uses_a_left_join(layer: SemanticLayer) -> None:
@@ -139,7 +139,7 @@ def test_delivered_is_a_default_when_no_status_is_named(layer: SemanticLayer) ->
 def test_a_status_filter_replaces_the_default(layer: SemanticLayer) -> None:
     q = compile_form(
         layer,
-        metric="orders",
+        metric="revenue",  # v0.5.0: the delivered default is for money metrics only
         filters=[{"dimension": "order_status", "op": "=", "values": ["canceled"]}],
     )
     assert "'delivered'" not in q.sql  # never "delivered AND canceled" (always 0)
@@ -182,7 +182,7 @@ def test_repeat_customer_rate_takes_two_steps(layer: SemanticLayer) -> None:
     assert "count(DISTINCT orders.order_id) AS per_value" in q.sql
     assert "GROUP BY customers.customer_state, customers.customer_unique_id" in q.sql
     assert ") AS per_row" in q.sql and "GROUP BY customer_state" in q.sql
-    assert "orders.order_status = 'delivered'" in q.sql  # D2 default, inside the inner query
+    assert "'delivered'" not in q.sql  # v0.5.0: every status
     assert q.sql.splitlines()[-2] == "ORDER BY repeat_customer_rate DESC"
 
 
@@ -254,3 +254,41 @@ def test_an_average_returns_only_its_whole_count(layer: SemanticLayer) -> None:
     q = compile_form(layer, metric="average_order_value")
     assert "NULL AS support_part" in q.sql
     assert "count(DISTINCT order_items.order_id) AS support_whole" in q.sql
+
+
+# --- v0.5.0: only the tables a question needs (§0 M2 3c) ---
+
+
+def test_orders_need_only_the_orders_table(layer: SemanticLayer) -> None:
+    q = compile_form(
+        layer,
+        metric="orders",
+        filters=[{"dimension": "order_status", "op": "=", "values": ["canceled"]}],
+    )
+    assert "FROM orders" in q.sql and "JOIN" not in q.sql
+
+
+def test_orders_by_category_join_items_and_count_each_order_once(layer: SemanticLayer) -> None:
+    q = compile_form(layer, metric="orders", dimensions=["product_category"])
+    assert "count(DISTINCT orders.order_id) AS orders" in q.sql
+    assert "JOIN order_items ON order_items.order_id = orders.order_id" in q.sql
+
+
+def test_customers_need_only_the_customers_table(layer: SemanticLayer) -> None:
+    q = compile_form(layer, metric="customers")
+    assert "FROM customers" in q.sql and "JOIN" not in q.sql and "WHERE" not in q.sql
+    by_month = compile_form(layer, metric="customers", dimensions=["month"])
+    assert "JOIN orders" in by_month.sql  # the date is on the order: joined only now
+
+
+def test_a_sum_metric_never_follows_a_one_to_many_join(layer: SemanticLayer) -> None:
+    with pytest.raises(CompileError, match="counted twice"):
+        compile_form(layer, metric="total_paid", dimensions=["product_category"])
+
+
+def test_review_breakdowns_by_month_use_the_review_date(layer: SemanticLayer) -> None:
+    q = compile_form(layer, metric="review_count", dimensions=["month"])
+    assert "date_trunc('month', reviews.review_creation_date) AS month" in q.sql
+    assert "JOIN" not in q.sql
+    orders = compile_form(layer, metric="orders", dimensions=["month"])
+    assert "date_trunc('month', orders.order_purchase_timestamp) AS month" in orders.sql

@@ -1,7 +1,9 @@
-# How the tables connect. Every join goes from the "many" side to the "one" side, so following
-# a join never multiplies rows. optional: true means LEFT JOIN (keep rows with no match, F8).
+# How the tables connect. A normal join goes from the "many" side to the "one" side, so
+# following it never multiplies rows. optional: true means LEFT JOIN (keep rows with no match,
+# F8). fans_out: true (v0.5.0) is the other way, one row -> many rows: only a metric that
+# counts DISTINCT ids (fan_out_safe: orders, customers) may follow it ("orders by category").
 # The key is "condition", not "on": YAML reads a bare `on` as the boolean true.
-version: 0.4.0
+version: 0.5.0
 
 joins:
   - { from: order_items, to: orders, condition: order_items.order_id = orders.order_id }
@@ -14,3 +16,7 @@ joins:
   - { from: payments, to: orders, condition: payments.order_id = orders.order_id }
   - { from: reviews, to: orders, condition: reviews.order_id = orders.order_id }
   - { from: orders, to: customers, condition: orders.customer_id = customers.customer_id }
+  # one -> many (v0.5.0): joined only when the question needs it, for DISTINCT counts only
+  - { from: orders, to: order_items, condition: order_items.order_id = orders.order_id, fans_out: true }
+  - { from: orders, to: payments, condition: payments.order_id = orders.order_id, fans_out: true }
+  - { from: customers, to: orders, condition: orders.customer_id = customers.customer_id, fans_out: true }

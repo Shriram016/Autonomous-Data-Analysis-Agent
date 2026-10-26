@@ -8,7 +8,7 @@
   "number_of_customers": {
     "headers": ["Customers"],
     "rows": [
-      ["93,358"]
+      ["96,096"]
     ]
   },
   "average_review_score": {
@@ -105,13 +105,13 @@
   "orders_march_2018": {
     "headers": ["Orders"],
     "rows": [
-      ["7,003"]
+      ["7,211"]
     ]
   },
   "reviews_2018": {
     "headers": ["Reviews"],
     "rows": [
-      ["53,854"]
+      ["56,164"]
     ]
   },
   "revenue_toy_products": {
@@ -123,7 +123,7 @@
   "orders_from_sao_paulo": {
     "headers": ["Orders"],
     "rows": [
-      ["40,501"]
+      ["41,746"]
     ]
   },
   "paid_by_credit_card": {
@@ -135,19 +135,20 @@
   "canceled_orders": {
     "headers": ["Orders"],
     "rows": [
-      ["461"]
+      ["625"]
     ]
   },
   "orders_by_status": {
     "headers": ["Order status", "Orders"],
     "rows": [
+      ["shipped", "1,107"],
+      ["unavailable", "609"],
+      ["invoiced", "314"],
+      ["created", "5"],
       ["approved", "2"],
-      ["canceled", "461"],
-      ["delivered", "96,478"],
-      ["invoiced", "312"],
       ["processing", "301"],
-      ["shipped", "1,106"],
-      ["unavailable", "6"]
+      ["delivered", "96,478"],
+      ["canceled", "625"]
     ]
   },
   "revenue_last_month": {
@@ -159,7 +160,7 @@
   "orders_last_3_months": {
     "headers": ["Orders"],
     "rows": [
-      ["18,609"]
+      ["18,971"]
     ]
   },
   "top_5_categories": {
@@ -175,13 +176,13 @@
   "items_sold": {
     "headers": ["Items sold"],
     "rows": [
-      ["110,197"]
+      ["112,650"]
     ]
   },
   "active_sellers_2017": {
     "headers": ["Active sellers"],
     "rows": [
-      ["1,690"]
+      ["1,784"]
     ]
   },
   "cancellation_rate": {
@@ -199,7 +200,7 @@
   "repeat_customer_rate": {
     "headers": ["Repeat-customer rate"],
     "rows": [
-      ["3.00%"]
+      ["3.12%"]
     ]
   },
   "revenue_by_quarter_2017": {
@@ -316,10 +317,10 @@
   "example_orders_by_quarter_2017": {
     "headers": ["Quarter", "Orders"],
     "rows": [
-      ["2017-Q1", "4,949"],
-      ["2017-Q2", "8,984"],
-      ["2017-Q3", "12,215"],
-      ["2017-Q4", "17,280"]
+      ["2017-Q1", "5,262"],
+      ["2017-Q3", "12,642"],
+      ["2017-Q2", "9,349"],
+      ["2017-Q4", "17,848"]
     ]
   },
   "clarify_best_products": {"route": "clarify"},
@@ -330,6 +331,6 @@
   "off_topic_cricket": {"route": "off_topic", "text": "I can only answer questions about the store's data: orders, revenue, deliveries, customers and reviews. For example:"},
   "off_topic_poem": {"route": "off_topic", "text": "I can only answer questions about the store's data: orders, revenue, deliveries, customers and reviews. For example:"},
   "metadata_overview": {"route": "metadata", "text": "I answer questions about the store's orders from 2016-09 to 2018-08-31. Metrics: Orders, Revenue, Freight, Total paid, Average order value, Customers, Late-delivery rate, Average delivery days, Average review score, Reviews, Items sold, Active sellers, Cancellation rate, Low-review rate, Repeat-customer rate. Breakdowns: Month, Year, Quarter, Customer state, Order status, Product category, Seller state, Seller, Payment type, Review score."},
-  "metadata_date_range": {"route": "metadata", "text": "The data has orders from 2016-09 to 2018-09. Complete months end on 2018-08-31: I use that day as 'today' for questions like 'last month'."},
+  "metadata_date_range": {"route": "metadata", "text": "The data has orders from 2016-09 to 2018-10. Complete months end on 2018-08-31: I use that day as 'today' for questions like 'last month'."},
   "metadata_revenue_definition": {"route": "metadata", "text": "Revenue: Product sales, the sum of item prices without freight. Delivered orders only, unless you ask for an order status."}
 }

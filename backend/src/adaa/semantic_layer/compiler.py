@@ -6,7 +6,7 @@ The LLM fills in the form (request.py); it never names tables or writes SQL. Thi
 2. applies the status rule (D2) and the grain rule, so nothing is double counted,
 3. collects the tables the definitions need and finds the joins (joins.yaml),
 4. builds WHERE from the metric's own filters, the delivered-only default (only when the
-   form names no status), the period and the manager's filters,
+   form names no status), the period (on the metric's own date) and the manager's filters,
 5. adds GROUP BY, ORDER BY and LIMIT,
 6. writes the "how I got this" explanation.
 
@@ -20,7 +20,6 @@ from datetime import timedelta
 from adaa.semantic_layer.definitions import STATUS_DIMENSION, SemanticLayer, tables_in
 from adaa.semantic_layer.request import MAX_LIMIT, Filter, StructuredRequest
 
-PERIOD_COLUMN = "orders.order_purchase_timestamp"  # a period always means the order date
 SQL_OPERATORS = {"=": "=", "!=": "<>", "in": "IN", "not in": "NOT IN"}
 
 
@@ -110,16 +109,17 @@ def needed_tables(request: StructuredRequest, layer: SemanticLayer) -> set[str]:
         parts += [metric.support.part_sql or "", metric.support.whole_sql]
     if default := status_default(request, layer):  # the status lives on the orders table
         parts.append(default)
-    if request.period:  # a period filters on the order date, so it needs the orders table
-        parts.append(PERIOD_COLUMN)
-    parts += [layer.dimensions[d].sql for d in request.dimensions]
-    parts += [layer.dimensions[f.dimension].sql for f in request.filters]
+    if request.period:  # a period filters on the metric's own date (v0.5.0)
+        parts.append(metric.date_column)
+    parts += [layer.dimension_sql(request.metric, d) for d in request.dimensions]
+    parts += [layer.dimension_sql(request.metric, f.dimension) for f in request.filters]
     return tables_in(*parts)
 
 
 def build_joins(request: StructuredRequest, layer: SemanticLayer) -> str:
     start = layer.metrics[request.metric].table
-    path = layer.join_path(start, needed_tables(request, layer) - {start})
+    fan_out = layer.metrics[request.metric].fan_out_safe  # one → many only for DISTINCT counts
+    path = layer.join_path(start, needed_tables(request, layer) - {start}, fan_out=fan_out)
     return "\n".join(
         f"  {'LEFT JOIN' if j.optional else 'JOIN'} {j.to_table} ON {j.condition}" for j in path
     )
@@ -137,17 +137,20 @@ def build_period(
     start, end = request.period.start, request.period.end
     params["period_start"] = start
     params["period_end"] = end + timedelta(days=1)  # "before the next day" includes all of `end`
-    condition = f"{PERIOD_COLUMN} >= %(period_start)s AND {PERIOD_COLUMN} < %(period_end)s"
+    column = layer.metrics[request.metric].date_column  # the counted table's own date
+    condition = f"{column} >= %(period_start)s AND {column} < %(period_end)s"
     return condition, f"Period: {start} to {end}."
 
 
-def build_filter(index: int, f: Filter, layer: SemanticLayer, params: dict[str, object]) -> str:
+def build_filter(
+    index: int, f: Filter, metric: str, layer: SemanticLayer, params: dict[str, object]
+) -> str:
     names = []
     for j, value in enumerate(f.values):
         name = f"f{index}_{j}"
         params[name] = value
         names.append(f"%({name})s")
-    column = layer.dimensions[f.dimension].sql
+    column = layer.dimension_sql(metric, f.dimension)
     if f.op in ("=", "!="):
         return f"{column} {SQL_OPERATORS[f.op]} {names[0]}"
     return f"{column} {SQL_OPERATORS[f.op]} ({', '.join(names)})"
@@ -162,7 +165,9 @@ def build_where(
     period_condition, period_line = build_period(request, layer, params)
     if period_condition:
         conditions.append(period_condition)
-    conditions += [build_filter(i, f, layer, params) for i, f in enumerate(request.filters)]
+    conditions += [
+        build_filter(i, f, request.metric, layer, params) for i, f in enumerate(request.filters)
+    ]
     return conditions, period_line
 
 
@@ -219,8 +224,8 @@ def build_body(
     query with one row per person (per_value), then the metric over those rows."""
     metric = layer.metrics[request.metric]
     dims = request.dimensions
-    select = [f"{layer.dimensions[d].sql} AS {d}" for d in dims]
-    group = [layer.dimensions[d].sql for d in dims]
+    select = [f"{layer.dimension_sql(request.metric, d)} AS {d}" for d in dims]
+    group = [layer.dimension_sql(request.metric, d) for d in dims]
     where = ("WHERE " + "\n  AND ".join(conditions)) if conditions else ""
     values = [f"{metric.sql} AS {request.metric}"]
     if metric.support:  # the counts behind a rate, after the metric

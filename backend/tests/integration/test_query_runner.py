@@ -59,7 +59,7 @@ def test_known_totals_match_the_m06_check(layer: SemanticLayer) -> None:
     customers = single_value(ask(layer, metric="customers", period=ALL_DATES))
     assert revenue == Decimal("13221498.11")
     assert round(float(late), 4) == 0.0677
-    assert customers == 93358
+    assert customers == 96096  # v0.5.0: every person in our records
 
 
 def test_breakdown_adds_up_to_the_total(layer: SemanticLayer) -> None:
@@ -176,13 +176,14 @@ def test_quarters_add_up_to_the_year(layer: SemanticLayer) -> None:
 
 
 def test_canceled_orders_are_not_zero(layer: SemanticLayer) -> None:
-    """D2 is a default: naming a status replaces it (before v0.3.0 this returned 0)."""
+    """Orders count every order (v0.5.0: 625 canceled, incl. 164 with no items)."""
     canceled = ask(
         layer,
         metric="orders",
         filters=[{"dimension": "order_status", "op": "=", "values": ["canceled"]}],
     )
-    assert single_value(canceled) == 461  # canceled orders that have items
+    assert single_value(canceled) == 625
     by_status = by_key(ask(layer, metric="orders", dimensions=["order_status"]))
-    assert by_status["canceled"] == 461 and by_status["delivered"] == 96478
-    assert single_value(ask(layer, metric="orders")) == 96478  # no status named → delivered
+    assert len(by_status) == 8 and by_status["unavailable"] == 609
+    assert by_status["canceled"] == 625 and by_status["delivered"] == 96478
+    assert single_value(ask(layer, metric="orders")) == 99441  # every status, no default

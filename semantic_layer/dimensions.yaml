@@ -5,28 +5,30 @@
 #                item  payment  review
 # A metric can use a dimension at its own grain or at "order" (above it in the tree).
 # Example: revenue (item) can use category (item) and state (order), not payment type (payment).
-version: 0.4.0
+# A metric that counts DISTINCT ids (orders, customers) can use any dimension it can reach.
+# Time dimensions use {date}: the counted metric's own date (v0.5.0: reviews by review date).
+version: 0.5.0
 
 dimensions:
   month:
     label: Month
     grain: order
-    sql: date_trunc('month', orders.order_purchase_timestamp)
+    sql: date_trunc('month', {date})
     terms: [month, monthly, per month]
     kind: time  # a breakdown with no sort is shown oldest first (a trend)
-    why: Purchase date is the order date. Months outside 2017-01..2018-08 are thin. (F1)
+    why: "The metric's own date (orders, items, payments: purchase date; reviews: review date). Thin months outside 2017-01..2018-08. (F1)"
 
   year:
     label: Year
     grain: order
-    sql: extract(year FROM orders.order_purchase_timestamp)
+    sql: extract(year FROM {date})
     terms: [year, yearly, annual]
     kind: time
 
   quarter:
     label: Quarter
     grain: order
-    sql: to_char(orders.order_purchase_timestamp, 'YYYY-"Q"Q')
+    sql: to_char({date}, 'YYYY-"Q"Q')
     terms: [quarter, quarterly, per quarter]
     kind: time
     why: Text like 2017-Q3, so it sorts by date. Calendar quarters (added v0.4.0).

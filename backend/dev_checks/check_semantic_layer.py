@@ -22,20 +22,12 @@ EXPECTED = {
         "::int) FROM orders WHERE order_status = 'delivered' "
         "AND order_delivered_customer_date IS NOT NULL"
     ),
-    "customers": (
-        "SELECT count(DISTINCT c.customer_unique_id) FROM order_items i "
-        "JOIN orders o USING (order_id) JOIN customers c USING (customer_id) "
-        "WHERE o.order_status = 'delivered'"
-    ),
+    # v0.5.0: every person, every order status (§0 M2 3c decisions 5 and 6)
+    "customers": "SELECT count(DISTINCT customer_unique_id) FROM customers",
+    "orders": "SELECT count(*) FROM orders",
     # v0.4.0
-    "items_sold": (
-        "SELECT count(*) FROM order_items i JOIN orders o USING (order_id) "
-        "WHERE o.order_status = 'delivered'"
-    ),
-    "active_sellers": (
-        "SELECT count(DISTINCT i.seller_id) FROM order_items i JOIN orders o USING (order_id) "
-        "WHERE o.order_status = 'delivered'"
-    ),
+    "items_sold": "SELECT count(*) FROM order_items",
+    "active_sellers": "SELECT count(DISTINCT seller_id) FROM order_items",
     "cancellation_rate": (
         "SELECT count(*) FILTER (WHERE order_status = 'canceled')::numeric / count(*) FROM orders"
     ),
@@ -45,7 +37,7 @@ EXPECTED = {
     "repeat_customer_rate": (
         "SELECT avg((n >= 2)::int) FROM (SELECT c.customer_unique_id, count(*) AS n "
         "FROM orders o JOIN customers c USING (customer_id) "
-        "WHERE o.order_status = 'delivered' GROUP BY c.customer_unique_id) AS people"
+        "GROUP BY c.customer_unique_id) AS people"
     ),
 }
 

@@ -1,5 +1,7 @@
 # Text-to-SQL baseline — findings
 
+**Status: DONE (2026-10-26).**
+
 **Question:** Is our method (the LLM fills a form, the semantic layer writes the SQL) better
 than the simple method (the LLM writes the SQL itself)?
 

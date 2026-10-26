@@ -18,10 +18,8 @@ def query_result(*rows: tuple[object, ...]) -> QueryResult:
 def fake_ask(form: StructuredRequest) -> QueryResult:
     """Answers the start-up queries: orders by month (data date) and one per dimension."""
     if form.dimensions == ["month"]:
-        return query_result((datetime(2018, 8, 1), 6300), (datetime(2018, 9, 1), 16))
-    if form.dimensions == ["month", "order_status"]:  # the data span: every status
         return query_result(
-            (datetime(2016, 9, 1), "canceled", 2), (datetime(2018, 10, 1), "canceled", 4)
+            (datetime(2016, 9, 1), 4), (datetime(2018, 8, 1), 6300), (datetime(2018, 10, 1), 4)
         )
     if form.dimensions == ["customer_state"]:
         return query_result(("SP", 1), ("RJ", 1))

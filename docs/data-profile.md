@@ -29,6 +29,32 @@ layer) and for the eval traps.*
 
 **Status:** the profile answers all 10 areas. F2, F3, F4, F5 and F7 are the main inputs for M0.6.
 
+### Messy data → where ADAA handles it
+
+*Added 2026-10-26 (M2 step 3). Why Olist: it is real, messy business data. This table is
+the evidence that the messiness is handled, not only present. Most of it is handled once,
+in a semantic-layer definition, so every question gets the same correct rule. The
+text-to-SQL baseline ([v3-text-to-sql-baseline.md](v3-text-to-sql-baseline.md)) shows the
+cost of NOT handling it: plain SQL on the same data scored 5 / 34 (21 / 34 with the rules in
+the prompt); ours 34 / 34.*
+
+| Messy fact | Finding | Where ADAA handles it | Status |
+|---|---|---|---|
+| Revenue has 3 meanings (13.6M / 15.8M / 16.0M) | F2 | `revenue` = item price only (D1); `freight`, `total_paid` separate | ✅ handled |
+| Orders in 8 statuses; canceled / unavailable mixed in | F3 | Delivered only by default (D2), unless the question names a status; delivery metrics delivered-only always; `cancellation_rate` over every status | ✅ handled |
+| 775 orders have no items (603 unavailable, 164 canceled) | F2, F3 | `orders` counted through items dropped them ("canceled orders" = 461, not 625) | ⚠️ fix decided in M2 step 3c: start from `orders`, join items only when needed |
+| One person, several `customer_id` values | F4 | `customers`, `repeat_customer_rate` count `customer_unique_id` | ✅ handled |
+| `review_id` not unique; orders with 2+ reviews | F5 | A review = a (`review_id`, `order_id`) row; stated in the answer | ✅ handled |
+| Thin first and last months; data ends 2018-10 | F1 | "Today" = 2018-08-31 (last month with ≥ 500 orders); "Data as of" line; a note when a period runs past it | ✅ handled |
+| Delivery date (timestamp) vs estimated date (date) | F7 | Late = compared by day, delivered orders with a delivery date only | ✅ handled |
+| Products with no category; untranslated categories | F8 | English name → Portuguese name → `unknown` | ✅ handled |
+| Users' words ≠ stored values ("toy", "São Paulo", "Paris") | — | Value linking: `toys`, `SP`; unknown places refused, never guessed (Paris ≠ PA) | ✅ handled |
+| Zip prefixes with leading zeros | — | Loaded as text (faithful but typed load) | ✅ handled |
+| Odd but real values (0 payments, `not_defined`, freight > price) | F9 | Rows kept (faithful load); `not_defined` only outside delivered orders | ✅ kept on purpose |
+| Unhappy customers write more | F6 | Review answers must say "of reviews with a comment" | ⏳ M3 (reviews) |
+| Reviews in Portuguese, free text | — | Translate once at load, tag topics, embed; quote guardrail | ⏳ M3 |
+| Geolocation: missing zips, points outside Brazil | F8, F9 | Not used yet (no maps) | ⏳ later |
+
 <!-- GENERATED BELOW: do not edit by hand; rerun profile_olist -->
 
 *Generated 2026-10-19 from schema `business`.*

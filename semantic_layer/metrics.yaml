@@ -1,21 +1,24 @@
 # Metrics: the numbers the agent can compute. Every metric needs a grain (order | item | payment
 # | review); see dimensions.yaml for the grain tree. Decisions: §0 M0.6 (D1 revenue = item price,
 # D2 delivered orders only, as a default the question can change). Findings F1–F9: docs/data-profile.md.
-version: 0.4.0
+# v0.5.0 (§0 M2 3c): use only the tables a question needs (orders and customers start from their
+# own tables); the delivered default only for revenue and money metrics (always for delivery
+# metrics), every status for the rest; each metric uses its own table's date.
+version: 0.5.0
 
 metrics:
   orders:
     label: Orders
-    description: Number of orders.
-    grain: item  # counted from items with DISTINCT, so item breakdowns don't double count
-    table: order_items
-    sql: count(DISTINCT order_items.order_id)
+    description: Number of orders placed, in any status unless the question names one.
+    grain: order
+    table: orders  # one table when that is enough; items only for item breakdowns (v0.5.0)
+    sql: count(DISTINCT orders.order_id)
+    fan_out_safe: true  # DISTINCT: "orders by category" joins items, each order counted once
     filters: []
-    status: default  # delivered only unless the question names a status (D2)
     unit: count
     terms: [orders, number of orders, order count]
-    shown_in_answer: "Orders = distinct orders. An order with items in 2 categories counts in both."
-    why: count DISTINCT keeps item breakdowns correct. (F3)
+    shown_in_answer: "Orders = every order placed, in any status. An order with items in 2 categories counts in both."
+    why: Every submitted order, incl. 775 with no items (164 canceled, 603 unavailable). (F2, F3)
 
   revenue:
     label: Revenue
@@ -75,14 +78,14 @@ metrics:
   customers:
     label: Customers
     description: Distinct people with an order.
-    grain: item  # DISTINCT people, so item breakdowns don't double count
-    table: order_items
+    grain: order  # one customer_id per order
+    table: customers  # every person in our records (v0.5.0)
     sql: count(DISTINCT customers.customer_unique_id)
+    fan_out_safe: true  # DISTINCT people: joins to orders / items count each person once
     filters: []
-    status: default  # delivered only unless the question names a status (D2)
     unit: count
     terms: [customers, buyers, number of customers]
-    shown_in_answer: "Customers = distinct people (customer_unique_id), not customer IDs."
+    shown_in_answer: "Customers = distinct people (customer_unique_id), whatever their orders' status."
     why: One person can have several customer_id values. (F4)
 
   late_delivery_rate:
@@ -129,6 +132,7 @@ metrics:
     grain: review
     table: reviews
     sql: avg(reviews.review_score)
+    date_column: reviews.review_creation_date  # a review's own date (v0.5.0)
     filters: []
     unit: score  # an average from 1 to 5
     support:
@@ -144,6 +148,7 @@ metrics:
     grain: review
     table: reviews
     sql: count(*)
+    date_column: reviews.review_creation_date  # "reviews in 2018" = written in 2018 (v0.5.0)
     filters: []
     unit: count
     terms: [reviews, number of reviews, review count]
@@ -159,10 +164,9 @@ metrics:
     table: order_items
     sql: count(*)
     filters: []
-    status: default  # delivered only unless the question names a status (D2)
-    unit: count
+    unit: count  # every status (v0.5.0: the delivered default is for money metrics only)
     terms: [items sold, units sold, number of items]
-    shown_in_answer: "Items sold = order item rows (2 units of one product = 2 items)."
+    shown_in_answer: "Items sold = order item rows in any status (2 units of one product = 2 items)."
     why: One row in order_items is one unit; orders counts orders, this counts units.
 
   active_sellers:
@@ -172,10 +176,9 @@ metrics:
     table: order_items
     sql: count(DISTINCT order_items.seller_id)
     filters: []
-    status: default  # delivered only unless the question names a status (D2)
-    unit: count
+    unit: count  # every status (v0.5.0)
     terms: [active sellers, number of sellers, seller count]
-    shown_in_answer: "Active sellers = distinct sellers with a sale in the period."
+    shown_in_answer: "Active sellers = distinct sellers with an order item in the period, any status."
     why: A seller with no sale in the period is not counted.
 
   cancellation_rate:
@@ -202,6 +205,7 @@ metrics:
     grain: review
     table: reviews
     sql: avg((reviews.review_score <= 2)::int)
+    date_column: reviews.review_creation_date
     filters: []
     unit: ratio
     support:
@@ -222,8 +226,7 @@ metrics:
     per_sql: count(DISTINCT orders.order_id)  # that person's orders
     sql: avg((per_value >= 2)::int)  # step 2: share of people with 2+
     filters: []
-    status: default  # delivered only unless the question names a status (D2)
-    unit: ratio
+    unit: ratio  # every status (v0.5.0)
     support:
       part_sql: count(*) FILTER (WHERE per_value >= 2)  # over the per-person rows
       whole_sql: count(*)

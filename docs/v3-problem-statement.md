@@ -985,6 +985,46 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    definitions shares their mistakes. Also check "reviews in 2018" (53,854 by the order's
 >    purchase date vs 56,164) and any other case where the baseline differs only by a
 >    definition. Decide with the full 3c report.
+>    **3c decision 1 (🔒 2026-10-26, builder): join only when needed.** If one table can
+>    answer, use that table alone. `orders` starts from the `orders` table ("canceled
+>    orders" = 625, no join); `order_items` is joined only when the question needs an item
+>    field (category, seller), each order counted once (`count(DISTINCT …)`). Delivered
+>    numbers are unchanged (96,478). Implemented in semantic layer v0.5.0 with the other
+>    3c decisions.
+>    **3c decision 2 (🔒 2026-10-26, builder): each table's own date.** A period, and the
+>    month / quarter / year breakdowns, use the date of the table the metric counts: review
+>    metrics → `reviews.review_creation_date` ("reviews in 2018" = written in 2018: 56,164);
+>    order metrics → `orders.order_purchase_timestamp`. Items and payments have no date of
+>    their own, so they keep the order date. Replaces "a period always means the order date".
+>    **3c questions 3 and 4 (settled 2026-10-26):** orders by status (7 vs 8) is fixed by
+>    decision 1; payment types (4 vs 5) — the baseline ignored "delivered only"
+>    (`not_defined` exists only outside delivered orders), so no change.
+>    **3c decision 5 (🔒 2026-10-26, builder): a customer = every person in our records**,
+>    whatever their orders' status: `count(DISTINCT customer_unique_id) FROM customers` =
+>    96,096 (no join, no delivered default). The `customers` metric starts from `customers`
+>    and joins `orders` only when the question needs it (a period, a status filter).
+>    **3c decision 6 (🔒 2026-10-26, builder): the delivered default only where it
+>    matters.** D2 narrowed: **delivered only by default** for revenue and the money metrics
+>    (revenue, freight, total_paid, average_order_value); **delivered only always** for the
+>    delivery metrics (late_delivery_rate, average_delivery_days); **every status** for all
+>    others (orders, customers, repeat_customer_rate, items_sold, active_sellers,
+>    cancellation_rate); review metrics have no status rule. "Orders placed in March 2018"
+>    = every submitted order, `orders` alone. Why: "too many assumptions" — a default only
+>    where a non-delivered order would give a wrong number (money, delivery times).
+>    **Hand-written SQL review (builder, 2026-10-26):** every case uses only the joins its
+>    question needs (e.g. orders in March 2018 → `orders` alone; reviews in 2018 →
+>    `reviews` alone; orders from SP → `orders` + `customers`). Updated in v0.5.0.
+>    ✅ **Semantic layer v0.5.0** (3c decisions 1, 2, 5, 6) — eval on the updated ground
+>    truth: 43 / 44 (`2026-10-26_180448`), then **44 / 44** (`2026-10-26_181933`, $0.0368,
+>    p50 3.5 s).
+>    **⚠️ Known router weakness (2026-10-26):** "What is the cancellation rate?" was routed
+>    to `metadata` (how a metric is defined) instead of `numbers` in 1 of 2 runs. The router
+>    is not stable on "What is the <metric>?" wording. Fix later (e.g. a router prompt
+>    example), and add more such wordings to the eval.
+>    **Revisit later (raised 2026-10-26 by the builder):** is Olist's messiness real enough
+>    to justify it as a stand-in for real-world data? The builder is not yet convinced by the
+>    "Messy data → where ADAA handles it" table (data-profile.md). Discuss before calling
+>    the dataset choice defended (interview point).
 >    **Decide later (raised 2026-10-26 by the builder): usage per LLM call.** Today
 >    `conversation.questions` keeps one row per question with the totals only; each call's
 >    job, model, tokens, cost and time are only in the `llm_call` log lines. Option: an
