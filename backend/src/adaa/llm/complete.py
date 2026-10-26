@@ -25,7 +25,7 @@ from pydantic import BaseModel, ValidationError
 
 from adaa.llm.adapters.anthropic_adapter import AnthropicAdapter
 from adaa.llm.adapters.base import Adapter, Message
-from adaa.llm.config import JobSettings, LlmConfig, get_config
+from adaa.llm.config import JobSettings, LlmConfig, LlmConfigError, get_config
 from adaa.llm.types import (
     AdapterReply,
     LlmOutputError,
@@ -51,6 +51,8 @@ def adapter_for(job: JobSettings) -> Adapter:
     match job.provider.adapter:
         case "anthropic":
             return AnthropicAdapter()
+        case "jev":  # a classifier, not a chat model: agent/router.py calls it directly
+            raise LlmConfigError(f"job '{job.job}' uses Jev, which can't fill a form")
 
 
 def total_usage(replies: list[AdapterReply]) -> Usage:

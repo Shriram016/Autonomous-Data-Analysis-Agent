@@ -50,3 +50,25 @@ def test_unknown_job_gives_a_clear_error() -> None:
 def test_wrong_config_does_not_load(tmp_path: Path, old: str, new: str, message: str) -> None:
     with pytest.raises(LlmConfigError, match=message):
         load(broken_copy(tmp_path, old, new))
+
+
+def test_router_order_is_config() -> None:
+    config = load()
+    assert config.router.order == ["route_jev", "route_haiku"]  # Jev first, Haiku fallback
+    jev = config.job_settings("route_jev")
+    assert jev.provider.adapter == "jev" and jev.provider.api_key_env == "OPENROUTER_API_KEY"
+    assert jev.model_name == "typesafe/jev-1.14"  # pinned, not jev-latest
+
+
+@pytest.mark.parametrize(
+    ("old", "new", "message"),
+    [
+        ("order: [route_jev, route_haiku]", "order: [route_jev, route_gpt]", "unknown job"),
+        ("    max_tokens: 100  # one short field\n", "", "needs max_tokens"),
+    ],
+)
+def test_wrong_router_config_does_not_load(
+    tmp_path: Path, old: str, new: str, message: str
+) -> None:
+    with pytest.raises(LlmConfigError, match=message):
+        load(broken_copy(tmp_path, old, new))

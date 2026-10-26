@@ -14,6 +14,9 @@ providers:
   anthropic:
     adapter: anthropic
     api_key_env: ANTHROPIC_API_KEY  # the name of the variable in .env, never the key itself
+  openrouter:
+    adapter: jev  # TypeSafe's Jev classifier through OpenRouter's decisions API (alpha)
+    api_key_env: OPENROUTER_API_KEY
 
 models:
   claude-haiku-5-5:
@@ -27,7 +30,31 @@ models:
       output: 0.50
     price_checked: 2026-10-20
 
+  typesafe/jev-1.14:  # pinned version; ~typesafe/jev-latest would change under us
+    provider: openrouter
+    price_per_million:
+      input: 0.042
+      output: 0.0  # a choice answer: output is free
+    price_checked: 2026-10-26
+
+# The router (M2 step 2): the jobs tried in order. First = primary, the rest = fallbacks.
+# One line changes the primary ([route_haiku, route_jev]) or drops Jev ([route_haiku]).
+# Every option fails → the question goes to the numbers route (the M1 behaviour).
+router:
+  order: [route_jev, route_haiku]
+
 jobs:
+  route_jev:  # question → route, with a confidence (Jev picks one choice)
+    model: typesafe/jev-1.14
+    timeout_seconds: 5  # a classifier: fast, or fall back
+
+  route_haiku:  # question → route (fallback); no confidence
+    model: claude-haiku-5-5
+    thinking: disabled
+    max_tokens: 100  # one short field
+    timeout_seconds: 10
+    max_attempts: 1  # no retry: the next option, or the numbers route, is the fallback
+
   agent:  # English question → structured request form (M1.3)
     model: claude-haiku-5-5
     # disabled / low / medium / high. Not "off": YAML reads a bare `off` as false.

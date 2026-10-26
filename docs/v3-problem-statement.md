@@ -901,6 +901,29 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    agent 0.2.0 and answer 0.2.0. Eval cases v3: 30 (10 new, hand-written SQL); **run: 30 /
 >    30**, $0.0192, p50 2.9 s, p95 4.3 s, no template answers. 286 unit + 41 integration
 >    tests. **Next: M2 step 2 — router + quick routes.**
+>    **Router (🔒 2026-10-26, builder's choice):** a **separate router component**: question
+>    in → `RouteDecision {route: numbers | clarify | refuse | off_topic | metadata,
+>    confidence: 0–1 or none, source: jev | haiku}`, the same shape whatever model answers.
+>    **Jev first** (TypeSafe's hosted classifier, early access since 2026-09), **Haiku as
+>    the fallback** (Jev error, timeout or bad output); both fail → numbers route (today's
+>    behaviour). Why: the common pattern "a small fast classifier routes, a larger model
+>    answers", a router that can be tested and swapped alone, and a confidence score. Known
+>    costs: one more call and vendor per question, a new key, questions sent to one more
+>    company; ADAA's answer model is already the cheapest (Haiku), so the saving is small.
+>    The eval measures Jev vs Haiku routing (accuracy, time, cost). **Primary and fallback
+>    are config:** `config/llm.yaml` → `router.order: [jev, haiku]`; one line changes the
+>    primary (`[haiku, jev]`) or drops Jev (`[haiku]`). **Failures are tracked:** one log
+>    line per fallback (`router_fallback from=jev to=haiku reason=timeout`) and per total
+>    failure (`router_failed`), names and counts only; they join the M6 Grafana panels with
+>    the other component failures. Jev access (confirmed 2026-10-26 from OpenRouter's page):
+>    `POST https://openrouter.ai/api/alpha/decisions` (alpha endpoint), key
+>    `OPENROUTER_API_KEY`, model `typesafe/jev-1.14` (pinned), one `choice` question →
+>    `choice`, `probabilities`, `confidence`; $0.042 per 1M input tokens, output free;
+>    latency, rate limits and data retention not stated. **⏳ Jev not yet tested for real
+>    (2026-10-26):** the builder adds `OPENROUTER_API_KEY` to `.env` later; when the builder
+>    says the key is added, run a real Jev test (state the cost first). Until then the order
+>    stays `[route_jev, route_haiku]`: with no key the Jev adapter fails at once (no network
+>    call, `router_fallback … reason=MissingKeyError`) and Haiku routes.
 >
 >
 > ⚠️ **MANDATORY — DO NOT SKIP: post-build architecture cross-examination.** Once development is

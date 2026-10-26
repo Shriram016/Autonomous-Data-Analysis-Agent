@@ -101,6 +101,7 @@ class AnthropicAdapter:
         if "effort" in thinking:
             output_config["effort"] = thinking.pop("effort")
 
+        assert job.settings.max_tokens, "config.check() requires max_tokens for anthropic jobs"
         started = time.monotonic()
         try:
             response = self.get_client(job).messages.create(
