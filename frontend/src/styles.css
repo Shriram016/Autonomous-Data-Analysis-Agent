@@ -114,6 +114,14 @@ button:focus-visible, input:focus-visible, summary:focus-visible {
   padding: 20px;
 }
 .answer-text { margin: 0; font-size: 1.05rem; }
+.suggestions { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.suggestion {
+  padding: 8px 14px;
+  border: 1px solid var(--accent);
+  background: var(--accent-soft);
+  color: var(--ink);
+  text-align: left;
+}
 .table-wrap { overflow-x: auto; }
 table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
 th, td { padding: 6px 10px; border-bottom: 1px solid var(--line); text-align: left; }

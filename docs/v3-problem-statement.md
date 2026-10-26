@@ -952,7 +952,9 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    last answer?" needs memory → M4. **2c decision 4 (🔒):** off_topic = a fixed code text
 >    ("I can only answer questions about the store's data …") + **3 example buttons picked at
 >    random from 6** tested examples in one place in code (no LLM, free); 2d's eval runs all
->    6 so each one is known to work.
+>    6 so each one is known to work. ✅ **2c-1** (`9b38ec2`) quick replies · ✅ **2c-2**
+>    suggestion buttons on the page. **⏳ To do (builder, later):** try the router and the
+>    quick replies in the browser (rebuild api + worker first).
 >    **Decide later (raised 2026-10-26 by the builder): usage per LLM call.** Today
 >    `conversation.questions` keeps one row per question with the totals only; each call's
 >    job, model, tokens, cost and time are only in the `llm_call` log lines. Option: an

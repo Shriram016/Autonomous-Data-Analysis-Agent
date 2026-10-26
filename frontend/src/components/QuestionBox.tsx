@@ -1,4 +1,4 @@
-import { type FormEvent, useState } from "react";
+import type { FormEvent } from "react";
 
 const MAX_CHARS = 500; // the API's limit (§0)
 const EXAMPLES = [
@@ -7,11 +7,15 @@ const EXAMPLES = [
   "Late delivery rate by month",
 ];
 
-type Props = { disabled: boolean; onAsk: (question: string) => void };
+type Props = {
+  disabled: boolean;
+  text: string; // held by App, so a clicked suggestion can fill the box
+  onTextChange: (text: string) => void;
+  onAsk: (question: string) => void;
+};
 
 /** The text box, a character counter, the Ask button and three example questions. */
-export function QuestionBox({ disabled, onAsk }: Props) {
-  const [text, setText] = useState("");
+export function QuestionBox({ disabled, text, onTextChange, onAsk }: Props) {
   const question = text.trim();
 
   function submit(event: FormEvent) {
@@ -29,7 +33,7 @@ export function QuestionBox({ disabled, onAsk }: Props) {
           value={text}
           maxLength={MAX_CHARS}
           placeholder="e.g. Revenue by customer state in 2017"
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => onTextChange(e.target.value)}
           disabled={disabled}
           autoComplete="off"
         />
@@ -45,7 +49,7 @@ export function QuestionBox({ disabled, onAsk }: Props) {
               type="button"
               className="example"
               disabled={disabled}
-              onClick={() => setText(example)}
+              onClick={() => onTextChange(example)}
             >
               {example}
             </button>

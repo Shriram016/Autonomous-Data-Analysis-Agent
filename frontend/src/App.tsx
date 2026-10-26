@@ -26,6 +26,7 @@ function setQuestionInAddress(id: string | null) {
 
 export function App() {
   const [phase, setPhase] = useState<Phase>({ kind: "idle" });
+  const [draft, setDraft] = useState(""); // the question box's text
   const stopStream = useRef<(() => void) | null>(null);
 
   function follow(id: string) {
@@ -48,6 +49,12 @@ export function App() {
     } catch (error) {
       setPhase({ kind: "error", message: error instanceof ApiError ? error.message : SERVICE_DOWN });
     }
+  }
+
+  // A suggestion button: show the question in the box, then ask it as a new question.
+  function askSuggestion(question: string) {
+    setDraft(question);
+    void ask(question);
   }
 
   // After a reload: pick the question up from the address.
@@ -76,12 +83,12 @@ export function App() {
         <p className="subtitle">Answers from Olist's Brazilian e-commerce data, 2016–2018</p>
       </header>
 
-      <QuestionBox disabled={busy} onAsk={ask} />
+      <QuestionBox disabled={busy} text={draft} onTextChange={setDraft} onAsk={ask} />
 
       {(phase.kind === "asking" || (phase.kind === "answered" && phase.steps.length > 0)) && (
         <Steps steps={phase.steps} finished={phase.kind === "answered"} />
       )}
-      {phase.kind === "answered" && <AnswerView answer={phase.answer} />}
+      {phase.kind === "answered" && <AnswerView answer={phase.answer} onAsk={askSuggestion} />}
       {phase.kind === "error" && <p className="message">{phase.message}</p>}
     </main>
   );
