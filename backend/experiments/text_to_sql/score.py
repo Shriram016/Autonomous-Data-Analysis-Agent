@@ -251,7 +251,7 @@ def review_markdown(
 
 def main() -> None:
     sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[union-attr]
-    path = Path(sys.argv[1]) if len(sys.argv) > 1 else latest(RESULTS_DIR)
+    path = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else latest(RESULTS_DIR)
     run = BaselineRun.model_validate_json(path.read_text(encoding="utf-8"))
     eval_set = load_cases()
     if eval_set.version != run.cases_version:

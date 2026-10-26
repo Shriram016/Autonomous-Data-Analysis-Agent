@@ -20,8 +20,8 @@
   {
     "id": "number_of_customers",
     "variant": "B",
-    "passed": false,
-    "reason": "different values"
+    "passed": true,
+    "reason": "result matches"
   },
   {
     "id": "average_review_score",
@@ -98,26 +98,26 @@
   {
     "id": "orders_march_2018",
     "variant": "A",
-    "passed": false,
-    "reason": "different values"
+    "passed": true,
+    "reason": "result matches"
   },
   {
     "id": "orders_march_2018",
     "variant": "B",
-    "passed": false,
-    "reason": "different values"
+    "passed": true,
+    "reason": "result matches"
   },
   {
     "id": "reviews_2018",
     "variant": "A",
-    "passed": false,
-    "reason": "different values"
+    "passed": true,
+    "reason": "result matches"
   },
   {
     "id": "reviews_2018",
     "variant": "B",
-    "passed": false,
-    "reason": "different values"
+    "passed": true,
+    "reason": "result matches"
   },
   {
     "id": "revenue_toy_products",
@@ -140,8 +140,8 @@
   {
     "id": "orders_from_sao_paulo",
     "variant": "B",
-    "passed": false,
-    "reason": "different values"
+    "passed": true,
+    "reason": "result matches"
   },
   {
     "id": "paid_by_credit_card",
@@ -158,26 +158,26 @@
   {
     "id": "canceled_orders",
     "variant": "A",
-    "passed": false,
-    "reason": "different values"
+    "passed": true,
+    "reason": "result matches"
   },
   {
     "id": "canceled_orders",
     "variant": "B",
-    "passed": false,
-    "reason": "different values"
+    "passed": true,
+    "reason": "result matches"
   },
   {
     "id": "orders_by_status",
     "variant": "A",
-    "passed": false,
-    "reason": "8 rows, expected 7"
+    "passed": true,
+    "reason": "result matches"
   },
   {
     "id": "orders_by_status",
     "variant": "B",
-    "passed": false,
-    "reason": "8 rows, expected 7"
+    "passed": true,
+    "reason": "result matches"
   },
   {
     "id": "revenue_last_month",
@@ -218,26 +218,26 @@
   {
     "id": "items_sold",
     "variant": "A",
-    "passed": false,
-    "reason": "different values"
+    "passed": true,
+    "reason": "result matches"
   },
   {
     "id": "items_sold",
     "variant": "B",
-    "passed": true,
-    "reason": "result matches"
-  },
-  {
-    "id": "active_sellers_2017",
-    "variant": "A",
     "passed": false,
     "reason": "different values"
   },
   {
     "id": "active_sellers_2017",
-    "variant": "B",
+    "variant": "A",
     "passed": true,
     "reason": "result matches"
+  },
+  {
+    "id": "active_sellers_2017",
+    "variant": "B",
+    "passed": false,
+    "reason": "different values"
   },
   {
     "id": "cancellation_rate",
@@ -266,14 +266,14 @@
   {
     "id": "repeat_customer_rate",
     "variant": "A",
-    "passed": false,
-    "reason": "different values"
+    "passed": true,
+    "reason": "result matches"
   },
   {
     "id": "repeat_customer_rate",
     "variant": "B",
-    "passed": false,
-    "reason": "different values"
+    "passed": true,
+    "reason": "result matches"
   },
   {
     "id": "revenue_by_quarter_2017",
@@ -404,7 +404,7 @@
   {
     "id": "example_orders_by_quarter_2017",
     "variant": "B",
-    "passed": false,
-    "reason": "different values"
+    "passed": true,
+    "reason": "result matches"
   }
 ]
