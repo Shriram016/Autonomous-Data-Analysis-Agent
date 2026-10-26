@@ -53,8 +53,10 @@ class Metric(BaseModel):
     sql: str
     filters: list[str] = []  # always applied: part of the definition
     # D2: "default" = delivered only unless the form names a status; "built_in" = the
-    # filters already hold it and the form may not name a status; None = no status rule.
-    status: Literal["default", "built_in"] | None = None
+    # filters already hold it and the form may not name a status; "all" = a share of orders
+    # in every status (e.g. cancellation rate), so the form may not name a status either;
+    # None = no status rule.
+    status: Literal["default", "built_in", "all"] | None = None
     unit: Unit  # required: decides how the answer shows the number (agent/facts.py)
     terms: list[str]
     shown_in_answer: str
@@ -105,8 +107,8 @@ class SemanticLayer(BaseModel):
 
     def allows(self, metric: str, dimension: str) -> bool:
         """Every rule the compiler applies: the grain rule, and no status split for a metric
-        whose definition already needs delivered orders (D2 built in)."""
-        if dimension == STATUS_DIMENSION and self.metrics[metric].status == "built_in":
+        whose definition already fixes the statuses (D2 built in, or every status)."""
+        if dimension == STATUS_DIMENSION and self.metrics[metric].status in ("built_in", "all"):
             return False
         return self.can_use(metric, dimension)
 

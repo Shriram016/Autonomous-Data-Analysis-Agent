@@ -61,11 +61,18 @@ def names_a_status(request: StructuredRequest) -> bool:
 
 
 def check_status(request: StructuredRequest, layer: SemanticLayer) -> None:
-    """A metric whose definition needs delivered orders can't be split or filtered by status."""
+    """A metric whose definition fixes the statuses can't be split or filtered by status."""
     metric = layer.metrics[request.metric]
-    if metric.status == "built_in" and names_a_status(request):
+    if not names_a_status(request):
+        return
+    if metric.status == "built_in":
         raise CompileError(
             f"{metric.label} needs delivered orders (it uses the delivery date), "
+            "so it can't be split or filtered by order status."
+        )
+    if metric.status == "all":
+        raise CompileError(
+            f"{metric.label} is a share of orders in every status, "
             "so it can't be split or filtered by order status."
         )
 

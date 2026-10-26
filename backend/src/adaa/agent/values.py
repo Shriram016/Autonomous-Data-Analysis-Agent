@@ -24,7 +24,6 @@ from adaa.semantic_layer.request import FilterValue, StructuredRequest
 from adaa.semantic_layer.runner import QueryResult
 
 MAX_VALUES = 100  # bigger dimensions (seller IDs) stay out of the prompt and the check
-NOT_LISTED = frozenset({"month", "year"})  # dates: the form's `period` handles them
 
 
 class ValueNotFoundError(Exception):
@@ -59,7 +58,7 @@ def build_catalogue(
     """
     found: dict[str, list[FilterValue]] = {}
     for name in layer.dimensions:
-        if name in NOT_LISTED:
+        if layer.dimensions[name].kind == "time":  # dates: the form's `period` handles them
             continue
         metric = next(m for m in layer.metrics if layer.can_use(m, name))
         result = ask(StructuredRequest(metric=metric, dimensions=[name], limit=MAX_VALUES + 1))

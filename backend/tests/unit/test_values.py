@@ -81,7 +81,7 @@ def test_build_catalogue_keeps_small_dimensions_only() -> None:
 
     catalogue = build_catalogue(load(), fake_ask)
     assert "seller" not in catalogue.values  # too many values
-    assert "month" not in catalogue.values and "year" not in catalogue.values  # dates
+    assert not {"month", "year", "quarter"} & catalogue.values.keys()  # dates (kind: time)
     assert catalogue.values["customer_state"] == [f"customer_state_{i}" for i in range(3)]
 
 

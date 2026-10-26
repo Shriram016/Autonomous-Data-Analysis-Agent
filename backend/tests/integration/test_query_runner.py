@@ -122,6 +122,22 @@ def test_answer_request_always_logs_in_as_adaa_query(
     assert len(used) == 1 and "user=adaa_query " in used[0]
 
 
+def test_new_v040_metrics_on_real_data(layer: SemanticLayer) -> None:
+    """Values from data-profile.md: 625 of 99,441 orders canceled (F3); 112,650 items."""
+    rate = single_value(ask(layer, metric="cancellation_rate"))
+    assert round(float(rate), 6) == round(625 / 99441, 6)
+    by_status = by_key(ask(layer, metric="items_sold", dimensions=["order_status"]))
+    assert sum(by_status.values()) == 112650  # every item, in every status
+
+
+def test_quarters_add_up_to_the_year(layer: SemanticLayer) -> None:
+    quarters = ask(layer, metric="revenue", dimensions=["quarter"], period=YEAR_2017)
+    assert [row[0] for row in quarters.rows] == ["2017-Q1", "2017-Q2", "2017-Q3", "2017-Q4"]
+    assert sum(by_key(quarters).values()) == single_value(
+        ask(layer, metric="revenue", period=YEAR_2017)
+    )
+
+
 def test_canceled_orders_are_not_zero(layer: SemanticLayer) -> None:
     """D2 is a default: naming a status replaces it (before v0.3.0 this returned 0)."""
     canceled = ask(

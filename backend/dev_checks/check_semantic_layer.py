@@ -27,6 +27,21 @@ EXPECTED = {
         "JOIN orders o USING (order_id) JOIN customers c USING (customer_id) "
         "WHERE o.order_status = 'delivered'"
     ),
+    # v0.4.0
+    "items_sold": (
+        "SELECT count(*) FROM order_items i JOIN orders o USING (order_id) "
+        "WHERE o.order_status = 'delivered'"
+    ),
+    "active_sellers": (
+        "SELECT count(DISTINCT i.seller_id) FROM order_items i JOIN orders o USING (order_id) "
+        "WHERE o.order_status = 'delivered'"
+    ),
+    "cancellation_rate": (
+        "SELECT count(*) FILTER (WHERE order_status = 'canceled')::numeric / count(*) FROM orders"
+    ),
+    "low_review_rate": (
+        "SELECT count(*) FILTER (WHERE review_score IN (1, 2))::numeric / count(*) FROM reviews"
+    ),
 }
 
 

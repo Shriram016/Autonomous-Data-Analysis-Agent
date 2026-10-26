@@ -285,3 +285,33 @@ reviews, attacks), and every production bug becomes a new case.
 **Interview one-liner:** "Every change runs against an eval set whose answers come from
 hand-written SQL, not from the system under test; the plan is a diagnostic, the result is the
 score, and the score is code, not another LLM."
+
+## Q8. The semantic layer limits what the agent can answer. Isn't that a weakness?
+
+**Short answer:** the limit is on purpose. The agent answers only what the semantic layer
+defines, so every number has one agreed meaning. A question outside it is not ignored: the
+agent refuses, names the missing data and offers the closest answerable question.
+
+**How the gap closes:** refusals are logged; the team reads them and adds the metrics people
+ask for often. A correct "I can't answer that" is better than a confident wrong number.
+
+**Interview one-liner:** "The scope is limited by design; refusals are logged and drive what
+we add next."
+
+## Q9. What if a domain needs 1,000 definitions? The prompt would be far too large.
+
+**Short answer:** production teams do not put every definition in the prompt.
+
+- **Split by area:** sales, logistics, finance … each with its own small semantic layer. A
+  router picks the area first. (Snowflake Cortex Analyst and Databricks Genie also use one small
+  model per business area.)
+- **Retrieval:** embed each definition; per question, put only the top 10–20 matches in the
+  prompt.
+- **Lookup tool:** the LLM calls `search_metrics("cancel")` and reads only the results.
+- **Prompt caching** lowers the cost of a big stable prompt, but does not fix one that is too long.
+
+**ADAA today:** 14 metrics fit easily. Retrieval or a split is needed from about 100+
+definitions. Not planned for ADAA: one prompt is enough; split only if it starts to fail.
+
+**Interview one-liner:** "Past ~100 definitions, split the semantic layer by business area
+behind a router, or retrieve only the relevant definitions per question."

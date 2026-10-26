@@ -160,6 +160,19 @@ def test_delivery_metrics_refuse_a_status(layer: SemanticLayer, metric: str) -> 
     assert "orders.order_status = 'delivered'" in plain.sql  # built into the definition
 
 
+def test_cancellation_rate_counts_every_status(layer: SemanticLayer) -> None:
+    q = compile_form(layer, metric="cancellation_rate", dimensions=["customer_state"])
+    assert "avg((orders.order_status = 'canceled')::int) AS cancellation_rate" in q.sql
+    assert "'delivered'" not in q.sql  # status "all": no delivered-only default
+    assert "FROM orders" in q.sql and "order_items" not in q.sql
+    with pytest.raises(CompileError, match="share of orders in every status"):
+        compile_form(
+            layer,
+            metric="cancellation_rate",
+            filters=[{"dimension": "order_status", "op": "=", "values": ["canceled"]}],
+        )
+
+
 def test_review_metrics_have_no_status_rule(layer: SemanticLayer) -> None:
     q = compile_form(layer, metric="review_count")
     assert "order_status" not in q.sql
@@ -175,6 +188,7 @@ def test_review_metrics_have_no_status_rule(layer: SemanticLayer) -> None:
         ({"dimensions": ["month"]}, "ORDER BY month ASC, revenue DESC"),
         ({"dimensions": ["month", "customer_state"]}, "ORDER BY month ASC, revenue DESC"),
         ({"dimensions": ["year"]}, "ORDER BY year ASC, revenue DESC"),
+        ({"dimensions": ["quarter"]}, "ORDER BY quarter ASC, revenue DESC"),
         ({"dimensions": ["customer_state"]}, "ORDER BY revenue DESC"),  # unchanged
         (  # the form's own sort always wins
             {"dimensions": ["month"], "sort": {"by": "revenue"}, "limit": 5},

@@ -1,7 +1,7 @@
 # How the tables connect. Every join goes from the "many" side to the "one" side, so following
 # a join never multiplies rows. optional: true means LEFT JOIN (keep rows with no match, F8).
 # The key is "condition", not "on": YAML reads a bare `on` as the boolean true.
-version: 0.3.3
+version: 0.4.0
 
 joins:
   - { from: order_items, to: orders, condition: order_items.order_id = orders.order_id }

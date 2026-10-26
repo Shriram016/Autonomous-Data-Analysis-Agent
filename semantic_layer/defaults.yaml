@@ -1,6 +1,6 @@
 # Default meanings for vague words and missing details. Each default is stated in the answer,
 # with an offer to switch (§0: assume only when a default is written down; otherwise ask).
-version: 0.3.3
+version: 0.4.0
 
 defaults:
   default_status_filter:

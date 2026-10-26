@@ -1,7 +1,7 @@
 # Metrics: the numbers the agent can compute. Every metric needs a grain (order | item | payment
 # | review); see dimensions.yaml for the grain tree. Decisions: §0 M0.6 (D1 revenue = item price,
 # D2 delivered orders only, as a default the question can change). Findings F1–F9: docs/data-profile.md.
-version: 0.3.3
+version: 0.4.0
 
 metrics:
   orders:
@@ -135,3 +135,56 @@ metrics:
     terms: [reviews, number of reviews, review count]
     shown_in_answer: "Reviews = review rows (review_id, order_id)."
     why: (F5)
+
+  # --- added in v0.4.0 (M2 step 1) ---
+
+  items_sold:
+    label: Items sold
+    description: Number of items sold (one order can have several items).
+    grain: item
+    table: order_items
+    sql: count(*)
+    filters: []
+    status: default  # delivered only unless the question names a status (D2)
+    unit: count
+    terms: [items sold, units sold, number of items]
+    shown_in_answer: "Items sold = order item rows (2 units of one product = 2 items)."
+    why: One row in order_items is one unit; orders counts orders, this counts units.
+
+  active_sellers:
+    label: Active sellers
+    description: Number of distinct sellers with at least one sale.
+    grain: item  # DISTINCT sellers, so item breakdowns don't double count
+    table: order_items
+    sql: count(DISTINCT order_items.seller_id)
+    filters: []
+    status: default  # delivered only unless the question names a status (D2)
+    unit: count
+    terms: [active sellers, number of sellers, seller count]
+    shown_in_answer: "Active sellers = distinct sellers with a sale in the period."
+    why: A seller with no sale in the period is not counted.
+
+  cancellation_rate:
+    label: Cancellation rate
+    description: Share of all orders that were canceled.
+    grain: order
+    table: orders
+    sql: avg((orders.order_status = 'canceled')::int)
+    filters: []
+    status: all  # a share of every order, so no delivered-only default
+    unit: ratio
+    terms: [cancellation rate, cancellations, canceled share]
+    shown_in_answer: "Cancellation rate = canceled orders / all orders (every status)."
+    why: Delivered only would make it 0. 'unavailable' is not counted as canceled. (F3)
+
+  low_review_rate:
+    label: Low-review rate
+    description: Share of reviews with a score of 1 or 2.
+    grain: review
+    table: reviews
+    sql: avg((reviews.review_score <= 2)::int)
+    filters: []
+    unit: ratio
+    terms: [low review rate, bad reviews, unhappy customers]
+    shown_in_answer: "Low-review rate = reviews with score 1 or 2 / all reviews."
+    why: A share is easier to compare than an average score. No status filter. (F5)

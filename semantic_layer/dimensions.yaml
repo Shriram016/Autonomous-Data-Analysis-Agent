@@ -5,7 +5,7 @@
 #                item  payment  review
 # A metric can use a dimension at its own grain or at "order" (above it in the tree).
 # Example: revenue (item) can use category (item) and state (order), not payment type (payment).
-version: 0.3.3
+version: 0.4.0
 
 dimensions:
   month:
@@ -22,6 +22,14 @@ dimensions:
     sql: extract(year FROM orders.order_purchase_timestamp)
     terms: [year, yearly, annual]
     kind: time
+
+  quarter:
+    label: Quarter
+    grain: order
+    sql: to_char(orders.order_purchase_timestamp, 'YYYY-"Q"Q')
+    terms: [quarter, quarterly, per quarter]
+    kind: time
+    why: Text like 2017-Q3, so it sorts by date. Calendar quarters (added v0.4.0).
 
   customer_state:
     label: Customer state

@@ -43,6 +43,22 @@ def test_grain_rule(metric: str, dimension: str, allowed: bool) -> None:
     assert load().can_use(metric, dimension) is allowed
 
 
+@pytest.mark.parametrize(
+    ("metric", "dimension", "allowed"),
+    [
+        ("items_sold", "product_category", True),
+        ("active_sellers", "seller_state", True),
+        ("cancellation_rate", "customer_state", True),
+        ("cancellation_rate", "product_category", False),  # one order, several categories
+        ("cancellation_rate", "order_status", False),  # status "all": no status split
+        ("low_review_rate", "review_score", True),
+        ("revenue", "quarter", True),
+    ],
+)
+def test_new_metrics_follow_the_rules(metric: str, dimension: str, allowed: bool) -> None:
+    assert load().allows(metric, dimension) is allowed
+
+
 def test_join_path_reaches_category_through_products() -> None:
     path = load().join_path("order_items", {"category_translation"})
     assert [(j.from_table, j.to_table) for j in path] == [
@@ -88,7 +104,7 @@ def test_unreachable_table_is_refused(layer_copy: Path) -> None:
 
 
 def test_version_mismatch_is_refused(layer_copy: Path) -> None:
-    edit(layer_copy, "joins.yaml", "version: 0.3.3", "version: 0.4.0")
+    edit(layer_copy, "joins.yaml", "version: 0.4.0", "version: 0.4.1")
     with pytest.raises(SemanticLayerError, match="different versions"):
         load(layer_copy)
 

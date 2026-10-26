@@ -52,11 +52,10 @@ def test_an_expected_form_that_does_not_compile_is_reported(tmp_path: Path) -> N
         tmp_path, "expected_form: {metric: customers}", "expected_form: {metric: buyers}"
     )
     problems = check_cases(load_cases(path), load())
-    assert problems == [
-        "case 'number_of_customers': No metric called 'buyers'. "
-        "Known metrics: orders, revenue, freight, total_paid, average_order_value, customers, "
-        "late_delivery_rate, average_delivery_days, average_review_score, review_count."
-    ]
+    assert len(problems) == 1
+    assert problems[0].startswith(
+        "case 'number_of_customers': No metric called 'buyers'. Known metrics: orders, revenue,"
+    )
 
 
 def test_a_form_without_its_hand_written_sql_is_refused(tmp_path: Path) -> None:
