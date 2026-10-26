@@ -55,6 +55,13 @@ jobs:
     timeout_seconds: 15
     max_attempts: 1  # no retry: a code-made fallback reply is shown, and the failure logged
 
+  text_to_sql:  # EXPERIMENT ONLY (M2 step 3): question → SQL written by the LLM, to compare
+    model: claude-haiku-5-5  # the same model as the agent: only the method differs
+    thinking: disabled
+    max_tokens: 1500  # one query
+    timeout_seconds: 30
+    max_attempts: 1  # a simple baseline: no retry, not even after an SQL error
+
   route_haiku:  # question → route (fallback); no confidence
     model: claude-haiku-5-5
     thinking: disabled

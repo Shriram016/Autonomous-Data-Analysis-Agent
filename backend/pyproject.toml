@@ -49,11 +49,12 @@ select = ["E", "F", "I", "B", "UP", "SIM"]
 
 [tool.mypy]
 python_version = "3.12"
-files = ["src", "tests", "dev_checks"]
+files = ["src", "tests", "dev_checks", "experiments"]
 plugins = ["pydantic.mypy"]
 check_untyped_defs = true
 warn_unused_ignores = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]  # so tests can import experiments/ (not part of the package)
 markers = ["integration: needs running Postgres/Redis (docker compose)"]

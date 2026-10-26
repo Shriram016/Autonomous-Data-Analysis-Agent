@@ -966,6 +966,25 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    (2) "What are our best products?" is also the clarify prompt's own example (the LLM
 >    copied its options), so that case proves little: new cases must not copy prompt
 >    examples. **Next: M2 step 3 — text-to-SQL baseline.**
+>    **Text-to-SQL baseline (🔒 2026-10-26):** measures our method (form → semantic layer →
+>    SQL) against the LLM writing SQL itself. Lives in `backend/experiments/text_to_sql/`
+>    (outside `src/adaa`, not in the product or the image; reuses the eval cases and right
+>    answers). **Same model (Haiku 5.5), no new library** (no LangChain SQL agent / Vanna):
+>    only the method changes. Output `{sql, cannot_answer}`, run as `adaa_query`. **Two
+>    variants:** A = table descriptions only; B = descriptions + short business rules.
+>    Scored on raw values vs the hand-written SQL (rounded, any row order unless sorted);
+>    must-stop cases pass only with `cannot_answer`. A stronger model (e.g. Sonnet) is added
+>    only if Haiku fails badly. Slices: 3a baseline, 3b scoring, 3c run + report.
+>    **⚠️ Definition to review in 3c (found 2026-10-26 by the baseline run):** "How many
+>    orders were canceled?" — ours = **461** (the `orders` metric counts orders through
+>    their items: `count(DISTINCT order_items.order_id)`), the baseline = **625** (every
+>    canceled row in `orders`); a manager probably expects 625 (164 canceled orders have no
+>    items, F2/F3). The hand-written eval SQL also counts through items, because it mirrors
+>    the rule written in cases.yaml ("orders are counted through their items") — so it
+>    tests the compiler, **not the definition itself**: hand-written SQL that copies our
+>    definitions shares their mistakes. Also check "reviews in 2018" (53,854 by the order's
+>    purchase date vs 56,164) and any other case where the baseline differs only by a
+>    definition. Decide with the full 3c report.
 >    **Decide later (raised 2026-10-26 by the builder): usage per LLM call.** Today
 >    `conversation.questions` keeps one row per question with the totals only; each call's
 >    job, model, tokens, cost and time are only in the `llm_call` log lines. Option: an

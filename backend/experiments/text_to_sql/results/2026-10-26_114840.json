@@ -1,0 +1,2547 @@
+{
+  "started_at": "2026-10-26T11:48:40.586482Z",
+  "cases_version": 4,
+  "model": "claude-haiku-5-5",
+  "prompts": {
+    "A": "0.1.0 (bc8608d5e4dd)",
+    "B": "0.1.0 (bc8608d5e4dd)"
+  },
+  "cost_usd": 0.014015,
+  "p50_seconds": 1.77,
+  "results": [
+    {
+      "id": "total_revenue",
+      "kind": "simple",
+      "question": "What was the total revenue?",
+      "variant": "A",
+      "sql": "SELECT SUM(price + freight_value) AS total_revenue FROM order_items",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "15843553.24"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.0001457,
+      "input_tokens": 1227,
+      "seconds": 2.53
+    },
+    {
+      "id": "total_revenue",
+      "kind": "simple",
+      "question": "What was the total revenue?",
+      "variant": "B",
+      "sql": "SELECT SUM(oi.price) AS total_revenue FROM order_items oi JOIN orders o ON o.order_id = oi.order_id WHERE o.order_status = 'delivered'",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "13221498.11"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.00019109999999999998,
+      "input_tokens": 1501,
+      "seconds": 2.84
+    },
+    {
+      "id": "number_of_customers",
+      "kind": "simple",
+      "question": "How many customers do we have?",
+      "variant": "A",
+      "sql": "SELECT COUNT(*) AS customer_count FROM customers",
+      "cannot_answer": null,
+      "rows": [
+        [
+          99441
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.0001427,
+      "input_tokens": 1227,
+      "seconds": 1.78
+    },
+    {
+      "id": "number_of_customers",
+      "kind": "simple",
+      "question": "How many customers do we have?",
+      "variant": "B",
+      "sql": "SELECT COUNT(DISTINCT customer_unique_id) AS customer_count FROM customers",
+      "cannot_answer": null,
+      "rows": [
+        [
+          96096
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.0001761,
+      "input_tokens": 1501,
+      "seconds": 1.67
+    },
+    {
+      "id": "average_review_score",
+      "kind": "simple",
+      "question": "What is the average review score?",
+      "variant": "A",
+      "sql": "SELECT AVG(review_score) AS average_review_score FROM reviews",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "4.0864206240425703"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.00014410000000000003,
+      "input_tokens": 1226,
+      "seconds": 1.25
+    },
+    {
+      "id": "average_review_score",
+      "kind": "simple",
+      "question": "What is the average review score?",
+      "variant": "B",
+      "sql": "SELECT AVG(review_score) AS average_review_score FROM reviews",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "4.0864206240425703"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.000171,
+      "input_tokens": 1500,
+      "seconds": 2.2
+    },
+    {
+      "id": "late_delivery_rate",
+      "kind": "simple",
+      "question": "What share of orders arrived late?",
+      "variant": "A",
+      "sql": "SELECT ROUND(100.0 * COUNT(*) FILTER (WHERE order_delivered_customer_date > order_estimated_delivery_date) / NULLIF(COUNT(*) FILTER (WHERE order_delivered_customer_date IS NOT NULL), 0), 2) AS late_delivery_pct FROM orders",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "8.11"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.0001899,
+      "input_tokens": 1229,
+      "seconds": 1.7
+    },
+    {
+      "id": "late_delivery_rate",
+      "kind": "simple",
+      "question": "What share of orders arrived late?",
+      "variant": "B",
+      "sql": "SELECT ROUND(100.0 * COUNT(*) FILTER (WHERE order_delivered_customer_date::date > order_estimated_delivery_date::date) / NULLIF(COUNT(*), 0), 2) AS late_share_pct FROM orders WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "6.77"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.0002213,
+      "input_tokens": 1503,
+      "seconds": 1.73
+    },
+    {
+      "id": "revenue_by_state",
+      "kind": "breakdown",
+      "question": "Show revenue by customer state",
+      "variant": "A",
+      "sql": "SELECT c.customer_state, SUM(oi.price + oi.freight_value) AS revenue FROM orders o JOIN customers c ON o.customer_id = c.customer_id JOIN order_items oi ON oi.order_id = o.order_id GROUP BY c.customer_state ORDER BY revenue DESC",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "SP",
+          "5921678.12"
+        ],
+        [
+          "RJ",
+          "2129681.98"
+        ],
+        [
+          "MG",
+          "1856161.49"
+        ],
+        [
+          "RS",
+          "885826.76"
+        ],
+        [
+          "PR",
+          "800935.44"
+        ],
+        [
+          "BA",
+          "611506.67"
+        ],
+        [
+          "SC",
+          "610213.60"
+        ],
+        [
+          "DF",
+          "353229.44"
+        ],
+        [
+          "GO",
+          "347706.93"
+        ],
+        [
+          "ES",
+          "324801.91"
+        ],
+        [
+          "PE",
+          "322237.69"
+        ],
+        [
+          "CE",
+          "275606.30"
+        ],
+        [
+          "PA",
+          "217647.11"
+        ],
+        [
+          "MT",
+          "186168.96"
+        ],
+        [
+          "MA",
+          "151171.99"
+        ],
+        [
+          "PB",
+          "140987.81"
+        ],
+        [
+          "MS",
+          "135956.67"
+        ],
+        [
+          "PI",
+          "108132.28"
+        ],
+        [
+          "RN",
+          "101895.08"
+        ],
+        [
+          "AL",
+          "96229.40"
+        ],
+        [
+          "SE",
+          "73032.32"
+        ],
+        [
+          "TO",
+          "61354.42"
+        ],
+        [
+          "RO",
+          "57558.02"
+        ],
+        [
+          "AM",
+          "27835.73"
+        ],
+        [
+          "AC",
+          "19669.70"
+        ],
+        [
+          "AP",
+          "16262.80"
+        ],
+        [
+          "RR",
+          "10064.62"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.00018580000000000002,
+      "input_tokens": 1228,
+      "seconds": 2.88
+    },
+    {
+      "id": "revenue_by_state",
+      "kind": "breakdown",
+      "question": "Show revenue by customer state",
+      "variant": "B",
+      "sql": "SELECT c.customer_state, SUM(oi.price) AS revenue FROM orders o JOIN order_items oi ON oi.order_id = o.order_id JOIN customers c ON c.customer_id = o.customer_id WHERE o.order_status = 'delivered' GROUP BY c.customer_state ORDER BY revenue DESC",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "SP",
+          "5067633.16"
+        ],
+        [
+          "RJ",
+          "1759651.13"
+        ],
+        [
+          "MG",
+          "1552481.83"
+        ],
+        [
+          "RS",
+          "728897.47"
+        ],
+        [
+          "PR",
+          "666063.51"
+        ],
+        [
+          "SC",
+          "507012.13"
+        ],
+        [
+          "BA",
+          "493584.14"
+        ],
+        [
+          "DF",
+          "296498.41"
+        ],
+        [
+          "GO",
+          "282836.70"
+        ],
+        [
+          "ES",
+          "268643.45"
+        ],
+        [
+          "PE",
+          "251889.49"
+        ],
+        [
+          "CE",
+          "219757.38"
+        ],
+        [
+          "PA",
+          "174470.59"
+        ],
+        [
+          "MT",
+          "152191.62"
+        ],
+        [
+          "MA",
+          "117009.38"
+        ],
+        [
+          "MS",
+          "115429.97"
+        ],
+        [
+          "PB",
+          "112586.82"
+        ],
+        [
+          "PI",
+          "84721.00"
+        ],
+        [
+          "RN",
+          "82105.66"
+        ],
+        [
+          "AL",
+          "78855.72"
+        ],
+        [
+          "SE",
+          "56574.19"
+        ],
+        [
+          "TO",
+          "48402.51"
+        ],
+        [
+          "RO",
+          "45682.76"
+        ],
+        [
+          "AM",
+          "22155.84"
+        ],
+        [
+          "AC",
+          "15930.97"
+        ],
+        [
+          "AP",
+          "13374.81"
+        ],
+        [
+          "RR",
+          "7057.47"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.00021720000000000002,
+      "input_tokens": 1502,
+      "seconds": 1.61
+    },
+    {
+      "id": "paid_by_payment_type",
+      "kind": "breakdown",
+      "question": "How much did customers pay with each payment method?",
+      "variant": "A",
+      "sql": "SELECT payment_type, SUM(payment_value) AS total_paid FROM payments GROUP BY payment_type ORDER BY total_paid DESC",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "credit_card",
+          "12542084.19"
+        ],
+        [
+          "boleto",
+          "2869361.27"
+        ],
+        [
+          "voucher",
+          "379436.87"
+        ],
+        [
+          "debit_card",
+          "217989.79"
+        ],
+        [
+          "not_defined",
+          "0.00"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.0001582,
+      "input_tokens": 1232,
+      "seconds": 1.27
+    },
+    {
+      "id": "paid_by_payment_type",
+      "kind": "breakdown",
+      "question": "How much did customers pay with each payment method?",
+      "variant": "B",
+      "sql": "SELECT payment_type, SUM(payment_value) AS total_paid FROM payments GROUP BY payment_type ORDER BY total_paid DESC",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "credit_card",
+          "12542084.19"
+        ],
+        [
+          "boleto",
+          "2869361.27"
+        ],
+        [
+          "voucher",
+          "379436.87"
+        ],
+        [
+          "debit_card",
+          "217989.79"
+        ],
+        [
+          "not_defined",
+          "0.00"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.00018559999999999998,
+      "input_tokens": 1506,
+      "seconds": 1.25
+    },
+    {
+      "id": "delivery_days_by_state",
+      "kind": "breakdown",
+      "question": "Average delivery time per customer state",
+      "variant": "A",
+      "sql": "SELECT c.customer_state, AVG(EXTRACT(EPOCH FROM (o.order_delivered_customer_date - o.order_purchase_timestamp)) / 86400.0) AS avg_delivery_days FROM orders o JOIN customers c ON o.customer_id = c.customer_id WHERE o.order_delivered_customer_date IS NOT NULL AND o.order_purchase_timestamp IS NOT NULL GROUP BY c.customer_state ORDER BY avg_delivery_days",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "SP",
+          "8.76135656379617053783"
+        ],
+        [
+          "PR",
+          "11.9915822274132756"
+        ],
+        [
+          "MG",
+          "12.0102583429146892"
+        ],
+        [
+          "DF",
+          "12.9675681089743590"
+        ],
+        [
+          "SC",
+          "14.9592974533773977"
+        ],
+        [
+          "RS",
+          "15.3002761924068530"
+        ],
+        [
+          "RJ",
+          "15.31005281555537566234"
+        ],
+        [
+          "GO",
+          "15.6063385354567649"
+        ],
+        [
+          "MS",
+          "15.6183190184656839"
+        ],
+        [
+          "ES",
+          "15.7893071103685139"
+        ],
+        [
+          "TO",
+          "17.6580626098269803"
+        ],
+        [
+          "MT",
+          "18.0557560117256082"
+        ],
+        [
+          "PE",
+          "18.4483229944084072"
+        ],
+        [
+          "RN",
+          "19.2781562060478200"
+        ],
+        [
+          "BA",
+          "19.33546582448926198923"
+        ],
+        [
+          "RO",
+          "19.3720365131077580"
+        ],
+        [
+          "PI",
+          "19.4570982629162776"
+        ],
+        [
+          "PB",
+          "20.4267676096067054"
+        ],
+        [
+          "AC",
+          "21.0357129629629630"
+        ],
+        [
+          "CE",
+          "21.2665786349289086"
+        ],
+        [
+          "SE",
+          "21.5197882808181316"
+        ],
+        [
+          "MA",
+          "21.5729764741205641"
+        ],
+        [
+          "PA",
+          "23.7729169113616788"
+        ],
+        [
+          "AL",
+          "24.5438553619740647"
+        ],
+        [
+          "AM",
+          "26.4259909003831418"
+        ],
+        [
+          "AP",
+          "27.1850677169707020"
+        ],
+        [
+          "RR",
+          "29.3875460140018067"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.0002194,
+      "input_tokens": 1229,
+      "seconds": 1.89
+    },
+    {
+      "id": "delivery_days_by_state",
+      "kind": "breakdown",
+      "question": "Average delivery time per customer state",
+      "variant": "B",
+      "sql": "SELECT c.customer_state, AVG(o.order_delivered_customer_date::date - o.order_purchase_timestamp::date) AS avg_delivery_days FROM orders o JOIN customers c ON o.customer_id = c.customer_id WHERE o.order_status = 'delivered' AND o.order_delivered_customer_date IS NOT NULL GROUP BY c.customer_state ORDER BY avg_delivery_days DESC",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "RR",
+          "29.3414634146341463"
+        ],
+        [
+          "AP",
+          "27.1791044776119403"
+        ],
+        [
+          "AM",
+          "26.3586206896551724"
+        ],
+        [
+          "AL",
+          "24.5012594458438287"
+        ],
+        [
+          "PA",
+          "23.7251585623678647"
+        ],
+        [
+          "MA",
+          "21.5118549511854951"
+        ],
+        [
+          "SE",
+          "21.4626865671641791"
+        ],
+        [
+          "CE",
+          "21.2001563721657545"
+        ],
+        [
+          "AC",
+          "21.0000000000000000"
+        ],
+        [
+          "PB",
+          "20.3887814313346228"
+        ],
+        [
+          "PI",
+          "19.3949579831932773"
+        ],
+        [
+          "RO",
+          "19.2839506172839506"
+        ],
+        [
+          "BA",
+          "19.2785626535626536"
+        ],
+        [
+          "RN",
+          "19.2236286919831224"
+        ],
+        [
+          "PE",
+          "18.3954802259887006"
+        ],
+        [
+          "MT",
+          "18.0033860045146727"
+        ],
+        [
+          "TO",
+          "17.5985401459854015"
+        ],
+        [
+          "ES",
+          "15.7238095238095238"
+        ],
+        [
+          "MS",
+          "15.5449358059914408"
+        ],
+        [
+          "GO",
+          "15.5360245273377619"
+        ],
+        [
+          "RS",
+          "15.2485029940119760"
+        ],
+        [
+          "RJ",
+          "15.2370040485829960"
+        ],
+        [
+          "SC",
+          "14.9029892836999436"
+        ],
+        [
+          "DF",
+          "12.8990384615384615"
+        ],
+        [
+          "MG",
+          "11.9449533204157125"
+        ],
+        [
+          "PR",
+          "11.9380459069672964"
+        ],
+        [
+          "SP",
+          "8.7005729243838593"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.0002298,
+      "input_tokens": 1503,
+      "seconds": 3.59
+    },
+    {
+      "id": "revenue_2017",
+      "kind": "period",
+      "question": "What was the revenue in 2017?",
+      "variant": "A",
+      "sql": "SELECT SUM(price + freight_value) AS revenue FROM order_items oi JOIN orders o ON oi.order_id = o.order_id WHERE o.order_purchase_timestamp >= '2017-01-01' AND o.order_purchase_timestamp < '2018-01-01'",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "7142672.43"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.000181,
+      "input_tokens": 1230,
+      "seconds": 2.3
+    },
+    {
+      "id": "revenue_2017",
+      "kind": "period",
+      "question": "What was the revenue in 2017?",
+      "variant": "B",
+      "sql": "SELECT SUM(oi.price) AS revenue FROM order_items oi JOIN orders o ON oi.order_id = o.order_id WHERE o.order_status = 'delivered' AND o.order_purchase_timestamp >= '2017-01-01' AND o.order_purchase_timestamp < '2018-01-01'",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "5962902.01"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.0002144,
+      "input_tokens": 1504,
+      "seconds": 1.52
+    },
+    {
+      "id": "orders_march_2018",
+      "kind": "period",
+      "question": "How many orders were placed in March 2018?",
+      "variant": "A",
+      "sql": "SELECT COUNT(*) AS order_count FROM orders WHERE order_purchase_timestamp >= '2018-03-01' AND order_purchase_timestamp < '2018-04-01'",
+      "cannot_answer": null,
+      "rows": [
+        [
+          7211
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.00016519999999999998,
+      "input_tokens": 1232,
+      "seconds": 1.31
+    },
+    {
+      "id": "orders_march_2018",
+      "kind": "period",
+      "question": "How many orders were placed in March 2018?",
+      "variant": "B",
+      "sql": "SELECT COUNT(DISTINCT order_id) AS order_count FROM orders WHERE order_purchase_timestamp >= '2018-03-01' AND order_purchase_timestamp < '2018-04-01'",
+      "cannot_answer": null,
+      "rows": [
+        [
+          7211
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.00019659999999999998,
+      "input_tokens": 1506,
+      "seconds": 1.27
+    },
+    {
+      "id": "reviews_2018",
+      "kind": "period",
+      "question": "Number of reviews in 2018",
+      "variant": "A",
+      "sql": "SELECT COUNT(*) AS review_count FROM reviews WHERE review_creation_date >= '2018-01-01' AND review_creation_date < '2019-01-01'",
+      "cannot_answer": null,
+      "rows": [
+        [
+          56164
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.0001614,
+      "input_tokens": 1229,
+      "seconds": 2.2
+    },
+    {
+      "id": "reviews_2018",
+      "kind": "period",
+      "question": "Number of reviews in 2018",
+      "variant": "B",
+      "sql": "SELECT COUNT(*) AS review_count FROM reviews WHERE review_creation_date >= '2018-01-01' AND review_creation_date < '2019-01-01'",
+      "cannot_answer": null,
+      "rows": [
+        [
+          56164
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.0001888,
+      "input_tokens": 1503,
+      "seconds": 1.53
+    },
+    {
+      "id": "revenue_toy_products",
+      "kind": "filter",
+      "question": "Revenue for toy products",
+      "variant": "A",
+      "sql": "SELECT SUM(oi.price) AS revenue FROM order_items oi JOIN products p ON oi.product_id = p.product_id JOIN category_translation ct ON p.product_category_name = ct.product_category_name WHERE ct.product_category_name_english = 'toys'",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "483946.60"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.00017869999999999998,
+      "input_tokens": 1227,
+      "seconds": 1.52
+    },
+    {
+      "id": "revenue_toy_products",
+      "kind": "filter",
+      "question": "Revenue for toy products",
+      "variant": "B",
+      "sql": "SELECT SUM(oi.price) AS revenue FROM order_items oi JOIN orders o ON oi.order_id = o.order_id JOIN products p ON oi.product_id = p.product_id JOIN category_translation ct ON p.product_category_name = ct.product_category_name WHERE o.order_status = 'delivered' AND ct.product_category_name_english LIKE '%toys%'",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "471286.48"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.00022559999999999998,
+      "input_tokens": 1501,
+      "seconds": 1.47
+    },
+    {
+      "id": "orders_from_sao_paulo",
+      "kind": "filter",
+      "question": "How many orders came from São Paulo?",
+      "variant": "A",
+      "sql": "SELECT COUNT(DISTINCT o.order_id) AS order_count FROM orders o JOIN customers c ON o.customer_id = c.customer_id WHERE c.customer_state = 'SP' AND c.customer_city ILIKE 'sao paulo'",
+      "cannot_answer": null,
+      "rows": [
+        [
+          15540
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.00017760000000000003,
+      "input_tokens": 1231,
+      "seconds": 1.66
+    },
+    {
+      "id": "orders_from_sao_paulo",
+      "kind": "filter",
+      "question": "How many orders came from São Paulo?",
+      "variant": "B",
+      "sql": "SELECT COUNT(DISTINCT o.order_id) AS order_count FROM orders o JOIN customers c ON o.customer_id = c.customer_id WHERE c.customer_state = 'SP'",
+      "cannot_answer": null,
+      "rows": [
+        [
+          41746
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.0001945,
+      "input_tokens": 1505,
+      "seconds": 1.64
+    },
+    {
+      "id": "paid_by_credit_card",
+      "kind": "filter",
+      "question": "Total amount paid by credit card",
+      "variant": "A",
+      "sql": "SELECT SUM(payment_value) AS total_credit_card_payments FROM payments WHERE payment_type = 'credit_card'",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "12542084.19"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.0001544,
+      "input_tokens": 1229,
+      "seconds": 1.39
+    },
+    {
+      "id": "paid_by_credit_card",
+      "kind": "filter",
+      "question": "Total amount paid by credit card",
+      "variant": "B",
+      "sql": "SELECT SUM(payment_value) AS total_credit_card_paid FROM payments WHERE payment_type = 'credit_card'",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "12542084.19"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.0001818,
+      "input_tokens": 1503,
+      "seconds": 1.83
+    },
+    {
+      "id": "canceled_orders",
+      "kind": "status",
+      "question": "How many orders were canceled?",
+      "variant": "A",
+      "sql": "SELECT COUNT(*) AS canceled_orders FROM orders WHERE order_status = 'canceled'",
+      "cannot_answer": null,
+      "rows": [
+        [
+          625
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.0001508,
+      "input_tokens": 1228,
+      "seconds": 1.36
+    },
+    {
+      "id": "canceled_orders",
+      "kind": "status",
+      "question": "How many orders were canceled?",
+      "variant": "B",
+      "sql": "SELECT COUNT(DISTINCT order_id) AS canceled_orders FROM orders WHERE order_status = 'canceled'",
+      "cannot_answer": null,
+      "rows": [
+        [
+          625
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.0001822,
+      "input_tokens": 1502,
+      "seconds": 2.44
+    },
+    {
+      "id": "orders_by_status",
+      "kind": "status",
+      "question": "Orders by status",
+      "variant": "A",
+      "sql": "SELECT order_status, COUNT(*) AS order_count FROM orders GROUP BY order_status ORDER BY order_count DESC",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "delivered",
+          96478
+        ],
+        [
+          "shipped",
+          1107
+        ],
+        [
+          "canceled",
+          625
+        ],
+        [
+          "unavailable",
+          609
+        ],
+        [
+          "invoiced",
+          314
+        ],
+        [
+          "processing",
+          301
+        ],
+        [
+          "created",
+          5
+        ],
+        [
+          "approved",
+          2
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.0001544,
+      "input_tokens": 1224,
+      "seconds": 2.64
+    },
+    {
+      "id": "orders_by_status",
+      "kind": "status",
+      "question": "Orders by status",
+      "variant": "B",
+      "sql": "SELECT order_status, COUNT(DISTINCT order_id) AS order_count FROM orders GROUP BY order_status ORDER BY order_count DESC",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "delivered",
+          96478
+        ],
+        [
+          "shipped",
+          1107
+        ],
+        [
+          "canceled",
+          625
+        ],
+        [
+          "unavailable",
+          609
+        ],
+        [
+          "invoiced",
+          314
+        ],
+        [
+          "processing",
+          301
+        ],
+        [
+          "created",
+          5
+        ],
+        [
+          "approved",
+          2
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.00018580000000000002,
+      "input_tokens": 1498,
+      "seconds": 1.31
+    },
+    {
+      "id": "revenue_last_month",
+      "kind": "relative_date",
+      "question": "What was the revenue last month?",
+      "variant": "A",
+      "sql": "SELECT SUM(oi.price + oi.freight_value) AS revenue FROM order_items oi JOIN orders o ON oi.order_id = o.order_id WHERE o.order_purchase_timestamp >= DATE '2018-07-01' AND o.order_purchase_timestamp < DATE '2018-08-01'",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "1058728.03"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.00018680000000000001,
+      "input_tokens": 1228,
+      "seconds": 1.39
+    },
+    {
+      "id": "revenue_last_month",
+      "kind": "relative_date",
+      "question": "What was the revenue last month?",
+      "variant": "B",
+      "sql": "SELECT SUM(oi.price) AS revenue FROM order_items oi JOIN orders o ON o.order_id = oi.order_id WHERE o.order_status = 'delivered' AND o.order_purchase_timestamp >= DATE '2018-07-01' AND o.order_purchase_timestamp < DATE '2018-08-01'",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "867953.46"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.00021720000000000002,
+      "input_tokens": 1502,
+      "seconds": 2.47
+    },
+    {
+      "id": "orders_last_3_months",
+      "kind": "relative_date",
+      "question": "How many orders in the last 3 months?",
+      "variant": "A",
+      "sql": "SELECT COUNT(*) AS order_count FROM orders WHERE order_purchase_timestamp >= DATE '2018-08-31' - INTERVAL '3 months' AND order_purchase_timestamp <= DATE '2018-08-31'",
+      "cannot_answer": null,
+      "rows": [
+        [
+          19103
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.00017460000000000002,
+      "input_tokens": 1231,
+      "seconds": 1.77
+    },
+    {
+      "id": "orders_last_3_months",
+      "kind": "relative_date",
+      "question": "How many orders in the last 3 months?",
+      "variant": "B",
+      "sql": "SELECT COUNT(DISTINCT order_id) AS order_count FROM orders WHERE order_purchase_timestamp >= DATE '2018-08-31' - INTERVAL '3 months' AND order_purchase_timestamp < DATE '2018-08-31' + INTERVAL '1 day'",
+      "cannot_answer": null,
+      "rows": [
+        [
+          19104
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.0002115,
+      "input_tokens": 1505,
+      "seconds": 2.59
+    },
+    {
+      "id": "top_5_categories",
+      "kind": "top",
+      "question": "Top 5 product categories by revenue",
+      "variant": "A",
+      "sql": "SELECT COALESCE(ct.product_category_name_english, p.product_category_name) AS category, SUM(oi.price) AS revenue FROM order_items oi JOIN products p ON oi.product_id = p.product_id LEFT JOIN category_translation ct ON p.product_category_name = ct.product_category_name GROUP BY 1 ORDER BY revenue DESC LIMIT 5",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "health_beauty",
+          "1258681.34"
+        ],
+        [
+          "watches_gifts",
+          "1205005.68"
+        ],
+        [
+          "bed_bath_table",
+          "1036988.68"
+        ],
+        [
+          "sports_leisure",
+          "988048.97"
+        ],
+        [
+          "computers_accessories",
+          "911954.32"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.00019960000000000003,
+      "input_tokens": 1231,
+      "seconds": 2.41
+    },
+    {
+      "id": "top_5_categories",
+      "kind": "top",
+      "question": "Top 5 product categories by revenue",
+      "variant": "B",
+      "sql": "SELECT COALESCE(ct.product_category_name_english, p.product_category_name) AS category, SUM(oi.price) AS revenue FROM order_items oi JOIN orders o ON o.order_id = oi.order_id JOIN products p ON p.product_id = oi.product_id LEFT JOIN category_translation ct ON ct.product_category_name = p.product_category_name WHERE o.order_status = 'delivered' GROUP BY 1 ORDER BY revenue DESC LIMIT 5",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "health_beauty",
+          "1233131.72"
+        ],
+        [
+          "watches_gifts",
+          "1166176.98"
+        ],
+        [
+          "bed_bath_table",
+          "1023434.76"
+        ],
+        [
+          "sports_leisure",
+          "954852.55"
+        ],
+        [
+          "computers_accessories",
+          "888724.61"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.0002455,
+      "input_tokens": 1505,
+      "seconds": 2.56
+    },
+    {
+      "id": "items_sold",
+      "kind": "simple",
+      "question": "How many items did we sell?",
+      "variant": "A",
+      "sql": "SELECT COUNT(*) AS items_sold FROM order_items",
+      "cannot_answer": null,
+      "rows": [
+        [
+          112650
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.00014319999999999998,
+      "input_tokens": 1227,
+      "seconds": 1.3
+    },
+    {
+      "id": "items_sold",
+      "kind": "simple",
+      "question": "How many items did we sell?",
+      "variant": "B",
+      "sql": "SELECT COUNT(*) AS items_sold FROM order_items oi JOIN orders o ON o.order_id = oi.order_id WHERE o.order_status = 'delivered'",
+      "cannot_answer": null,
+      "rows": [
+        [
+          110197
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.00019009999999999999,
+      "input_tokens": 1501,
+      "seconds": 1.59
+    },
+    {
+      "id": "active_sellers_2017",
+      "kind": "period",
+      "question": "How many sellers made a sale in 2017?",
+      "variant": "A",
+      "sql": "SELECT COUNT(DISTINCT oi.seller_id) AS seller_count FROM order_items oi JOIN orders o ON oi.order_id = o.order_id WHERE o.order_purchase_timestamp >= '2017-01-01' AND o.order_purchase_timestamp < '2018-01-01'",
+      "cannot_answer": null,
+      "rows": [
+        [
+          1784
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.00018130000000000002,
+      "input_tokens": 1233,
+      "seconds": 1.83
+    },
+    {
+      "id": "active_sellers_2017",
+      "kind": "period",
+      "question": "How many sellers made a sale in 2017?",
+      "variant": "B",
+      "sql": "SELECT COUNT(DISTINCT oi.seller_id) AS seller_count FROM order_items oi JOIN orders o ON oi.order_id = o.order_id WHERE o.order_purchase_timestamp >= '2017-01-01' AND o.order_purchase_timestamp < '2018-01-01' AND o.order_status = 'delivered'",
+      "cannot_answer": null,
+      "rows": [
+        [
+          1690
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.0002157,
+      "input_tokens": 1507,
+      "seconds": 1.59
+    },
+    {
+      "id": "cancellation_rate",
+      "kind": "simple",
+      "question": "What is the cancellation rate?",
+      "variant": "A",
+      "sql": "SELECT ROUND(100.0 * COUNT(*) FILTER (WHERE order_status = 'canceled') / COUNT(*), 2) AS cancellation_rate_pct FROM orders",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "0.63"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.0001659,
+      "input_tokens": 1229,
+      "seconds": 2.17
+    },
+    {
+      "id": "cancellation_rate",
+      "kind": "simple",
+      "question": "What is the cancellation rate?",
+      "variant": "B",
+      "sql": "SELECT ROUND(100.0 * COUNT(DISTINCT order_id) FILTER (WHERE order_status = 'canceled') / NULLIF(COUNT(DISTINCT order_id), 0), 2) AS cancellation_rate_pct FROM orders",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "0.63"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.00020580000000000002,
+      "input_tokens": 1503,
+      "seconds": 1.39
+    },
+    {
+      "id": "low_review_rate",
+      "kind": "simple",
+      "question": "What share of reviews give 1 or 2 stars?",
+      "variant": "A",
+      "sql": "SELECT ROUND(100.0 * COUNT(*) FILTER (WHERE review_score IN (1, 2)) / NULLIF(COUNT(*), 0), 2) AS low_review_share_pct FROM reviews WHERE review_score IS NOT NULL",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "14.69"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.00017910000000000002,
+      "input_tokens": 1236,
+      "seconds": 1.45
+    },
+    {
+      "id": "low_review_rate",
+      "kind": "simple",
+      "question": "What share of reviews give 1 or 2 stars?",
+      "variant": "B",
+      "sql": "SELECT ROUND(100.0 * COUNT(*) FILTER (WHERE review_score IN (1, 2)) / NULLIF(COUNT(*), 0), 2) AS low_score_share_pct FROM reviews",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "14.69"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.000199,
+      "input_tokens": 1510,
+      "seconds": 1.89
+    },
+    {
+      "id": "repeat_customer_rate",
+      "kind": "simple",
+      "question": "What share of customers ordered more than once?",
+      "variant": "A",
+      "sql": "WITH order_counts AS (SELECT c.customer_unique_id, COUNT(DISTINCT o.order_id) AS n_orders FROM customers c JOIN orders o ON o.customer_id = c.customer_id GROUP BY c.customer_unique_id) SELECT ROUND(100.0 * COUNT(*) FILTER (WHERE n_orders > 1) / COUNT(*), 2) AS repeat_customer_pct FROM order_counts",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "3.12"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.00021110000000000004,
+      "input_tokens": 1231,
+      "seconds": 1.77
+    },
+    {
+      "id": "repeat_customer_rate",
+      "kind": "simple",
+      "question": "What share of customers ordered more than once?",
+      "variant": "B",
+      "sql": "WITH cust_orders AS (SELECT c.customer_unique_id, COUNT(DISTINCT o.order_id) AS n_orders FROM orders o JOIN customers c ON o.customer_id = c.customer_id GROUP BY c.customer_unique_id) SELECT ROUND(100.0 * COUNT(*) FILTER (WHERE n_orders > 1) / COUNT(*), 2) AS repeat_customer_share_pct FROM cust_orders",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "3.12"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.0002405,
+      "input_tokens": 1505,
+      "seconds": 1.73
+    },
+    {
+      "id": "revenue_by_quarter_2017",
+      "kind": "breakdown",
+      "question": "Revenue per quarter in 2017",
+      "variant": "A",
+      "sql": "SELECT date_trunc('quarter', o.order_purchase_timestamp) AS quarter, SUM(oi.price + oi.freight_value) AS revenue FROM orders o JOIN order_items oi ON oi.order_id = o.order_id WHERE o.order_purchase_timestamp >= '2017-01-01' AND o.order_purchase_timestamp < '2018-01-01' GROUP BY 1 ORDER BY 1",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "2017-01-01T00:00:00",
+          "855517.70"
+        ],
+        [
+          "2017-04-01T00:00:00",
+          "1501576.23"
+        ],
+        [
+          "2017-07-01T00:00:00",
+          "1973575.13"
+        ],
+        [
+          "2017-10-01T00:00:00",
+          "2812003.37"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.00020710000000000002,
+      "input_tokens": 1231,
+      "seconds": 1.62
+    },
+    {
+      "id": "revenue_by_quarter_2017",
+      "kind": "breakdown",
+      "question": "Revenue per quarter in 2017",
+      "variant": "B",
+      "sql": "SELECT date_trunc('quarter', o.order_purchase_timestamp)::date AS quarter_start, SUM(oi.price) AS revenue FROM orders o JOIN order_items oi ON oi.order_id = o.order_id WHERE o.order_status = 'delivered' AND o.order_purchase_timestamp >= '2017-01-01' AND o.order_purchase_timestamp < '2018-01-01' GROUP BY 1 ORDER BY 1",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "2017-01-01",
+          "705220.61"
+        ],
+        [
+          "2017-04-01",
+          "1251931.30"
+        ],
+        [
+          "2017-07-01",
+          "1643703.89"
+        ],
+        [
+          "2017-10-01",
+          "2362046.21"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.0002395,
+      "input_tokens": 1505,
+      "seconds": 1.58
+    },
+    {
+      "id": "revenue_2018_vs_2017",
+      "kind": "compare",
+      "question": "Revenue 2018 vs 2017",
+      "variant": "A",
+      "sql": "SELECT EXTRACT(YEAR FROM o.order_purchase_timestamp)::int AS year, SUM(oi.price + oi.freight_value) AS revenue FROM orders o JOIN order_items oi ON oi.order_id = o.order_id WHERE EXTRACT(YEAR FROM o.order_purchase_timestamp) IN (2017, 2018) GROUP BY 1 ORDER BY 1",
+      "cannot_answer": null,
+      "rows": [
+        [
+          2017,
+          "7142672.43"
+        ],
+        [
+          2018,
+          "8643697.60"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.0002052,
+      "input_tokens": 1232,
+      "seconds": 2.23
+    },
+    {
+      "id": "revenue_2018_vs_2017",
+      "kind": "compare",
+      "question": "Revenue 2018 vs 2017",
+      "variant": "B",
+      "sql": "SELECT EXTRACT(YEAR FROM o.order_purchase_timestamp)::int AS year, SUM(oi.price) AS revenue FROM orders o JOIN order_items oi ON oi.order_id = o.order_id WHERE o.order_status = 'delivered' AND EXTRACT(YEAR FROM o.order_purchase_timestamp) IN (2017, 2018) GROUP BY 1 ORDER BY 1",
+      "cannot_answer": null,
+      "rows": [
+        [
+          2017,
+          "5962902.01"
+        ],
+        [
+          2018,
+          "7218125.12"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.0002356,
+      "input_tokens": 1506,
+      "seconds": 1.53
+    },
+    {
+      "id": "late_rate_2018_vs_2017",
+      "kind": "compare",
+      "question": "Compare the late delivery rate in 2018 with 2017",
+      "variant": "A",
+      "sql": "WITH delivered AS (SELECT EXTRACT(YEAR FROM order_purchase_timestamp)::int AS year, COUNT(*) AS total_orders, COUNT(*) FILTER (WHERE order_delivered_customer_date > order_estimated_delivery_date) AS late_orders FROM orders WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL AND order_estimated_delivery_date IS NOT NULL AND EXTRACT(YEAR FROM order_purchase_timestamp) IN (2017, 2018) GROUP BY 1) SELECT year, total_orders, late_orders, ROUND(100.0 * late_orders / total_orders, 2) AS late_delivery_rate_pct FROM delivered ORDER BY year",
+      "cannot_answer": null,
+      "rows": [
+        [
+          2017,
+          43426,
+          2878,
+          "6.63"
+        ],
+        [
+          2018,
+          52777,
+          4944,
+          "9.37"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.0002698,
+      "input_tokens": 1238,
+      "seconds": 1.98
+    },
+    {
+      "id": "late_rate_2018_vs_2017",
+      "kind": "compare",
+      "question": "Compare the late delivery rate in 2018 with 2017",
+      "variant": "B",
+      "sql": "WITH delivered AS (SELECT EXTRACT(YEAR FROM order_purchase_timestamp)::int AS year, order_id, (order_delivered_customer_date::date > order_estimated_delivery_date::date) AS is_late FROM orders WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL AND order_estimated_delivery_date IS NOT NULL AND EXTRACT(YEAR FROM order_purchase_timestamp) IN (2017, 2018)) SELECT year, COUNT(DISTINCT order_id) AS delivered_orders, COUNT(DISTINCT order_id) FILTER (WHERE is_late) AS late_orders, ROUND(100.0 * COUNT(DISTINCT order_id) FILTER (WHERE is_late) / NULLIF(COUNT(DISTINCT order_id), 0), 2) AS late_rate_pct FROM delivered GROUP BY year ORDER BY year",
+      "cannot_answer": null,
+      "rows": [
+        [
+          2017,
+          43426,
+          2453,
+          "5.65"
+        ],
+        [
+          2018,
+          52777,
+          4078,
+          "7.73"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.00032920000000000003,
+      "input_tokens": 1512,
+      "seconds": 2.23
+    },
+    {
+      "id": "revenue_change_by_state",
+      "kind": "compare",
+      "question": "How did revenue change in each customer state from 2017 to 2018?",
+      "variant": "A",
+      "sql": "SELECT c.customer_state, SUM(CASE WHEN EXTRACT(YEAR FROM o.order_purchase_timestamp) = 2017 THEN oi.price + oi.freight_value ELSE 0 END) AS revenue_2017, SUM(CASE WHEN EXTRACT(YEAR FROM o.order_purchase_timestamp) = 2018 THEN oi.price + oi.freight_value ELSE 0 END) AS revenue_2018, SUM(CASE WHEN EXTRACT(YEAR FROM o.order_purchase_timestamp) = 2018 THEN oi.price + oi.freight_value ELSE 0 END) - SUM(CASE WHEN EXTRACT(YEAR FROM o.order_purchase_timestamp) = 2017 THEN oi.price + oi.freight_value ELSE 0 END) AS revenue_change FROM orders o JOIN customers c ON o.customer_id = c.customer_id JOIN order_items oi ON oi.order_id = o.order_id WHERE EXTRACT(YEAR FROM o.order_purchase_timestamp) IN (2017, 2018) GROUP BY c.customer_state ORDER BY revenue_change DESC",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "SP",
+          "2513485.93",
+          "3391562.39",
+          "878076.46"
+        ],
+        [
+          "MG",
+          "842659.58",
+          "1007881.36",
+          "165221.78"
+        ],
+        [
+          "PR",
+          "345195.33",
+          "453245.39",
+          "108050.06"
+        ],
+        [
+          "SC",
+          "271785.25",
+          "335774.12",
+          "63988.87"
+        ],
+        [
+          "BA",
+          "281062.53",
+          "329448.80",
+          "48386.27"
+        ],
+        [
+          "DF",
+          "155786.30",
+          "196243.03",
+          "40456.73"
+        ],
+        [
+          "RS",
+          "420892.05",
+          "460221.74",
+          "39329.69"
+        ],
+        [
+          "ES",
+          "142252.67",
+          "181482.10",
+          "39229.43"
+        ],
+        [
+          "RJ",
+          "1047113.24",
+          "1070221.14",
+          "23107.90"
+        ],
+        [
+          "GO",
+          "162778.57",
+          "183773.69",
+          "20995.12"
+        ],
+        [
+          "PE",
+          "150695.93",
+          "169853.27",
+          "19157.34"
+        ],
+        [
+          "PI",
+          "45065.50",
+          "62820.69",
+          "17755.19"
+        ],
+        [
+          "PB",
+          "62870.20",
+          "78042.87",
+          "15172.67"
+        ],
+        [
+          "MS",
+          "60960.60",
+          "74996.07",
+          "14035.47"
+        ],
+        [
+          "RN",
+          "43895.38",
+          "57118.36",
+          "13222.98"
+        ],
+        [
+          "RR",
+          "2006.58",
+          "7852.79",
+          "5846.21"
+        ],
+        [
+          "MT",
+          "90692.24",
+          "94974.09",
+          "4281.85"
+        ],
+        [
+          "TO",
+          "28697.03",
+          "32657.39",
+          "3960.36"
+        ],
+        [
+          "CE",
+          "135266.14",
+          "138390.38",
+          "3124.24"
+        ],
+        [
+          "AM",
+          "12911.12",
+          "14924.61",
+          "2013.49"
+        ],
+        [
+          "AP",
+          "7331.53",
+          "8931.27",
+          "1599.74"
+        ],
+        [
+          "MA",
+          "75206.01",
+          "74967.13",
+          "-238.88"
+        ],
+        [
+          "PA",
+          "109645.87",
+          "106718.15",
+          "-2927.72"
+        ],
+        [
+          "RO",
+          "30903.89",
+          "26654.13",
+          "-4249.76"
+        ],
+        [
+          "SE",
+          "38964.35",
+          "33722.05",
+          "-5242.30"
+        ],
+        [
+          "AC",
+          "12986.60",
+          "6683.10",
+          "-6303.50"
+        ],
+        [
+          "AL",
+          "51562.01",
+          "44537.49",
+          "-7024.52"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.0003445,
+      "input_tokens": 1240,
+      "seconds": 2.48
+    },
+    {
+      "id": "revenue_change_by_state",
+      "kind": "compare",
+      "question": "How did revenue change in each customer state from 2017 to 2018?",
+      "variant": "B",
+      "sql": "SELECT c.customer_state, SUM(CASE WHEN EXTRACT(YEAR FROM o.order_purchase_timestamp) = 2017 THEN oi.price ELSE 0 END) AS revenue_2017, SUM(CASE WHEN EXTRACT(YEAR FROM o.order_purchase_timestamp) = 2018 THEN oi.price ELSE 0 END) AS revenue_2018, SUM(CASE WHEN EXTRACT(YEAR FROM o.order_purchase_timestamp) = 2018 THEN oi.price ELSE 0 END) - SUM(CASE WHEN EXTRACT(YEAR FROM o.order_purchase_timestamp) = 2017 THEN oi.price ELSE 0 END) AS revenue_change FROM orders o JOIN customers c ON o.customer_id = c.customer_id JOIN order_items oi ON oi.order_id = o.order_id WHERE o.order_status = 'delivered' AND EXTRACT(YEAR FROM o.order_purchase_timestamp) IN (2017, 2018) GROUP BY c.customer_state ORDER BY revenue_change DESC",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "SP",
+          "2136258.96",
+          "2919328.17",
+          "783069.21"
+        ],
+        [
+          "MG",
+          "708034.68",
+          "840172.20",
+          "132137.52"
+        ],
+        [
+          "PR",
+          "287424.81",
+          "376623.19",
+          "89198.38"
+        ],
+        [
+          "SC",
+          "223249.33",
+          "281524.74",
+          "58275.41"
+        ],
+        [
+          "BA",
+          "227453.44",
+          "265885.82",
+          "38432.38"
+        ],
+        [
+          "ES",
+          "115752.57",
+          "152031.09",
+          "36278.52"
+        ],
+        [
+          "DF",
+          "131169.70",
+          "164284.94",
+          "33115.24"
+        ],
+        [
+          "RS",
+          "350792.78",
+          "375581.14",
+          "24788.36"
+        ],
+        [
+          "PE",
+          "116445.99",
+          "134193.90",
+          "17747.91"
+        ],
+        [
+          "GO",
+          "133801.01",
+          "148131.20",
+          "14330.19"
+        ],
+        [
+          "PI",
+          "35275.57",
+          "49235.43",
+          "13959.86"
+        ],
+        [
+          "PB",
+          "49971.00",
+          "62565.92",
+          "12594.92"
+        ],
+        [
+          "RN",
+          "35080.30",
+          "46296.67",
+          "11216.37"
+        ],
+        [
+          "MS",
+          "52677.62",
+          "62752.35",
+          "10074.73"
+        ],
+        [
+          "RR",
+          "1404.76",
+          "5613.01",
+          "4208.25"
+        ],
+        [
+          "TO",
+          "23451.14",
+          "24951.37",
+          "1500.23"
+        ],
+        [
+          "AP",
+          "5947.15",
+          "7427.66",
+          "1480.51"
+        ],
+        [
+          "AM",
+          "10438.49",
+          "11717.35",
+          "1278.86"
+        ],
+        [
+          "MT",
+          "76051.18",
+          "76092.64",
+          "41.46"
+        ],
+        [
+          "MA",
+          "58843.84",
+          "57461.28",
+          "-1382.56"
+        ],
+        [
+          "RJ",
+          "876499.71",
+          "874934.14",
+          "-1565.57"
+        ],
+        [
+          "RO",
+          "24119.57",
+          "21563.19",
+          "-2556.38"
+        ],
+        [
+          "CE",
+          "110478.99",
+          "107628.71",
+          "-2850.28"
+        ],
+        [
+          "SE",
+          "29878.90",
+          "26409.84",
+          "-3469.06"
+        ],
+        [
+          "PA",
+          "88441.65",
+          "84941.34",
+          "-3500.31"
+        ],
+        [
+          "AC",
+          "10615.97",
+          "5315.00",
+          "-5300.97"
+        ],
+        [
+          "AL",
+          "43342.90",
+          "35462.83",
+          "-7880.07"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.0003629,
+      "input_tokens": 1514,
+      "seconds": 3.31
+    },
+    {
+      "id": "cancellation_rate_by_status",
+      "kind": "must_stop",
+      "question": "Cancellation rate by order status",
+      "variant": "A",
+      "sql": "SELECT order_status, COUNT(*) AS order_count, ROUND(100.0 * COUNT(*) / SUM(COUNT(*)) OVER (), 2) AS percentage FROM orders GROUP BY order_status ORDER BY order_count DESC",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "delivered",
+          96478,
+          "97.02"
+        ],
+        [
+          "shipped",
+          1107,
+          "1.11"
+        ],
+        [
+          "canceled",
+          625,
+          "0.63"
+        ],
+        [
+          "unavailable",
+          609,
+          "0.61"
+        ],
+        [
+          "invoiced",
+          314,
+          "0.32"
+        ],
+        [
+          "processing",
+          301,
+          "0.30"
+        ],
+        [
+          "created",
+          5,
+          "0.01"
+        ],
+        [
+          "approved",
+          2,
+          "0.00"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.00017690000000000002,
+      "input_tokens": 1229,
+      "seconds": 1.66
+    },
+    {
+      "id": "cancellation_rate_by_status",
+      "kind": "must_stop",
+      "question": "Cancellation rate by order status",
+      "variant": "B",
+      "sql": "SELECT order_status, COUNT(DISTINCT order_id) AS order_count, ROUND(100.0 * COUNT(DISTINCT order_id) / SUM(COUNT(DISTINCT order_id)) OVER (), 2) AS share_pct FROM orders GROUP BY order_status ORDER BY order_count DESC",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "delivered",
+          96478,
+          "97.02"
+        ],
+        [
+          "shipped",
+          1107,
+          "1.11"
+        ],
+        [
+          "canceled",
+          625,
+          "0.63"
+        ],
+        [
+          "unavailable",
+          609,
+          "0.61"
+        ],
+        [
+          "invoiced",
+          314,
+          "0.32"
+        ],
+        [
+          "processing",
+          301,
+          "0.30"
+        ],
+        [
+          "created",
+          5,
+          "0.01"
+        ],
+        [
+          "approved",
+          2,
+          "0.00"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.0002168,
+      "input_tokens": 1503,
+      "seconds": 2.91
+    },
+    {
+      "id": "revenue_in_paris",
+      "kind": "must_stop",
+      "question": "Revenue in Paris",
+      "variant": "A",
+      "sql": null,
+      "cannot_answer": "The schema has no city-level revenue attribution that can be reliably matched to Paris. Customers and sellers have city fields, and Paris would appear as 'paris' in customer_city or seller_city, but revenue must be computed from order_items (price + freight_value) and the question is ambiguous: it is unclear whether 'Revenue in Paris' refers to revenue from customers located in Paris or sellers located in Paris. Please clarify which party defines the location.",
+      "rows": [],
+      "error": null,
+      "cost_usd": 0.0002052,
+      "input_tokens": 1227,
+      "seconds": 1.77
+    },
+    {
+      "id": "revenue_in_paris",
+      "kind": "must_stop",
+      "question": "Revenue in Paris",
+      "variant": "B",
+      "sql": null,
+      "cannot_answer": "The schema has no city-level detail for orders that would reliably identify Paris. Customer and seller cities are available, but the question does not say whether it means customers or sellers, and Paris is not clearly identified in the data (the geolocation table is keyed by zip code prefix, not by a named Paris area). Please clarify whether you mean revenue from customers located in Paris (customers.customer_city) or from sellers located in Paris (sellers.seller_city), and confirm the city name as stored in the data.",
+      "rows": [],
+      "error": null,
+      "cost_usd": 0.0002381,
+      "input_tokens": 1501,
+      "seconds": 2.38
+    },
+    {
+      "id": "late_rate_by_status",
+      "kind": "must_stop",
+      "question": "Late delivery rate by order status",
+      "variant": "A",
+      "sql": "SELECT order_status, COUNT(*) AS total_orders, COUNT(*) FILTER (WHERE order_delivered_customer_date IS NOT NULL AND order_delivered_customer_date > order_estimated_delivery_date) AS late_orders, ROUND(100.0 * COUNT(*) FILTER (WHERE order_delivered_customer_date IS NOT NULL AND order_delivered_customer_date > order_estimated_delivery_date) / NULLIF(COUNT(*), 0), 2) AS late_delivery_rate_pct FROM orders GROUP BY order_status ORDER BY order_status",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "approved",
+          2,
+          0,
+          "0.00"
+        ],
+        [
+          "canceled",
+          625,
+          1,
+          "0.16"
+        ],
+        [
+          "created",
+          5,
+          0,
+          "0.00"
+        ],
+        [
+          "delivered",
+          96478,
+          7826,
+          "8.11"
+        ],
+        [
+          "invoiced",
+          314,
+          0,
+          "0.00"
+        ],
+        [
+          "processing",
+          301,
+          0,
+          "0.00"
+        ],
+        [
+          "shipped",
+          1107,
+          0,
+          "0.00"
+        ],
+        [
+          "unavailable",
+          609,
+          0,
+          "0.00"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.0002384,
+      "input_tokens": 1229,
+      "seconds": 2.53
+    },
+    {
+      "id": "late_rate_by_status",
+      "kind": "must_stop",
+      "question": "Late delivery rate by order status",
+      "variant": "B",
+      "sql": "SELECT order_status, COUNT(DISTINCT order_id) AS total_orders, COUNT(DISTINCT CASE WHEN order_delivered_customer_date::date > order_estimated_delivery_date::date THEN order_id END) AS late_orders, ROUND(100.0 * COUNT(DISTINCT CASE WHEN order_delivered_customer_date::date > order_estimated_delivery_date::date THEN order_id END) / NULLIF(COUNT(DISTINCT order_id), 0), 2) AS late_delivery_rate_pct FROM orders WHERE order_delivered_customer_date IS NOT NULL AND order_estimated_delivery_date IS NOT NULL GROUP BY order_status ORDER BY order_status",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "canceled",
+          6,
+          1,
+          "16.67"
+        ],
+        [
+          "delivered",
+          96470,
+          6534,
+          "6.77"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.0002883,
+      "input_tokens": 1503,
+      "seconds": 2.05
+    },
+    {
+      "id": "example_revenue_by_month_2017",
+      "kind": "breakdown",
+      "question": "Revenue by month in 2017",
+      "variant": "A",
+      "sql": "SELECT date_trunc('month', o.order_purchase_timestamp) AS month, SUM(oi.price + oi.freight_value) AS revenue FROM orders o JOIN order_items oi ON oi.order_id = o.order_id WHERE o.order_purchase_timestamp >= '2017-01-01' AND o.order_purchase_timestamp < '2018-01-01' GROUP BY 1 ORDER BY 1",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "2017-01-01T00:00:00",
+          "137188.49"
+        ],
+        [
+          "2017-02-01T00:00:00",
+          "286280.62"
+        ],
+        [
+          "2017-03-01T00:00:00",
+          "432048.59"
+        ],
+        [
+          "2017-04-01T00:00:00",
+          "412422.24"
+        ],
+        [
+          "2017-05-01T00:00:00",
+          "586190.95"
+        ],
+        [
+          "2017-06-01T00:00:00",
+          "502963.04"
+        ],
+        [
+          "2017-07-01T00:00:00",
+          "584971.62"
+        ],
+        [
+          "2017-08-01T00:00:00",
+          "668204.60"
+        ],
+        [
+          "2017-09-01T00:00:00",
+          "720398.91"
+        ],
+        [
+          "2017-10-01T00:00:00",
+          "769312.37"
+        ],
+        [
+          "2017-11-01T00:00:00",
+          "1179143.77"
+        ],
+        [
+          "2017-12-01T00:00:00",
+          "863547.23"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.0002044,
+      "input_tokens": 1229,
+      "seconds": 2.47
+    },
+    {
+      "id": "example_revenue_by_month_2017",
+      "kind": "breakdown",
+      "question": "Revenue by month in 2017",
+      "variant": "B",
+      "sql": "SELECT to_char(date_trunc('month', o.order_purchase_timestamp), 'YYYY-MM') AS month, SUM(oi.price) AS revenue FROM orders o JOIN order_items oi ON oi.order_id = o.order_id WHERE o.order_status = 'delivered' AND o.order_purchase_timestamp >= '2017-01-01' AND o.order_purchase_timestamp < '2018-01-01' GROUP BY 1 ORDER BY 1",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "2017-01",
+          "111798.36"
+        ],
+        [
+          "2017-02",
+          "234223.40"
+        ],
+        [
+          "2017-03",
+          "359198.85"
+        ],
+        [
+          "2017-04",
+          "340669.68"
+        ],
+        [
+          "2017-05",
+          "489338.25"
+        ],
+        [
+          "2017-06",
+          "421923.37"
+        ],
+        [
+          "2017-07",
+          "481604.52"
+        ],
+        [
+          "2017-08",
+          "554699.70"
+        ],
+        [
+          "2017-09",
+          "607399.67"
+        ],
+        [
+          "2017-10",
+          "648247.65"
+        ],
+        [
+          "2017-11",
+          "987765.37"
+        ],
+        [
+          "2017-12",
+          "726033.19"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.0002423,
+      "input_tokens": 1503,
+      "seconds": 1.61
+    },
+    {
+      "id": "example_late_rate_2018_vs_2017",
+      "kind": "compare",
+      "question": "Late delivery rate 2018 vs 2017",
+      "variant": "A",
+      "sql": "SELECT EXTRACT(YEAR FROM o.order_purchase_timestamp)::int AS year, COUNT(*) AS delivered_orders, SUM(CASE WHEN o.order_delivered_customer_date > o.order_estimated_delivery_date THEN 1 ELSE 0 END) AS late_orders, ROUND(100.0 * SUM(CASE WHEN o.order_delivered_customer_date > o.order_estimated_delivery_date THEN 1 ELSE 0 END) / COUNT(*), 2) AS late_delivery_rate_pct FROM orders o WHERE o.order_status = 'delivered' AND o.order_delivered_customer_date IS NOT NULL AND o.order_estimated_delivery_date IS NOT NULL AND EXTRACT(YEAR FROM o.order_purchase_timestamp) IN (2017, 2018) GROUP BY 1 ORDER BY 1",
+      "cannot_answer": null,
+      "rows": [
+        [
+          2017,
+          43426,
+          2878,
+          "6.63"
+        ],
+        [
+          2018,
+          52777,
+          4944,
+          "9.37"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.000293,
+      "input_tokens": 1235,
+      "seconds": 5.39
+    },
+    {
+      "id": "example_late_rate_2018_vs_2017",
+      "kind": "compare",
+      "question": "Late delivery rate 2018 vs 2017",
+      "variant": "B",
+      "sql": "SELECT EXTRACT(YEAR FROM order_purchase_timestamp)::int AS year, ROUND(100.0 * COUNT(DISTINCT CASE WHEN order_delivered_customer_date::date > order_estimated_delivery_date::date THEN order_id END) / NULLIF(COUNT(DISTINCT order_id), 0), 2) AS late_delivery_rate_pct FROM orders WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL AND EXTRACT(YEAR FROM order_purchase_timestamp) IN (2017, 2018) GROUP BY 1 ORDER BY 1",
+      "cannot_answer": null,
+      "rows": [
+        [
+          2017,
+          "5.65"
+        ],
+        [
+          2018,
+          "7.73"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.00027539999999999997,
+      "input_tokens": 1509,
+      "seconds": 2.22
+    },
+    {
+      "id": "example_review_score_by_state",
+      "kind": "breakdown",
+      "question": "Average review score by customer state",
+      "variant": "A",
+      "sql": "SELECT c.customer_state, AVG(r.review_score) AS avg_review_score FROM reviews r JOIN orders o ON r.order_id = o.order_id JOIN customers c ON o.customer_id = c.customer_id GROUP BY c.customer_state ORDER BY avg_review_score DESC",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "AP",
+          "4.1940298507462687"
+        ],
+        [
+          "AM",
+          "4.1836734693877551"
+        ],
+        [
+          "PR",
+          "4.1800317586343787"
+        ],
+        [
+          "SP",
+          "4.1739505876709043"
+        ],
+        [
+          "MG",
+          "4.1361720430107527"
+        ],
+        [
+          "RS",
+          "4.1333211745394857"
+        ],
+        [
+          "MS",
+          "4.1187845303867403"
+        ],
+        [
+          "RN",
+          "4.1058091286307054"
+        ],
+        [
+          "MT",
+          "4.1029900332225914"
+        ],
+        [
+          "TO",
+          "4.0967741935483871"
+        ],
+        [
+          "SC",
+          "4.0717637317140491"
+        ],
+        [
+          "DF",
+          "4.0647113594040968"
+        ],
+        [
+          "RO",
+          "4.0515873015873016"
+        ],
+        [
+          "AC",
+          "4.0493827160493827"
+        ],
+        [
+          "GO",
+          "4.0424901185770751"
+        ],
+        [
+          "ES",
+          "4.0416666666666667"
+        ],
+        [
+          "PB",
+          "4.0188323917137476"
+        ],
+        [
+          "PE",
+          "4.0115431348724180"
+        ],
+        [
+          "PI",
+          "3.9205702647657841"
+        ],
+        [
+          "RJ",
+          "3.8749706227967098"
+        ],
+        [
+          "BA",
+          "3.8608876973488234"
+        ],
+        [
+          "CE",
+          "3.8510158013544018"
+        ],
+        [
+          "PA",
+          "3.8491735537190083"
+        ],
+        [
+          "SE",
+          "3.8080229226361032"
+        ],
+        [
+          "MA",
+          "3.7640750670241287"
+        ],
+        [
+          "AL",
+          "3.7512077294685990"
+        ],
+        [
+          "RR",
+          "3.6086956521739130"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.00018419999999999998,
+      "input_tokens": 1227,
+      "seconds": 1.62
+    },
+    {
+      "id": "example_review_score_by_state",
+      "kind": "breakdown",
+      "question": "Average review score by customer state",
+      "variant": "B",
+      "sql": "SELECT c.customer_state, AVG(r.review_score) AS avg_review_score FROM reviews r JOIN orders o ON r.order_id = o.order_id JOIN customers c ON o.customer_id = c.customer_id GROUP BY c.customer_state ORDER BY avg_review_score DESC",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "AP",
+          "4.1940298507462687"
+        ],
+        [
+          "AM",
+          "4.1836734693877551"
+        ],
+        [
+          "PR",
+          "4.1800317586343787"
+        ],
+        [
+          "SP",
+          "4.1739505876709043"
+        ],
+        [
+          "MG",
+          "4.1361720430107527"
+        ],
+        [
+          "RS",
+          "4.1333211745394857"
+        ],
+        [
+          "MS",
+          "4.1187845303867403"
+        ],
+        [
+          "RN",
+          "4.1058091286307054"
+        ],
+        [
+          "MT",
+          "4.1029900332225914"
+        ],
+        [
+          "TO",
+          "4.0967741935483871"
+        ],
+        [
+          "SC",
+          "4.0717637317140491"
+        ],
+        [
+          "DF",
+          "4.0647113594040968"
+        ],
+        [
+          "RO",
+          "4.0515873015873016"
+        ],
+        [
+          "AC",
+          "4.0493827160493827"
+        ],
+        [
+          "GO",
+          "4.0424901185770751"
+        ],
+        [
+          "ES",
+          "4.0416666666666667"
+        ],
+        [
+          "PB",
+          "4.0188323917137476"
+        ],
+        [
+          "PE",
+          "4.0115431348724180"
+        ],
+        [
+          "PI",
+          "3.9205702647657841"
+        ],
+        [
+          "RJ",
+          "3.8749706227967098"
+        ],
+        [
+          "BA",
+          "3.8608876973488234"
+        ],
+        [
+          "CE",
+          "3.8510158013544018"
+        ],
+        [
+          "PA",
+          "3.8491735537190083"
+        ],
+        [
+          "SE",
+          "3.8080229226361032"
+        ],
+        [
+          "MA",
+          "3.7640750670241287"
+        ],
+        [
+          "AL",
+          "3.7512077294685990"
+        ],
+        [
+          "RR",
+          "3.6086956521739130"
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.0002071,
+      "input_tokens": 1501,
+      "seconds": 1.92
+    },
+    {
+      "id": "example_orders_by_quarter_2017",
+      "kind": "breakdown",
+      "question": "Orders per quarter in 2017",
+      "variant": "A",
+      "sql": "SELECT EXTRACT(QUARTER FROM order_purchase_timestamp)::int AS quarter, COUNT(*) AS order_count FROM orders WHERE order_purchase_timestamp >= '2017-01-01' AND order_purchase_timestamp < '2018-01-01' GROUP BY 1 ORDER BY 1",
+      "cannot_answer": null,
+      "rows": [
+        [
+          1,
+          5262
+        ],
+        [
+          2,
+          9349
+        ],
+        [
+          3,
+          12642
+        ],
+        [
+          4,
+          17848
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.0001905,
+      "input_tokens": 1230,
+      "seconds": 1.38
+    },
+    {
+      "id": "example_orders_by_quarter_2017",
+      "kind": "breakdown",
+      "question": "Orders per quarter in 2017",
+      "variant": "B",
+      "sql": "SELECT DATE_TRUNC('quarter', order_purchase_timestamp)::date AS quarter_start, COUNT(DISTINCT order_id) AS order_count FROM orders WHERE order_purchase_timestamp >= '2017-01-01' AND order_purchase_timestamp < '2018-01-01' GROUP BY 1 ORDER BY 1",
+      "cannot_answer": null,
+      "rows": [
+        [
+          "2017-01-01",
+          5262
+        ],
+        [
+          "2017-04-01",
+          9349
+        ],
+        [
+          "2017-07-01",
+          12642
+        ],
+        [
+          "2017-10-01",
+          17848
+        ]
+      ],
+      "error": null,
+      "cost_usd": 0.0002224,
+      "input_tokens": 1504,
+      "seconds": 1.52
+    }
+  ]
+}

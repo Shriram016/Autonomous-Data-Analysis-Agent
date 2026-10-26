@@ -1,0 +1,410 @@
+[
+  {
+    "id": "total_revenue",
+    "variant": "A",
+    "passed": false,
+    "reason": "different values"
+  },
+  {
+    "id": "total_revenue",
+    "variant": "B",
+    "passed": true,
+    "reason": "result matches"
+  },
+  {
+    "id": "number_of_customers",
+    "variant": "A",
+    "passed": false,
+    "reason": "different values"
+  },
+  {
+    "id": "number_of_customers",
+    "variant": "B",
+    "passed": false,
+    "reason": "different values"
+  },
+  {
+    "id": "average_review_score",
+    "variant": "A",
+    "passed": true,
+    "reason": "result matches"
+  },
+  {
+    "id": "average_review_score",
+    "variant": "B",
+    "passed": true,
+    "reason": "result matches"
+  },
+  {
+    "id": "late_delivery_rate",
+    "variant": "A",
+    "passed": false,
+    "reason": "different values"
+  },
+  {
+    "id": "late_delivery_rate",
+    "variant": "B",
+    "passed": true,
+    "reason": "result matches"
+  },
+  {
+    "id": "revenue_by_state",
+    "variant": "A",
+    "passed": false,
+    "reason": "different values"
+  },
+  {
+    "id": "revenue_by_state",
+    "variant": "B",
+    "passed": true,
+    "reason": "result matches"
+  },
+  {
+    "id": "paid_by_payment_type",
+    "variant": "A",
+    "passed": false,
+    "reason": "5 rows, expected 4"
+  },
+  {
+    "id": "paid_by_payment_type",
+    "variant": "B",
+    "passed": false,
+    "reason": "5 rows, expected 4"
+  },
+  {
+    "id": "delivery_days_by_state",
+    "variant": "A",
+    "passed": false,
+    "reason": "different values"
+  },
+  {
+    "id": "delivery_days_by_state",
+    "variant": "B",
+    "passed": true,
+    "reason": "result matches"
+  },
+  {
+    "id": "revenue_2017",
+    "variant": "A",
+    "passed": false,
+    "reason": "different values"
+  },
+  {
+    "id": "revenue_2017",
+    "variant": "B",
+    "passed": true,
+    "reason": "result matches"
+  },
+  {
+    "id": "orders_march_2018",
+    "variant": "A",
+    "passed": false,
+    "reason": "different values"
+  },
+  {
+    "id": "orders_march_2018",
+    "variant": "B",
+    "passed": false,
+    "reason": "different values"
+  },
+  {
+    "id": "reviews_2018",
+    "variant": "A",
+    "passed": false,
+    "reason": "different values"
+  },
+  {
+    "id": "reviews_2018",
+    "variant": "B",
+    "passed": false,
+    "reason": "different values"
+  },
+  {
+    "id": "revenue_toy_products",
+    "variant": "A",
+    "passed": false,
+    "reason": "different values"
+  },
+  {
+    "id": "revenue_toy_products",
+    "variant": "B",
+    "passed": true,
+    "reason": "result matches"
+  },
+  {
+    "id": "orders_from_sao_paulo",
+    "variant": "A",
+    "passed": false,
+    "reason": "different values"
+  },
+  {
+    "id": "orders_from_sao_paulo",
+    "variant": "B",
+    "passed": false,
+    "reason": "different values"
+  },
+  {
+    "id": "paid_by_credit_card",
+    "variant": "A",
+    "passed": false,
+    "reason": "different values"
+  },
+  {
+    "id": "paid_by_credit_card",
+    "variant": "B",
+    "passed": false,
+    "reason": "different values"
+  },
+  {
+    "id": "canceled_orders",
+    "variant": "A",
+    "passed": false,
+    "reason": "different values"
+  },
+  {
+    "id": "canceled_orders",
+    "variant": "B",
+    "passed": false,
+    "reason": "different values"
+  },
+  {
+    "id": "orders_by_status",
+    "variant": "A",
+    "passed": false,
+    "reason": "8 rows, expected 7"
+  },
+  {
+    "id": "orders_by_status",
+    "variant": "B",
+    "passed": false,
+    "reason": "8 rows, expected 7"
+  },
+  {
+    "id": "revenue_last_month",
+    "variant": "A",
+    "passed": false,
+    "reason": "different values"
+  },
+  {
+    "id": "revenue_last_month",
+    "variant": "B",
+    "passed": true,
+    "reason": "result matches"
+  },
+  {
+    "id": "orders_last_3_months",
+    "variant": "A",
+    "passed": false,
+    "reason": "different values"
+  },
+  {
+    "id": "orders_last_3_months",
+    "variant": "B",
+    "passed": false,
+    "reason": "different values"
+  },
+  {
+    "id": "top_5_categories",
+    "variant": "A",
+    "passed": false,
+    "reason": "different values"
+  },
+  {
+    "id": "top_5_categories",
+    "variant": "B",
+    "passed": true,
+    "reason": "result matches"
+  },
+  {
+    "id": "items_sold",
+    "variant": "A",
+    "passed": false,
+    "reason": "different values"
+  },
+  {
+    "id": "items_sold",
+    "variant": "B",
+    "passed": true,
+    "reason": "result matches"
+  },
+  {
+    "id": "active_sellers_2017",
+    "variant": "A",
+    "passed": false,
+    "reason": "different values"
+  },
+  {
+    "id": "active_sellers_2017",
+    "variant": "B",
+    "passed": true,
+    "reason": "result matches"
+  },
+  {
+    "id": "cancellation_rate",
+    "variant": "A",
+    "passed": true,
+    "reason": "result matches"
+  },
+  {
+    "id": "cancellation_rate",
+    "variant": "B",
+    "passed": true,
+    "reason": "result matches"
+  },
+  {
+    "id": "low_review_rate",
+    "variant": "A",
+    "passed": true,
+    "reason": "result matches"
+  },
+  {
+    "id": "low_review_rate",
+    "variant": "B",
+    "passed": true,
+    "reason": "result matches"
+  },
+  {
+    "id": "repeat_customer_rate",
+    "variant": "A",
+    "passed": false,
+    "reason": "different values"
+  },
+  {
+    "id": "repeat_customer_rate",
+    "variant": "B",
+    "passed": false,
+    "reason": "different values"
+  },
+  {
+    "id": "revenue_by_quarter_2017",
+    "variant": "A",
+    "passed": false,
+    "reason": "different values"
+  },
+  {
+    "id": "revenue_by_quarter_2017",
+    "variant": "B",
+    "passed": true,
+    "reason": "result matches"
+  },
+  {
+    "id": "revenue_2018_vs_2017",
+    "variant": "A",
+    "passed": false,
+    "reason": "period values differ"
+  },
+  {
+    "id": "revenue_2018_vs_2017",
+    "variant": "B",
+    "passed": true,
+    "reason": "both period values found"
+  },
+  {
+    "id": "late_rate_2018_vs_2017",
+    "variant": "A",
+    "passed": false,
+    "reason": "period values differ"
+  },
+  {
+    "id": "late_rate_2018_vs_2017",
+    "variant": "B",
+    "passed": true,
+    "reason": "both period values found"
+  },
+  {
+    "id": "revenue_change_by_state",
+    "variant": "A",
+    "passed": false,
+    "reason": "period values differ"
+  },
+  {
+    "id": "revenue_change_by_state",
+    "variant": "B",
+    "passed": true,
+    "reason": "both period values found"
+  },
+  {
+    "id": "cancellation_rate_by_status",
+    "variant": "A",
+    "passed": false,
+    "reason": "answered instead of stopping (compile_refused)"
+  },
+  {
+    "id": "cancellation_rate_by_status",
+    "variant": "B",
+    "passed": false,
+    "reason": "answered instead of stopping (compile_refused)"
+  },
+  {
+    "id": "revenue_in_paris",
+    "variant": "A",
+    "passed": true,
+    "reason": "said cannot_answer"
+  },
+  {
+    "id": "revenue_in_paris",
+    "variant": "B",
+    "passed": true,
+    "reason": "said cannot_answer"
+  },
+  {
+    "id": "late_rate_by_status",
+    "variant": "A",
+    "passed": false,
+    "reason": "answered instead of stopping (compile_refused)"
+  },
+  {
+    "id": "late_rate_by_status",
+    "variant": "B",
+    "passed": false,
+    "reason": "answered instead of stopping (compile_refused)"
+  },
+  {
+    "id": "example_revenue_by_month_2017",
+    "variant": "A",
+    "passed": false,
+    "reason": "different values"
+  },
+  {
+    "id": "example_revenue_by_month_2017",
+    "variant": "B",
+    "passed": true,
+    "reason": "result matches"
+  },
+  {
+    "id": "example_late_rate_2018_vs_2017",
+    "variant": "A",
+    "passed": false,
+    "reason": "period values differ"
+  },
+  {
+    "id": "example_late_rate_2018_vs_2017",
+    "variant": "B",
+    "passed": true,
+    "reason": "both period values found"
+  },
+  {
+    "id": "example_review_score_by_state",
+    "variant": "A",
+    "passed": true,
+    "reason": "result matches"
+  },
+  {
+    "id": "example_review_score_by_state",
+    "variant": "B",
+    "passed": true,
+    "reason": "result matches"
+  },
+  {
+    "id": "example_orders_by_quarter_2017",
+    "variant": "A",
+    "passed": false,
+    "reason": "different values"
+  },
+  {
+    "id": "example_orders_by_quarter_2017",
+    "variant": "B",
+    "passed": false,
+    "reason": "different values"
+  }
+]
