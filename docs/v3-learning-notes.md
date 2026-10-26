@@ -571,3 +571,41 @@ guardrail, not to the table, so the eval is unchanged.
 
 30 / 30, $0.0192, p50 2.9 s, p95 4.3 s. Weak spot found: the answer LLM sees only 20 rows, so
 "fastest state" can be missed (noted in §0 to fix later).
+
+## M2 step 2 — Router and quick routes
+
+### Why a router
+
+Before, every question went to the numbers flow, so "What was our profit?" or "Write a poem"
+gave a weak plan or an error. The router first picks one of 5 routes: numbers, clarify,
+refuse, off_topic, metadata. Its output is structured (one field, one of 5 values), never
+free text.
+
+### Jev first, Haiku as the fallback
+
+Jev (TypeSafe) is a hosted classifier: it picks one choice and gives a confidence, but writes
+no text. Common pattern: a small fast model routes, a larger model answers. In ADAA the
+answer model is already the cheapest (Haiku), so the saving is small; the gain is a separate,
+swappable router with a confidence score. The order is one config line
+(`router.order: [route_jev, route_haiku]`). A failed option writes `router_fallback`; all
+failing writes `router_failed` and the question goes to numbers. Jev is untested until the
+OpenRouter key is added.
+
+### After the router
+
+One `reply` component with 3 prompts and 3 forms (clarify, refuse, metadata). Metadata: the
+LLM picks only the topic; code writes the facts. Off-topic: no LLM, fixed text + 3 random
+examples. Suggestions are full questions shown as buttons; a click is a new question (no
+memory until M4). Suggestions are not checked before showing (builder's choice); the eval
+asks each one ("suggestions answered").
+
+### Eval: three ground truths per case
+
+Route (`expected_route`, default numbers) → plan (`expected_form`, a hint) → answer (the
+hand-written SQL table, or the exact code-written text, or the error kind). Clarify and
+refuse texts have no fixed truth, so the route and the number of suggestions are checked.
+
+### Run (2026-10-26)
+
+44 / 44, routes 44 / 44, suggestions 9 / 9, $0.0367. The router adds ~1 s per question.
+Lesson: an eval case that copies a prompt example proves little.

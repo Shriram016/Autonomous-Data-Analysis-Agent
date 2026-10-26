@@ -315,3 +315,30 @@ definitions. Not planned for ADAA: one prompt is enough; split only if it starts
 
 **Interview one-liner:** "Past ~100 definitions, split the semantic layer by business area
 behind a router, or retrieve only the relevant definitions per question."
+
+## Q10. Why a separate router with Jev, when one Haiku call could pick the route and fill the form?
+
+**Short answer:** a builder's choice for a cleaner design: the router is its own component,
+tested and swapped alone, with a confidence score. Jev first, Haiku as the fallback, the
+order in one config line; both fail → the numbers route.
+
+**Trade-off:** one extra call per question (~1 s with Haiku today; Jev should be faster) and
+one more vendor and key. The saving pattern ("small model routes, big model answers") is
+small here because the answer model is already Haiku.
+
+| Option | Pros | Cons |
+|---|---|---|
+| Separate router, Jev → Haiku (chosen) | Testable alone, confidence, swappable | Extra call and vendor |
+| Route field in the form call | No extra cost or time | Shared prompt, no reliable confidence |
+
+**Interview one-liner:** "The router is a swappable component behind one interface; the
+eval measures its accuracy, and the order of models is config, not code."
+
+## Q11. The LLM writes the suggestion buttons. What if one can't be answered?
+
+**Short answer:** the prompt lists the metrics and the dimensions each allows, so bad
+suggestions are rare; they are not checked before showing (a builder's choice, to keep it
+simple). A clicked bad suggestion is refused with a reason and shows in the refusal counts,
+and the eval asks every suggestion ("suggestions answered", 9 / 9 on 2026-10-26). If it
+becomes a problem: the same reply call also returns each suggestion's form and code compiles
+it before showing — no extra LLM call.

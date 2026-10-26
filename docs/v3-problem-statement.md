@@ -955,6 +955,17 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    6 so each one is known to work. ✅ **2c-1** (`9b38ec2`) quick replies · ✅ **2c-2**
 >    suggestion buttons on the page. **⏳ To do (builder, later):** try the router and the
 >    quick replies in the browser (rebuild api + worker first).
+>    ✅ **M2 step 2 router + quick routes done (2026-10-26)**, commits `34494a2` (2a),
+>    `e621980` (2b), `9b38ec2` (2c-1), `7253dce` (2c-2), `98be98a` (2d): every question is
+>    routed first (Jev primary, Haiku fallback, order in config; both fail → numbers);
+>    clarify / refuse / metadata / off_topic replies with suggestion buttons; eval cases v4
+>    (44, `expected_route` on every case). **Run: 44 / 44**, route accuracy 44 / 44 (all by
+>    Haiku: no Jev key yet), suggestions answered 9 / 9, $0.0367, p50 3.8 s, p95 5.9 s.
+>    329 unit + 41 integration + 14 frontend tests. **Noted:** (1) the router adds ~1 s to
+>    every numbers question (p50 2.9 → 3.8 s); measure Jev's time when the key is added.
+>    (2) "What are our best products?" is also the clarify prompt's own example (the LLM
+>    copied its options), so that case proves little: new cases must not copy prompt
+>    examples. **Next: M2 step 3 — text-to-SQL baseline.**
 >    **Decide later (raised 2026-10-26 by the builder): usage per LLM call.** Today
 >    `conversation.questions` keeps one row per question with the totals only; each call's
 >    job, model, tokens, cost and time are only in the `llm_call` log lines. Option: an
