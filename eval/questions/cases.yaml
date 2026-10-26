@@ -1,5 +1,6 @@
-# ADAA eval cases (§0 M1.7). Numbers questions only; the set grows every milestone and old
+# ADAA eval cases (§0 M1.7). The set grows every milestone and old
 # cases stay. Every real bug becomes a case. v3 (M2 step 1): new metrics, quarter, compare.
+# v4 (M2 step 2d): expected_route (default numbers) and the quick-route cases.
 #
 # Each case has a question and EITHER
 #   expected_form + expected_sql  (an answerable question), OR
@@ -15,7 +16,7 @@
 #
 # Relative dates: "today" is the data date, 2018-08-31 (§0 "today" rule).
 
-version: 3
+version: 4
 
 cases:
   # --- simple: one metric, no breakdown -------------------------------------------------
@@ -384,3 +385,130 @@ cases:
     kind: must_stop
     note: the late rate needs delivered orders, so the compiler refuses a status split
     expected_error: compile_refused
+
+  # --- v4: the off-topic example buttons (agent/replies.py EXAMPLES), asked as written ----
+  # "Top 5 product categories by revenue" and "What is the cancellation rate?" are above.
+  - question: "Revenue by month in 2017"
+    id: example_revenue_by_month_2017
+    kind: breakdown
+    expected_form:
+      metric: revenue
+      dimensions: [month]
+      period: {start: 2017-01-01, end: 2017-12-31}
+    expected_sql: |
+      SELECT date_trunc('month', o.order_purchase_timestamp), sum(i.price)
+      FROM order_items i JOIN orders o ON o.order_id = i.order_id
+      WHERE o.order_status = 'delivered'
+        AND o.order_purchase_timestamp >= '2017-01-01'
+        AND o.order_purchase_timestamp < '2018-01-01'
+      GROUP BY 1
+
+  - question: "Late delivery rate 2018 vs 2017"
+    id: example_late_rate_2018_vs_2017
+    kind: compare
+    expected_form:
+      metric: late_delivery_rate
+      period: {start: 2018-01-01, end: 2018-12-31}
+      compare_to: {start: 2017-01-01, end: 2017-12-31}
+    expected_sql: |
+      WITH late AS (
+        SELECT extract(year FROM order_purchase_timestamp) AS year,
+               avg(CASE WHEN order_delivered_customer_date::date
+                             > order_estimated_delivery_date::date THEN 1 ELSE 0 END) AS rate
+        FROM orders
+        WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL
+        GROUP BY 1
+      )
+      SELECT n.rate, b.rate, n.rate - b.rate
+      FROM late n JOIN late b ON n.year = 2018 AND b.year = 2017
+
+  - question: "Average review score by customer state"
+    id: example_review_score_by_state
+    kind: breakdown
+    note: reviews have no status filter; a review row counts once
+    expected_form: {metric: average_review_score, dimensions: [customer_state]}
+    expected_sql: |
+      SELECT c.customer_state, avg(r.review_score)
+      FROM reviews r
+        JOIN orders o ON o.order_id = r.order_id
+        JOIN customers c ON c.customer_id = o.customer_id
+      GROUP BY c.customer_state
+
+  - question: "Orders per quarter in 2017"
+    id: example_orders_by_quarter_2017
+    kind: breakdown
+    expected_form:
+      metric: orders
+      dimensions: [quarter]
+      period: {start: 2017-01-01, end: 2017-12-31}
+    expected_sql: |
+      SELECT extract(year FROM o.order_purchase_timestamp)::int || '-Q'
+             || extract(quarter FROM o.order_purchase_timestamp)::int,
+             count(DISTINCT i.order_id)
+      FROM order_items i JOIN orders o ON o.order_id = i.order_id
+      WHERE o.order_status = 'delivered'
+        AND o.order_purchase_timestamp >= '2017-01-01'
+        AND o.order_purchase_timestamp < '2018-01-01'
+      GROUP BY 1
+
+  # --- v4: quick routes (M2 step 2). The router must pick expected_route. ---------------
+  # metadata / off_topic: code writes the text, so it is compared exactly.
+  # clarify / refuse: the LLM writes the text; the route and the number of suggestions
+  # are checked, and each suggestion is asked too ("suggestions answered" in the report).
+  - question: "What are our best products?"
+    id: clarify_best_products
+    kind: clarify
+    note: best by revenue, items or orders? No written default for products
+    expected_route: clarify
+
+  - question: "Which states perform best?"
+    id: clarify_best_states
+    kind: clarify
+    note: best by revenue, orders, delivery speed or review score?
+    expected_route: clarify
+
+  - question: "What was our profit last year?"
+    id: refuse_profit
+    kind: refuse
+    note: no cost data
+    expected_route: refuse
+
+  - question: "How many people visited the website in 2018?"
+    id: refuse_website_visits
+    kind: refuse
+    note: no web analytics data
+    expected_route: refuse
+
+  - question: "How many units do we have in stock?"
+    id: refuse_stock
+    kind: refuse
+    note: no inventory data
+    expected_route: refuse
+
+  - question: "What's Virat Kohli's batting average?"
+    id: off_topic_cricket
+    kind: off_topic
+    expected_route: off_topic
+
+  - question: "Write me a poem about shopping"
+    id: off_topic_poem
+    kind: off_topic
+    expected_route: off_topic
+
+  - question: "What data do you have?"
+    id: metadata_overview
+    kind: metadata
+    expected_route: metadata
+    expected_topic: {topic: data_overview}
+
+  - question: "How recent is the data?"
+    id: metadata_date_range
+    kind: metadata
+    expected_route: metadata
+    expected_topic: {topic: date_range}
+
+  - question: "How is revenue calculated?"
+    id: metadata_revenue_definition
+    kind: metadata
+    expected_route: metadata
+    expected_topic: {topic: definition, metric: revenue}

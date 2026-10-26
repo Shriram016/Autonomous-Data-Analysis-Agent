@@ -17,16 +17,28 @@ from typing import Any
 import psycopg
 
 from adaa.agent.facts import build_headers, format_row
+from adaa.agent.notes import find_data_date, find_data_span
+from adaa.agent.replies import OFF_TOPIC_TEXT, DataFacts, metadata_text
 from adaa.evals.cases import EvalCase, load_cases
 from adaa.semantic_layer.definitions import SemanticLayer, load
+from adaa.semantic_layer.request import StructuredRequest
+from adaa.semantic_layer.runner import QueryResult, answer_request
 from adaa.settings import REPO_ROOT, get_settings
 
 RESULTS_FILE = REPO_ROOT / "eval" / "questions" / "expected_results.json"
 
 
 def expected_answer(
-    case: EvalCase, layer: SemanticLayer, conn: psycopg.Connection
+    case: EvalCase, layer: SemanticLayer, conn: psycopg.Connection, facts: DataFacts
 ) -> dict[str, Any]:
+    # Quick routes (M2 step 2d): the route, and the text where code writes it exactly.
+    if case.expected_route == "metadata":
+        assert case.expected_topic is not None
+        return {"route": "metadata", "text": metadata_text(case.expected_topic, layer, facts)}
+    if case.expected_route == "off_topic":
+        return {"route": "off_topic", "text": OFF_TOPIC_TEXT}
+    if case.expected_route != "numbers":  # clarify, refuse: the LLM writes the text
+        return {"route": case.expected_route}
     if case.expected_error:
         return {"error": case.expected_error}
     assert case.expected_form and case.expected_sql
@@ -47,7 +59,7 @@ def readable_json(answers: dict[str, dict[str, Any]]) -> str:
 
     blocks = []
     for case_id, answer in answers.items():
-        if "error" in answer:
+        if "error" in answer or "route" in answer:
             blocks.append(f"  {dump(case_id)}: {dump(answer)}")
             continue
         rows = ",\n".join(f"      {dump(row)}" for row in answer["rows"])
@@ -61,9 +73,15 @@ def readable_json(answers: dict[str, dict[str, Any]]) -> str:
 def main() -> None:
     layer = load()
     cases = load_cases()
+
+    def run(form: StructuredRequest) -> QueryResult:  # for the metadata facts
+        return answer_request(form, layer)
+
+    first_month, last_month = find_data_span(run)
+    facts = DataFacts(first_month, last_month, find_data_date(layer, run))
     with psycopg.connect(get_settings().postgres_conninfo("query")) as conn:
         conn.execute("SET search_path TO business")
-        answers = {case.id: expected_answer(case, layer, conn) for case in cases.cases}
+        answers = {case.id: expected_answer(case, layer, conn, facts) for case in cases.cases}
     RESULTS_FILE.write_text(readable_json(answers), encoding="utf-8")
     print(f"Wrote {len(answers)} expected answers to {RESULTS_FILE.relative_to(REPO_ROOT)}")
 

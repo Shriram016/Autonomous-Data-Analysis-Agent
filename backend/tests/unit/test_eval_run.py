@@ -63,7 +63,8 @@ def test_both_cases_pass_and_are_counted() -> None:
 def test_cost_and_versions_are_recorded() -> None:
     r = report()
     assert r.cost_usd == round(sum(x.cost_usd for x in r.results), 6) and r.cost_usd > 0
-    assert r.models == {"agent": "claude-haiku-5-5", "answer": "claude-haiku-5-5"}
+    assert r.models["route_jev"] == "typesafe/jev-1.14" and r.models["reply"] == "claude-haiku-5-5"
+    assert r.route_accuracy == "2/2" and r.router_sources == {"test": 2}
     assert r.versions.agent_prompt.startswith("0.2.0 (")
 
 

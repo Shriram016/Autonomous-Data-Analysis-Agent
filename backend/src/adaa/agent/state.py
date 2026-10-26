@@ -92,6 +92,7 @@ class FinishedAnswer(BaseModel):
     status: Literal["answered", "failed"]
     route: Route | None = None  # None in answers saved before the router (M2 step 2)
     route_confidence: float | None = None  # from Jev only
+    route_source: str | None = None  # the router job that answered, or "default"
     suggestions: list[str] = []  # quick routes: full questions, shown as buttons
     text: str  # the answer, or the plain error message
     error_kind: ErrorKind | None = None

@@ -1,5 +1,8 @@
 from typing import Any
 
+import pytest
+from pydantic import ValidationError
+
 from adaa.agent.state import NO_USAGE, FinishedAnswer, Table, Versions
 from adaa.evals.cases import EvalCase
 from adaa.evals.scoring import form_hints, score_case
@@ -25,6 +28,7 @@ def answered(*rows: list[str]) -> FinishedAnswer:
         status="answered",
         text="t",
         table=Table(headers=["h"], rows=list(rows)),
+        route="numbers",
         versions=VERSIONS,
         usage=NO_USAGE,
     )
@@ -32,7 +36,13 @@ def answered(*rows: list[str]) -> FinishedAnswer:
 
 def stopped(kind: Any) -> FinishedAnswer:
     return FinishedAnswer(
-        question="q", status="failed", text="t", error_kind=kind, versions=VERSIONS, usage=NO_USAGE
+        question="q",
+        status="failed",
+        text="t",
+        error_kind=kind,
+        route="numbers",
+        versions=VERSIONS,
+        usage=NO_USAGE,
     )
 
 
@@ -119,3 +129,51 @@ def test_same_filters_in_another_order_give_no_hint() -> None:
         filters=[{"dimension": "customer_state", "op": "in", "values": ["RJ", "SP"]}],
     )
     assert form_hints(a, b) == []
+
+
+# --- routes (M2 step 2d) ---
+
+
+def quick(route: Any, text: str = "t", suggestions: list[str] | None = None) -> FinishedAnswer:
+    return FinishedAnswer(
+        question="q",
+        status="answered",
+        text=text,
+        route=route,
+        suggestions=suggestions or [],
+        versions=VERSIONS,
+        usage=NO_USAGE,
+    )
+
+
+def route_case(route: str, **fields: Any) -> EvalCase:
+    return EvalCase.model_validate(
+        {"id": "r", "kind": route, "question": "q", "expected_route": route} | fields
+    )
+
+
+def test_a_numbers_question_sent_to_a_quick_route_fails_with_that_reason() -> None:
+    score = score_case(BY_STATE, EXPECTED, quick("clarify", suggestions=["a", "b"]), None)
+    assert not score.passed and score.reason == "expected route numbers, got clarify"
+
+
+def test_metadata_and_off_topic_compare_the_exact_text() -> None:
+    meta = route_case("metadata", expected_topic={"topic": "date_range"})
+    assert score_case(meta, {"text": "Data 2016"}, quick("metadata", "Data 2016"), None).passed
+    wrong = score_case(meta, {"text": "Data 2016"}, quick("metadata", "Data 2017"), None)
+    assert not wrong.passed and wrong.reason == "route metadata, text differs"
+
+
+def test_clarify_needs_two_or_three_suggestions_and_refuse_one() -> None:
+    clarify, refuse = route_case("clarify"), route_case("refuse")
+    assert score_case(clarify, {}, quick("clarify", suggestions=["a", "b"]), None).passed
+    assert not score_case(clarify, {}, quick("clarify"), None).passed  # the fallback reply
+    assert score_case(refuse, {}, quick("refuse", suggestions=["a"]), None).passed
+    assert not score_case(refuse, {}, quick("refuse", suggestions=["a", "b", "c"]), None).passed
+
+
+def test_a_quick_route_case_has_no_form_or_sql() -> None:
+    with pytest.raises(ValidationError, match="a quick route has no form"):
+        route_case("refuse", expected_sql="SELECT 1")
+    with pytest.raises(ValidationError, match="needs expected_topic"):
+        route_case("metadata")

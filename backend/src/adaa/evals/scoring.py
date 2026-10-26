@@ -1,8 +1,13 @@
 """Judge one eval case (§0 M1.7). Pure code: no LLM, no database.
 
-The RESULT decides pass or fail: the agent's table must equal the stored right answer (from
-the hand-written SQL), in any order unless the question asks for a sort. A must-stop case
-passes only when the agent stopped with the expected error kind.
+The ROUTE is checked first, for every case (M2 step 2d): a numbers question sent to a quick
+route fails with that reason. A quick-route case then passes on its route plus: metadata
+and off-topic — the exact text (code writes it); clarify — 2 or 3 suggestions; refuse — one
+suggestion (a code-made fallback reply has none, so it fails).
+
+For a numbers question, the RESULT decides pass or fail: the agent's table must equal the
+stored right answer (from the hand-written SQL), in any order unless the question asks for
+a sort. A must-stop case passes only when the agent stopped with the expected error kind.
 
 The FORM (the LLM's plan) is compared too, field by field, as hints that say where to look
 ("period: expected 2018-06-01 to 2018-08-31, got 2018-05-31 to 2018-08-31"). Hints never
@@ -64,6 +69,23 @@ def same_rows(expected: list[list[str]], got: list[list[str]], ordered: bool) ->
     return Counter(map(tuple, expected)) == Counter(map(tuple, got))  # any order, same rows
 
 
+SUGGESTIONS_NEEDED = {"clarify": (2, 3), "refuse": (1, 1)}  # (fewest, most)
+
+
+def score_quick_route(route: str, expected: dict[str, Any], answer: FinishedAnswer) -> Score:
+    if "text" in expected:  # metadata, off_topic: written by code, so exact
+        if answer.text == expected["text"]:
+            return Score(passed=True, reason=f"route {route}, text matches", form_hints=[])
+        return Score(passed=False, reason=f"route {route}, text differs", form_hints=[])
+    fewest, most = SUGGESTIONS_NEEDED[route]
+    count = len(answer.suggestions)
+    if fewest <= count <= most:
+        return Score(passed=True, reason=f"route {route}, {count} suggestions", form_hints=[])
+    return Score(
+        passed=False, reason=f"route {route}, {count} suggestions (fallback reply?)", form_hints=[]
+    )
+
+
 def score_case(
     case: EvalCase,
     expected_answer: dict[str, Any],
@@ -71,6 +93,16 @@ def score_case(
     agent_form: StructuredRequest | None,
 ) -> Score:
     hints = form_hints(case.expected_form, agent_form)
+
+    if answer.route != case.expected_route:
+        picked = answer.route or "no route"
+        return Score(
+            passed=False,
+            reason=f"expected route {case.expected_route}, got {picked}",
+            form_hints=hints,
+        )
+    if case.expected_route != "numbers":
+        return score_quick_route(case.expected_route, expected_answer, answer)
 
     if case.expected_error:  # must stop
         if answer.status == "failed" and answer.error_kind == case.expected_error:

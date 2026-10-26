@@ -1,10 +1,12 @@
 """Load and check the eval cases (eval/questions/cases.yaml, §0 M1.7).
 
-A case is a question plus EITHER the expected form (the right plan) and the hand-written
-expected SQL (the right answer, independent of our compiler), OR the expected error (a
-question that must stop). The file refuses to load if two cases share an id or a case mixes
-the two; check_cases() also proves every expected form compiles, so a typo in the file can't
-quietly make a case unpassable.
+A case is a question, its expected route (default `numbers`, M2 step 2d), and for a
+numbers question EITHER the expected form (the right plan) and the hand-written expected
+SQL (the right answer, independent of our compiler), OR the expected error (a question
+that must stop). A quick-route case has no form or SQL; a metadata case names its topic.
+The file refuses to load if two cases share an id or a case mixes these; check_cases()
+also proves every expected form compiles, so a typo in the file can't quietly make a case
+unpassable.
 """
 
 from pathlib import Path
@@ -13,6 +15,8 @@ from typing import Literal, Self
 import yaml
 from pydantic import BaseModel, ConfigDict, model_validator
 
+from adaa.agent.replies import MetadataForm
+from adaa.agent.router import Route
 from adaa.agent.state import ErrorKind
 from adaa.semantic_layer.compare import split_comparison
 from adaa.semantic_layer.compiler import CompileError, compile_request
@@ -32,6 +36,10 @@ CaseKind = Literal[
     "top",
     "compare",
     "must_stop",
+    "clarify",  # quick routes (M2 step 2d)
+    "refuse",
+    "off_topic",
+    "metadata",
 ]
 
 
@@ -46,12 +54,23 @@ class EvalCase(BaseModel):
     kind: CaseKind
     question: str
     note: str | None = None
+    expected_route: Route = "numbers"  # the router must pick this
+    expected_topic: MetadataForm | None = None  # metadata only: the topic (and metric)
     expected_form: StructuredRequest | None = None  # the right plan (compared as a hint)
     expected_sql: str | None = None  # hand-written: the right answer, not via our compiler
     expected_error: ErrorKind | None = None  # a question that must stop
 
     @model_validator(mode="after")
     def one_kind_of_expectation(self) -> Self:
+        if self.expected_route != "numbers":  # a quick route: no plan, no SQL, no error
+            numbers_fields = (self.expected_form, self.expected_sql, self.expected_error)
+            if any(f is not None for f in numbers_fields):
+                raise ValueError(f"case '{self.id}': a quick route has no form, SQL or error")
+            if (self.expected_route == "metadata") != (self.expected_topic is not None):
+                raise ValueError(f"case '{self.id}': a metadata case (only) needs expected_topic")
+            return self
+        if self.expected_topic is not None:
+            raise ValueError(f"case '{self.id}': a metadata case (only) needs expected_topic")
         answerable = self.expected_form is not None and self.expected_sql is not None
         stops = self.expected_error is not None
         partial = (self.expected_form is None) != (self.expected_sql is None)

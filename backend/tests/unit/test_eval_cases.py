@@ -9,7 +9,7 @@ from adaa.semantic_layer.definitions import load
 
 def test_the_real_cases_load_and_every_expected_form_compiles() -> None:
     cases = load_cases()
-    assert len(cases.cases) == 30  # v3: 20 from M1 + 10 from M2 step 1
+    assert len(cases.cases) == 44  # v4: 20 (M1) + 10 (M2 step 1) + 14 (M2 step 2d)
     assert check_cases(cases, load()) == []
 
 
@@ -25,6 +25,10 @@ def test_every_kind_is_covered() -> None:
         "top",
         "compare",
         "must_stop",
+        "clarify",
+        "refuse",
+        "off_topic",
+        "metadata",
     }
 
 

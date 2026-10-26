@@ -83,6 +83,7 @@ def finish(state: AgentState, context: AgentContext) -> FinishedAnswer:
         "form": state.form,  # also kept when a later step stopped: that is when it helps most
         "route": state.route.route if state.route else None,
         "route_confidence": state.route.confidence if state.route else None,
+        "route_source": state.route.source if state.route else None,
     }
     if state.error:
         return FinishedAnswer(
