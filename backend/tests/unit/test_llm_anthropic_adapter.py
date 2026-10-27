@@ -39,7 +39,13 @@ class FakeClient:
         return self.response
 
 
-def reply(text: str = '{"metric": "revenue"}', stop: str = "end_turn", thinking: int = 0) -> Any:
+def reply(
+    text: str = '{"metric": "revenue"}',
+    stop: str = "end_turn",
+    thinking: int = 0,
+    cache_write: int | None = None,
+    cache_read: int | None = None,
+) -> Any:
     return SimpleNamespace(
         stop_reason=stop,
         content=[SimpleNamespace(type="text", text=text)],
@@ -47,8 +53,14 @@ def reply(text: str = '{"metric": "revenue"}', stop: str = "end_turn", thinking:
             input_tokens=3_000,
             output_tokens=300,
             output_tokens_details=SimpleNamespace(thinking_tokens=thinking),
+            cache_creation_input_tokens=cache_write,
+            cache_read_input_tokens=cache_read,
         ),
     )
+
+
+def with_cache(cache: str) -> Any:
+    return AGENT.model_copy(update={"settings": AGENT.settings.model_copy(update={"cache": cache})})
 
 
 def send(client: FakeClient) -> Any:
@@ -61,7 +73,9 @@ def test_request_is_built_from_the_config() -> None:
     sent = client.sent
     assert sent["model"] == "claude-haiku-5-5"
     assert sent["max_tokens"] == 2000 and sent["timeout"] == 30.0
-    assert sent["system"] == "You fill the form."  # split out of the messages
+    assert sent["system"] == [  # split out of the messages; the agent job caches (5m)
+        {"type": "text", "text": "You fill the form.", "cache_control": {"type": "ephemeral"}}
+    ]
     assert sent["messages"] == [{"role": "user", "content": "Revenue by state in 2017"}]
     assert sent["thinking"] == {"type": "disabled"}
     assert "effort" not in sent["output_config"]
@@ -85,6 +99,50 @@ def test_usage_is_read_with_thinking_tokens() -> None:
     assert (result.usage.input_tokens, result.usage.output_tokens) == (3_000, 300)
     assert result.usage.thinking_tokens == 120
     assert result.usage.cost_usd == pytest.approx(0.00045)
+    assert (result.usage.cache_write_tokens, result.usage.cache_read_tokens) == (0, 0)
+
+
+@pytest.mark.parametrize(
+    ("cache", "system"),
+    [
+        ("none", "You fill the form."),
+        (
+            "5m",
+            [
+                {
+                    "type": "text",
+                    "text": "You fill the form.",
+                    "cache_control": {"type": "ephemeral"},
+                }
+            ],
+        ),
+        (
+            "1h",
+            [
+                {
+                    "type": "text",
+                    "text": "You fill the form.",
+                    "cache_control": {"type": "ephemeral", "ttl": "1h"},
+                }
+            ],
+        ),
+    ],
+)
+def test_cache_setting_decides_the_cache_mark(cache: str, system: Any) -> None:
+    client = FakeClient(reply())
+    AnthropicAdapter(client=client).send(ASK, SCHEMA, with_cache(cache))
+    assert client.sent["system"] == system
+    assert client.sent["messages"][0]["content"] == "Revenue by state in 2017"  # never cached
+
+
+def test_cache_tokens_are_read_and_priced() -> None:
+    # 3,000 full-price input + 300 output = $0.00045; then 2,000 written at $0.125/M
+    write = send(FakeClient(reply(cache_write=2_000)))
+    assert write.usage.cache_write_tokens == 2_000
+    assert write.usage.cost_usd == pytest.approx(0.00045 + 2_000 * 0.125 / 1_000_000)
+    read = send(FakeClient(reply(cache_read=2_000)))
+    assert read.usage.cache_read_tokens == 2_000
+    assert read.usage.cost_usd == pytest.approx(0.00045 + 2_000 * 0.01 / 1_000_000)
 
 
 @pytest.mark.parametrize(

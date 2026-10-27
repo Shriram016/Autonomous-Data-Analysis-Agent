@@ -1036,7 +1036,28 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    seconds, outcome), written from the one place every call passes (`llm.complete`, the
 >    router's `log_call`), so 3 components today or 10 later need no schema change; the
 >    question total = the sum of its rows. Production systems keep such a table (billing,
->    quotas, audit) and also send traces to a tool (Langfuse, planned M6).
+>    quotas, audit) and also send traces to a tool (Langfuse, planned M6). **Cache tokens
+>    (2026-10-27):** they join this table when it is built (the hit rate is a per-call
+>    fact); not added to `conversation.questions`, whose `cost_usd` is already correct.
+>    **Prompt caching (🔒 2026-10-27, M2 step 4, builder):** built to learn the real-world
+>    method, not for ADAA's saving (low traffic, cheap Haiku). Rules read 2026-10-27 from
+>    Anthropic's docs: Haiku 5.5 minimum 512 tokens; TTL 5 min (default) or 1 h; write
+>    $0.125 / 1M (5 min) or $0.20 (1 h), read $0.01, normal input $0.10; prefix match (one
+>    changed byte = miss); max 4 marks. **Design:** one cache mark at the end of the system
+>    prompt, in the Anthropic adapter (`system_param`); every Haiku job already sends the
+>    fixed part as `system` and the changing part (question, data rows) as `user`, so one
+>    mark covers all. Per-job `cache: none | 5m | 1h` in `config/llm.yaml` — **5m** for
+>    agent, answer, reply, route_haiku (cheaper write; questions minutes apart reuse it);
+>    text_to_sql `none`. Cache prices in config next to the others (`check()` refuses a
+>    caching job whose model has none). `Usage` gains `cache_write_tokens` and
+>    `cache_read_tokens`; cost = input × $0.10 + output × $0.50 + cache_write × $0.125 +
+>    cache_read × $0.01 (all / 1M; `input` is only the uncached part); a call that reads
+>    has write = 0. Both counts are in the `llm_call` log line. **Real check (2 agent
+>    calls, different questions):** call 1 wrote 5,259 tokens, $0.000679; call 2 read the
+>    same 5,259, **$0.000073 (~87% less than the ~$0.00055 with no cache)**; only 17–18
+>    question tokens at full price; both forms right. Time not faster on 2 calls (2.2 s,
+>    3.2 s): too few to judge; the end-of-M2 eval shows it. The structured-output schema
+>    did not stop the cache. 372 unit tests. **Next: M2 step 5 — eval results format.**
 >
 >
 > ⚠️ **MANDATORY — DO NOT SKIP: post-build architecture cross-examination.** Once development is

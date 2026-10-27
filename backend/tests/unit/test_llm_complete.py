@@ -4,9 +4,15 @@ import pytest
 
 from adaa.llm.adapters.base import Message
 from adaa.llm.adapters.fake import FakeAdapter
-from adaa.llm.complete import complete
-from adaa.llm.config import LlmConfigError
-from adaa.llm.types import LlmOutputError, LlmResult, LlmUnavailableError
+from adaa.llm.complete import complete, log_call
+from adaa.llm.config import LlmConfigError, get_config
+from adaa.llm.types import (
+    AdapterReply,
+    LlmOutputError,
+    LlmResult,
+    LlmUnavailableError,
+    make_usage,
+)
 from adaa.semantic_layer.request import StructuredRequest
 
 ASK = [Message(role="user", content="Revenue by state in 2017")]
@@ -88,6 +94,19 @@ def test_good_call_writes_one_ok_line(caplog: pytest.LogCaptureFixture) -> None:
     assert line["outcome"] == "ok" and line["attempts"] == 1
     assert (line["input_tokens"], line["output_tokens"]) == (1_000, 100)  # the fake's counts
     assert line["cost_usd"] == pytest.approx(0.00015)
+    assert (line["cache_write_tokens"], line["cache_read_tokens"]) == (0, 0)  # fake: no cache
+
+
+def test_line_shows_cache_tokens(caplog: pytest.LogCaptureFixture) -> None:
+    caplog.set_level("INFO", logger="adaa.llm")
+    job = get_config().job_settings("agent")
+    price = job.model.price_per_million
+    write = make_usage(50, 100, 0, price, cache_write_tokens=3_000)  # first call: stored
+    read = make_usage(50, 100, 0, price, cache_read_tokens=3_000)  # retry: reused
+    log_call(job, "ok", [AdapterReply(text="", usage=u, seconds=0.0) for u in (write, read)], 0.0)
+    [line] = llm_lines(caplog)
+    assert (line["cache_write_tokens"], line["cache_read_tokens"]) == (3_000, 3_000)
+    assert "cache_read_tokens=3000" in caplog.text  # in the text line too
 
 
 def test_output_error_line_has_both_attempts(caplog: pytest.LogCaptureFixture) -> None:

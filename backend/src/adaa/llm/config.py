@@ -24,6 +24,9 @@ CONFIG_FILE = REPO_ROOT / "config" / "llm.yaml"
 # when the fallback is built.
 Adapter = Literal["anthropic", "jev"]
 Thinking = Literal["disabled", "low", "medium", "high"]
+# Prompt caching (M2 step 4): keep the system prompt cached for 5 minutes or 1 hour, or not
+# at all. Not "off": YAML reads a bare `off` as false, so the value is "none".
+Cache = Literal["none", "5m", "1h"]
 
 
 class LlmConfigError(Exception):
@@ -42,6 +45,11 @@ class Provider(Strict):
 class Price(Strict):
     input: float  # USD per 1M input tokens
     output: float  # USD per 1M output tokens (thinking tokens use this price too)
+    # Prompt caching prices, USD per 1M tokens. Only models that can cache set them;
+    # check() makes every job that caches use a model with all three.
+    cache_write_5m: float | None = None  # the first call stores the prompt for 5 minutes
+    cache_write_1h: float | None = None  # ... or for 1 hour
+    cache_read: float | None = None  # a later call reuses the stored prompt
 
 
 class Model(Strict):
@@ -59,6 +67,7 @@ class Job(Strict):
     max_tokens: PositiveInt | None = None
     max_attempts: Literal[1, 2] = 1  # 2 = one retry with the errors; never more (§0 M1.3)
     max_rows: PositiveInt | None = None  # only jobs that read data rows set it
+    cache: Cache = "none"  # cache the system prompt (anthropic jobs only)
 
 
 class Router(Strict):
@@ -109,6 +118,12 @@ def check(config: LlmConfig) -> None:
             adapter = config.providers[config.models[job.model].provider].adapter
             if adapter == "anthropic" and job.max_tokens is None:
                 problems.append(f"job '{name}' needs max_tokens (a chat model)")
+            if job.cache != "none":
+                price = config.models[job.model].price_per_million
+                if adapter != "anthropic":
+                    problems.append(f"job '{name}' caches, but its model cannot (not anthropic)")
+                elif None in (price.cache_write_5m, price.cache_write_1h, price.cache_read):
+                    problems.append(f"job '{name}' caches, but '{job.model}' has no cache prices")
     for name in config.router.order:
         if name not in config.jobs:
             problems.append(f"router uses unknown job '{name}'")

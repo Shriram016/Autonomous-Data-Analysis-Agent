@@ -1,9 +1,12 @@
 """The Anthropic adapter: sends one request to Claude through the official SDK (ADR 0009).
 
 This is the only file that imports the `anthropic` package. It turns our request into the
-SDK's request (system prompt split out, schema cleaned for strict mode, thinking set from
-config), sends it, and turns the reply and any SDK error into our shapes. It does NOT
-check the reply against the form; llm.complete does that.
+SDK's request (system prompt split out and marked for caching, schema cleaned for strict
+mode, thinking set from config), sends it, and turns the reply and any SDK error into our
+shapes. It does NOT check the reply against the form; llm.complete does that.
+
+Prompt caching (M2 step 4): the system prompt is the same for every question, so it ends
+with a cache mark; the question and data rows come after it, in the user message.
 
 The SDK retries 429, 5xx and timeouts by itself (2 retries). We keep that until our own
 retry rules exist (§0 failure handling); then set max_retries=0 so the two don't stack.
@@ -77,6 +80,21 @@ def thinking_params(job: JobSettings) -> dict[str, Any]:
     return {"thinking": {"type": "adaptive"}, "effort": level}
 
 
+def system_param(system: str, job: JobSettings) -> str | list[dict[str, Any]]:
+    """The system prompt, as one block with a cache mark when the job caches.
+
+    The mark caches everything up to and including this block. "ephemeral" alone means
+    5 minutes; "1h" must be asked for.
+    """
+    cache = job.settings.cache
+    if cache == "none":
+        return system
+    mark: dict[str, Any] = {"type": "ephemeral"}
+    if cache == "1h":
+        mark["ttl"] = "1h"
+    return [{"type": "text", "text": system, "cache_control": mark}]
+
+
 @dataclass
 class AnthropicAdapter:
     client: Any = None  # tests pass a fake client; otherwise made on first use
@@ -110,7 +128,7 @@ class AnthropicAdapter:
                 messages=turns,
                 output_config=output_config,
                 timeout=float(job.settings.timeout_seconds),
-                **({"system": system} if system else {}),
+                **({"system": system_param(system, job)} if system else {}),
                 **thinking,
             )
         except anthropic.APITimeoutError as e:
@@ -131,11 +149,16 @@ class AnthropicAdapter:
             raise LlmOutputError("The AI reply was cut off; increase max_tokens for this job.")
 
         text = next((b.text for b in response.content if b.type == "text"), "")
-        details = response.usage.output_tokens_details
+        counts = response.usage
+        details = counts.output_tokens_details
         usage = make_usage(
-            response.usage.input_tokens,
-            response.usage.output_tokens,
+            counts.input_tokens,  # the uncached part only
+            counts.output_tokens,
             details.thinking_tokens if details and details.thinking_tokens else 0,
             job.model.price_per_million,
+            # None (not 0) when the request had no cache mark
+            cache_write_tokens=getattr(counts, "cache_creation_input_tokens", None) or 0,
+            cache_read_tokens=getattr(counts, "cache_read_input_tokens", None) or 0,
+            cache=job.settings.cache,
         )
         return AdapterReply(text=text, usage=usage, seconds=seconds)

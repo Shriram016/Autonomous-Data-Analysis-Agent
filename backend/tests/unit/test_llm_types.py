@@ -23,3 +23,31 @@ def test_two_attempts_add_up() -> None:
     total = make_usage(1_000, 100, 0, price) + make_usage(1_200, 150, 50, price)
     assert (total.input_tokens, total.output_tokens, total.thinking_tokens) == (2_200, 250, 50)
     assert total.cost_usd == pytest.approx(cost_usd(2_200, 250, price))
+
+
+def test_cache_write_costs_more_and_cache_read_costs_less() -> None:
+    # The same 3,000-token prompt: 2,900 cached + 100 tokens of question at full price.
+    plain = cost_usd(3_000, 300, HAIKU)
+    write = cost_usd(100, 300, HAIKU, cache_write_tokens=2_900)
+    read = cost_usd(100, 300, HAIKU, cache_read_tokens=2_900)
+    assert write == pytest.approx(plain + 2_900 * (0.125 - 0.10) / 1_000_000)
+    assert read == pytest.approx(plain - 2_900 * (0.10 - 0.01) / 1_000_000)
+
+
+def test_one_hour_cache_write_uses_its_own_price() -> None:
+    five_min = cost_usd(0, 0, HAIKU, cache_write_tokens=1_000_000, cache="5m")
+    one_hour = cost_usd(0, 0, HAIKU, cache_write_tokens=1_000_000, cache="1h")
+    assert (five_min, one_hour) == pytest.approx((0.125, 0.20))
+
+
+def test_cache_tokens_add_up_over_two_attempts() -> None:
+    first = make_usage(100, 50, 0, HAIKU, cache_write_tokens=2_900)
+    retry = make_usage(150, 50, 0, HAIKU, cache_read_tokens=2_900)
+    total = first + retry
+    assert (total.cache_write_tokens, total.cache_read_tokens) == (2_900, 2_900)
+    assert total.cost_usd == pytest.approx(first.cost_usd + retry.cost_usd)
+
+
+def test_cache_tokens_without_cache_prices_are_an_error() -> None:
+    with pytest.raises(ValueError, match="no cache prices"):
+        cost_usd(0, 0, Price(input=1.0, output=2.0), cache_read_tokens=10)

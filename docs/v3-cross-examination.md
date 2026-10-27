@@ -342,3 +342,24 @@ simple). A clicked bad suggestion is refused with a reason and shows in the refu
 and the eval asks every suggestion ("suggestions answered", 9 / 9 on 2026-10-26). If it
 becomes a problem: the same reply call also returns each suggestion's form and code compiles
 it before showing — no extra LLM call.
+
+## Q12. You added prompt caching. When is it worth it, and when is it not?
+
+**Short answer:** it pays when many calls share the same long prompt start within the cache
+time (5 min): 2 calls already pay for the 25% write premium, and each read is 90% cheaper.
+It does not pay when calls are more than 5 min apart (the cache expires, every call is a
+write) or when the prompt start changes per call. ADAA has low traffic, so the saving is
+small; it was built to learn the method. Real check: the second call cost ~87% less.
+
+| Option | Pros | Cons |
+|---|---|---|
+| 5 min TTL (chosen) | Cheapest write; free refresh on each read | Expires in quiet periods |
+| 1 h TTL | Survives gaps up to an hour | Write costs 2×; needs 3+ calls to pay |
+| No cache | Simplest | Pays full input price every call |
+
+**What can go wrong:** a silent miss — a date or ID in the system prompt changes the prefix,
+no error, just a higher bill. Guard: `cache_read_tokens` is in every `llm_call` log line, so a
+drop to 0 shows; re-check after any prompt change.
+
+**Interview one-liner:** "One cache mark at the end of the fixed system prompt, TTL in config,
+cache tokens priced and logged per call — and I proved it with the usage counts, not a guess."

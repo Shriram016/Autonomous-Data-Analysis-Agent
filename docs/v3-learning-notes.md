@@ -609,3 +609,49 @@ refuse texts have no fixed truth, so the route and the number of suggestions are
 
 44 / 44, routes 44 / 44, suggestions 9 / 9, $0.0367. The router adds ~1 s per question.
 Lesson: an eval case that copies a prompt example proves little.
+
+### Jev smoke test (2026-10-27)
+
+3 questions straight to Jev: all routed right, 0.4–0.8 s, $0.000033 per call. A vague
+question got confidence 0.61; clear ones 1.0. The full eval with Jev waits for the end of M2.
+
+## M2 step 4 — Prompt caching
+
+### What it is
+
+The provider stores the start of a prompt. The next call that starts with the same bytes
+reuses it: cheaper and often faster. The system prompt is the same for every question, so
+it is cached; the question comes after the cache mark and is never cached.
+
+### Write vs read
+
+- **Cache write:** the first call (or the first after the cache expired) stores the prompt
+  — 25% more than normal input ($0.125 vs $0.10 per 1M).
+- **Cache read:** each later call within the TTL reuses it — 90% less ($0.01 per 1M).
+  Each read resets the timer.
+- Cost = input × $0.10 + output × $0.50 + cache_write × $0.125 + cache_read × $0.01
+  (all / 1M). All four parts are always there; in one call either write or read is 0.
+
+### Example (3,000-token prompt, 50-token question, 200-token answer)
+
+No cache: $0.000405 per question. Question 1 (write): $0.000480. Question 2 (read):
+$0.000135 — about 67% less. Two calls in 5 minutes already pay for the write.
+
+### How we know it works
+
+The provider does not return a cost, only token counts. On the second call
+`cache_read_tokens` > 0 and `input_tokens` drops to the question only. If
+`cache_read_tokens` stays 0, something changes the prompt (a date, a random ID): a broken
+cache gives no error, only a higher bill — so check it after every prompt change.
+
+### Why build it for ADAA (low traffic)
+
+ADAA's saving is small: few users, so questions can be more than 5 minutes apart and the
+cache expires. Built to learn the method; with many users the saving is large. Tools
+(Langfuse, Helicone, the Anthropic Console) also show cost, but code still computes it
+when it must act at once (quotas, cost limits, the eval report).
+
+### Real check (2026-10-27)
+
+2 agent calls, different questions: call 1 wrote 5,259 tokens ($0.000679); call 2 read
+them ($0.000073, ~87% less than with no cache).

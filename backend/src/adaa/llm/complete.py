@@ -72,6 +72,8 @@ def log_call(
         "input_tokens": usage.input_tokens,
         "output_tokens": usage.output_tokens,
         "thinking_tokens": usage.thinking_tokens,
+        "cache_write_tokens": usage.cache_write_tokens,  # > 0: this call stored the prompt
+        "cache_read_tokens": usage.cache_read_tokens,  # > 0: the cache worked
         "cost_usd": round(usage.cost_usd, 6),
         "seconds": round(time.monotonic() - started, 3),
     }
