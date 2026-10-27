@@ -1069,9 +1069,16 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    saved run: `uv run python -m adaa.evals.report <run.json>`. Scoring unchanged. One file
 >    per run, old runs kept (builder's choice; a fixed `latest.md` can be added later).
 >    378 unit tests. The first real report comes from the end-of-M2 eval.
->    **Next: end of M2** — full eval with Jev as router (~$0.04, state the cost first), then
->    the open to-dos (browser check, router weakness, 20-row limit, more wordings) and the
->    blueprint update.
+>    ✅ **M2 numbers done properly — closed 2026-10-27 (builder's choice): the open M2 items
+>    move to the end of M3.** **⏳ To do at the end of M3:** (1) full eval with Jev as
+>    router (~$0.04, state the cost first); (2) browser check of the router and quick
+>    replies (rebuild api + worker first); (3) router weakness ("What is the cancellation
+>    rate?" → metadata in 1 of 2 runs); (4) the answer LLM sees only 20 rows ("top 20 of
+>    27"); (5) test more question wordings; (6) support-count checks in
+>    `check_semantic_layer`; (7) new eval cases must not copy prompt examples; (8) update
+>    the blueprint (M2 + M3 together). Still "decide later": the `llm_calls` table (with
+>    cache tokens) and "is Olist messy enough". **Next: M3 — reviews + hybrid** (ingestion:
+>    translate → tag → embed → publish; hybrid search; quote guardrail).
 >
 >
 > ⚠️ **MANDATORY — DO NOT SKIP: post-build architecture cross-examination.** Once development is
