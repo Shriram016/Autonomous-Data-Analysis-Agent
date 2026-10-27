@@ -68,6 +68,16 @@ def test_cost_and_versions_are_recorded() -> None:
     assert r.versions.agent_prompt.startswith("0.2.0 (")
 
 
+def test_expected_and_adaa_answers_are_kept_side_by_side() -> None:
+    first, second = report().results
+    assert first.expected_form is not None and first.expected_form.metric == "revenue"
+    assert first.form is not None and first.form.metric == "revenue"  # ADAA's plan
+    assert first.expected_answer == EXPECTED["total_revenue"]
+    assert first.table is not None and first.table.rows == [["R$ 100.00"]]  # ADAA's rows
+    assert first.expected_route == "numbers" and first.cache_read_tokens == 0  # fake: no cache
+    assert second.expected_answer == {"error": "value_not_found"} and second.table is None
+
+
 def test_a_run_is_saved_and_reads_back(tmp_path: Path) -> None:
     r = report()
     path = save(r, tmp_path)

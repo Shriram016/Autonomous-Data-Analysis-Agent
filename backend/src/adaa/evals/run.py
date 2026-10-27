@@ -27,11 +27,12 @@ from pydantic import BaseModel, ConfigDict
 
 from adaa.agent.context import AgentContext, get_context
 from adaa.agent.graph import ask
-from adaa.agent.state import FinishedAnswer, Versions
+from adaa.agent.state import FinishedAnswer, Table, Versions
 from adaa.evals.cases import EvalSet, load_cases
 from adaa.evals.expected import RESULTS_FILE
 from adaa.evals.scoring import score_case
 from adaa.llm.config import get_config
+from adaa.semantic_layer.request import StructuredRequest
 from adaa.settings import REPO_ROOT
 
 RUNS_DIR = REPO_ROOT / "eval" / "results"
@@ -54,6 +55,13 @@ class CaseResult(BaseModel):
     answer_text: str
     suggestions: list[str] = []  # clarify / refuse / off_topic buttons
     unanswered_suggestions: list[str] = []  # suggestions that got no table when asked
+    # Side by side for the readable report (M2 step 5): the right answer and ADAA's.
+    expected_route: str = "numbers"
+    expected_form: StructuredRequest | None = None  # the right plan (cases.yaml)
+    expected_answer: dict[str, Any] = {}  # headers + rows, an error, or a reply text
+    form: StructuredRequest | None = None  # ADAA's plan (after the value check)
+    table: Table | None = None  # ADAA's rows
+    cache_read_tokens: int = 0  # > 0: the prompt cache worked for this question
     cost_usd: float
     seconds: float
 
@@ -123,6 +131,12 @@ def run_eval(
                 answer_text=answer.text,
                 suggestions=answer.suggestions,
                 unanswered_suggestions=unanswered,
+                expected_route=case.expected_route,
+                expected_form=case.expected_form,
+                expected_answer=expected[case.id],
+                form=answer.form,
+                table=answer.table,
+                cache_read_tokens=answer.usage.cache_read_tokens,
                 cost_usd=cost,
                 seconds=round(seconds, 2),
             )
@@ -190,7 +204,11 @@ def main() -> None:
     expected = json.loads(RESULTS_FILE.read_text(encoding="utf-8"))
     report = run_eval(get_context(), load_cases(), expected)
     print_report(report)
-    print(f"\nSaved {save(report).relative_to(REPO_ROOT)}")
+    path = save(report)
+    print(f"\nSaved {path.relative_to(REPO_ROOT)}")
+    from adaa.evals.report import write_report  # here: report.py imports this module
+
+    print(f"Report {write_report(path).relative_to(REPO_ROOT)}")
 
 
 if __name__ == "__main__":

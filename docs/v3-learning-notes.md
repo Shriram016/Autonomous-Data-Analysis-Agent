@@ -655,3 +655,12 @@ when it must act at once (quotas, cost limits, the eval report).
 
 2 agent calls, different questions: call 1 wrote 5,259 tokens ($0.000679); call 2 read
 them ($0.000073, ~87% less than with no cache).
+
+## M2 step 5 — Eval report format
+
+### Two files per run
+
+Each eval run writes `eval/results/<date-time>.json` and `<date-time>.md`. The JSON is for
+code (compare runs, recompute); the `.md` is for a person: failures first, and for each case
+the right answer and ADAA's answer side by side (route, plan, table, sentence). Old runs
+stay, so runs can be compared over time.

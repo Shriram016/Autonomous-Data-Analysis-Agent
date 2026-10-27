@@ -1058,6 +1058,20 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    question tokens at full price; both forms right. Time not faster on 2 calls (2.2 s,
 >    3.2 s): too few to judge; the end-of-M2 eval shows it. The structured-output schema
 >    did not stop the cache. 372 unit tests. **Next: M2 step 5 — eval results format.**
+>    ✅ **M2 step 5 eval report format done (2026-10-27)** — closes the M1.7 results-format
+>    to-do. Each run still writes `eval/results/<date-time>.json` (for code; now also holds,
+>    per case, `expected_route`, `expected_form`, `expected_answer`, ADAA's `form` and
+>    `table`, and `cache_read_tokens`) **and now a readable `<date-time>.md` next to it**
+>    (`adaa/evals/report.py`, no LLM call): summary on top (score, by kind, route accuracy,
+>    suggestions, cost, p50 / p95, questions with cache reads, models, versions), then
+>    **failures first**, each case with route and plan (expected vs ADAA), both tables (max 10
+>    rows; the JSON keeps all), the sentence, hints, cost, time, cache read. Rebuild for any
+>    saved run: `uv run python -m adaa.evals.report <run.json>`. Scoring unchanged. One file
+>    per run, old runs kept (builder's choice; a fixed `latest.md` can be added later).
+>    378 unit tests. The first real report comes from the end-of-M2 eval.
+>    **Next: end of M2** — full eval with Jev as router (~$0.04, state the cost first), then
+>    the open to-dos (browser check, router weakness, 20-row limit, more wordings) and the
+>    blueprint update.
 >
 >
 > ⚠️ **MANDATORY — DO NOT SKIP: post-build architecture cross-examination.** Once development is
