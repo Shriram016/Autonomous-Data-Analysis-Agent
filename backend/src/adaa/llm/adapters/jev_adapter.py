@@ -10,7 +10,7 @@ Reached through OpenRouter's decisions API, which is ALPHA (confirmed 2026-10-26
 OpenRouter's page): the request format can change between releases, so this is the only
 file that knows it. Errors become our two error types, like the Anthropic adapter.
 
-Untested against the real API until OPENROUTER_API_KEY is in .env (§0 M2 step 2).
+Smoke-tested against the real API on 2026-10-27: request and reply format as below (§0 M2 step 2).
 """
 
 import json

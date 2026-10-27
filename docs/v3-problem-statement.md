@@ -919,11 +919,15 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    `POST https://openrouter.ai/api/alpha/decisions` (alpha endpoint), key
 >    `OPENROUTER_API_KEY`, model `typesafe/jev-1.14` (pinned), one `choice` question →
 >    `choice`, `probabilities`, `confidence`; $0.042 per 1M input tokens, output free;
->    latency, rate limits and data retention not stated. **⏳ Jev not yet tested for real
->    (2026-10-26):** the builder adds `OPENROUTER_API_KEY` to `.env` later; when the builder
->    says the key is added, run a real Jev test (state the cost first). Until then the order
->    stays `[route_jev, route_haiku]`: with no key the Jev adapter fails at once (no network
->    call, `router_fallback … reason=MissingKeyError`) and Haiku routes.
+>    latency, rate limits and data retention not stated. ✅ **Jev smoke test passed
+>    (2026-10-27):** key added; 3 questions sent straight to `ask_jev` (no fallback), all
+>    routed right — "revenue in 2017" → numbers (confidence 1.0), "a joke about cats" →
+>    off_topic (1.0), "which sellers are the strongest?" → clarify (0.61; numbers 0.31). The
+>    adapter worked unchanged (reply shape as expected). ~785 input tokens, **$0.000033 per
+>    call** (matches OpenRouter's own `cost` field; output free), **0.4–0.8 s per call**.
+>    OpenRouter answers with the dated snapshot `typesafe/jev-1.14-20261014` of our pinned
+>    model. **The full eval with Jev as router runs at the end of M2** (builder's choice: not
+>    now); it measures Jev vs Haiku routing accuracy and time.
 >    ✅ **2a router component** (`34494a2`) · ✅ **2b graph** (start → route → numbers flow, or
 >    reply; `RouteDecision` in the state, router cost in the question total, `route` and
 >    `route_confidence` in `FinishedAnswer`, router prompt in `Versions`; placeholder
