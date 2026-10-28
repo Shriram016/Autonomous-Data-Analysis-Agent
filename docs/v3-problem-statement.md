@@ -1079,6 +1079,77 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    the blueprint (M2 + M3 together). Still "decide later": the `llm_calls` table (with
 >    cache tokens) and "is Olist messy enough". **Next: M3 — reviews + hybrid** (ingestion:
 >    translate → tag → embed → publish; hybrid search; quote guardrail).
+>    **M3 ingestion — design (2026-10-28).** Reviews are per order (one survey per order),
+>    so an order with 2+ categories has one text for all its items. One review = one record,
+>    no chunking (median 53 chars). The new table keeps the key (`review_id` + `order_id`,
+>    because `review_id` repeats, F5), `text_pt` (title + message), `text_en`, the tags, the
+>    vector, the full-text column and the models / versions + `loaded_at`. Score, date,
+>    state and category come by join, not copied. 30 random samples (6 per star) showed
+>    slang, typos, very short praise ("bom"), the anonymised store name "lannister" (keep
+>    as is), and text that disagrees with the score (1-star "received perfect, thanks").
+>    🔒 **Translate + tag with an LLM, in one call per review (2026-10-28).** Considered: a
+>    pre-trained MT model (MarianMT / NLLB), a translation API, no translation (multilingual
+>    embeddings). Chosen: the LLM handles slang and typos and tags in the same pass.
+>    Correctness: the schema forces the enums; code rejects empty / still-Portuguese /
+>    odd-length text; a ~100-review gold set scores the tags before the full run; spot
+>    checks after. Model and Batch API: still open (check prices first). Input: `text_pt`
+>    only; the score is not sent, so tags come from the text alone.
+>    🔒 **Structured output, tag list `v1` (2026-10-28).** `{text_en, tags: {delivery,
+>    product, service, price, tone}}`. Every heading is required; "the text does not say" =
+>    `not_mentioned` (never empty). One value: `delivery` (fast, on_time, late,
+>    not_delivered, delivery_failed), `price` (good_value, too_expensive, freight_too_high),
+>    `tone` (positive, neutral, negative, mixed; no `not_mentioned`). List (values can be
+>    true together): `product` (good, damaged_or_defective, wrong_item, missing_items,
+>    not_as_described, bad_quality, other), `service` (good_service, seller_no_response,
+>    tracking_problem, refund_or_return, invoice_problem, other); in a list `not_mentioned`
+>    must stand alone (code checks). Category is not a tag (it comes from `products`).
+>    🔒 **Translate + tag model: Claude Haiku 5.5 through the Batch API (2026-10-28).** Same
+>    model and key as M2, 50% off for work nobody waits on. Estimate (prices checked
+>    2026-10-27; ~830 input + ~80 output tokens per review): all 40,977 reviews ~$2.50 in
+>    Batch (~$1 if the cached system prompt hits; cache hits in a batch are best-effort),
+>    the ~100-review gold set first ~$0.01. A bigger model only if the gold set shows Haiku
+>    is not good enough.
+>    🔒 **Embedding model: `bge-small-en-v1.5` (384 dims), run locally with `fastembed`
+>    (2026-10-28).** Considered: Voyage AI (Anthropic's suggestion) and OpenAI
+>    `text-embedding-3-small` (new provider, new key, a network call per question). Chosen:
+>    free, no key, data stays local, ~130 MB, no PyTorch, quick on CPU for 41k short English
+>    texts. The same model embeds the question at search time, so the worker loads it. The
+>    model name is on every row; switch to Voyage only if the eval shows weak search.
+>    🔒 **Load method: incremental + upsert, idempotent (2026-10-28).** Closes the open M3
+>    item above. Rejected: full reload + swap (a review never changes once written, and a
+>    reload pays ~$2.50 per run to translate the same text again). Each run takes every
+>    review whose key is not yet in the new table (no date watermark: late rows are still
+>    found, and a crashed run continues where it stopped), plus rows whose tag-list / model
+>    version is old. Primary key (`review_id`, `order_id`); every write is `INSERT … ON
+>    CONFLICT (review_id, order_id) DO UPDATE`, so a rerun never adds a row (1 review =
+>    1 row). ✅ Checked 2026-10-28: 99,224 rows = 99,224 distinct pairs, 0 null keys.
+>    🔒 **Which rows go in (2026-10-28):** every review with a non-blank message **or** a
+>    non-blank title (title-only reviews such as "Não recomendo" still give a tone and
+>    sometimes a topic; an emoji-only text gets `not_mentioned` / `other`). `text_pt` =
+>    title + ". " + message, with the blank parts left out. The row count (above 40,977)
+>    and its cost are counted when the table is built. ✅ Counted 2026-10-28: **42,697**
+>    reviews with text (1,720 title-only on top of 40,977).
+>    🔒 **Multi-category orders (2026-10-28).** Count: 464 of 42,697 reviews (1.1%) are on
+>    orders with 2+ categories (1,840 on 2+ products, often one category; 530 on orders with
+>    no items, so no category). Rule: a search filtered by category uses only one-category
+>    orders (a quote about a phone case never shows as "furniture"); a search without a
+>    category filter uses all reviews.
+>    🔒 **Gold set for the tags (2026-10-28).** 100 random reviews (~20 per star, some
+>    title-only). The builder tags them by hand (Portuguese text + a plain English meaning
+>    shown, no LLM tags, so the builder is not led). Haiku tags the same 100 (~$0.01); code
+>    scores single headings by % same and list headings by precision + recall. Pass mark:
+>    ≥ 90% on every heading; below that, change the prompt and run again. Only then the full
+>    run. Prompt examples never come from these 100.
+>    🔒 **Search details (2026-10-28).** Full-text on `text_en` with the `english` settings
+>    (stems: delay / delayed / delays match; small words skipped), stored as a generated
+>    `tsvector` column with a GIN index. Vector: exact scan, **no index** for now (42,697 ×
+>    384 dims ≈ 10–50 ms, always exact, filters never drop rows). Add HNSW only if a check
+>    shows the search is slow.
+>    🔒 **How it runs (2026-10-28).** A command run by hand: `uv run python -m
+>    adaa.ingestion.reviews`. It sends the batch and saves its ID; a second run collects
+>    the results (a batch can take up to 24 h, usually < 1 h); a rerun is safe (upsert).
+>    No daily data arrives now, so no timer. ⏳ Later, to learn it: a daily Celery job that
+>    calls the same code (incremental, so only new reviews).
 >
 >
 > ⚠️ **MANDATORY — DO NOT SKIP: post-build architecture cross-examination.** Once development is
