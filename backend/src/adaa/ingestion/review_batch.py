@@ -6,8 +6,10 @@ collect: reads the answers and checks each one (schema + check_translation), the
 the good ones and upserts them as complete rows (§0: complete rows only). A failed review
 gets no row, so the next send picks it up again.
 
-The file data/batches/<batch id>.json maps each short custom_id back to its review: a
-custom_id may have at most 64 characters, and review_id + order_id already have 64.
+Nothing paid is lost. data/batches/<name>.json maps each short custom_id back to its review
+(a custom_id may have at most 64 characters, and review_id + order_id already have 64); it is
+saved BEFORE the send. <name>.results.jsonl keeps every raw answer from the first download,
+so a rerun of collect reads the disk, not Anthropic.
 
 A batch file that is not collected yet blocks a new send, so the same reviews are never
 paid for twice.
@@ -19,6 +21,7 @@ Run from backend/:
 """
 
 import argparse
+import json
 import sys
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -37,6 +40,7 @@ from adaa.ingestion.reviews import PendingReview, ReviewRow, TranslationVersion,
 from adaa.llm.adapters.anthropic_adapter import AnthropicAdapter, BatchAnswer
 from adaa.llm.adapters.base import Message
 from adaa.llm.config import get_config
+from adaa.llm.types import Usage
 from adaa.settings import REPO_ROOT, get_settings
 
 JOB = "review_translate"
@@ -53,7 +57,8 @@ class BatchReview(BaseModel):
 
 
 class BatchFile(BaseModel):
-    batch_id: str
+    name: str  # the file's name; it exists before the batch, so a send can't lose the map
+    batch_id: str | None  # None until Anthropic accepts the batch
     job: str
     llm_model: str
     prompt_version: str
@@ -67,9 +72,42 @@ class BatchFile(BaseModel):
 
 def save_batch(batch: BatchFile, folder: Path = BATCHES_DIR) -> Path:
     folder.mkdir(parents=True, exist_ok=True)
-    path = folder / f"{batch.batch_id}.json"
+    path = folder / f"{batch.name}.json"
     path.write_text(batch.model_dump_json(indent=2) + "\n", encoding="utf-8")
     return path
+
+
+def results_path(name: str, folder: Path = BATCHES_DIR) -> Path:
+    """Every raw answer of a batch, saved at the first download: one JSON line per answer."""
+    return folder / f"{name}.results.jsonl"
+
+
+def save_answers(answers: list[BatchAnswer], path: Path) -> None:
+    """Write to a temporary file first, so a half-written file never counts as saved."""
+    lines = [
+        json.dumps(
+            {
+                "custom_id": a.custom_id,
+                "text": a.text,
+                "error": a.error,
+                "usage": a.usage.model_dump() if a.usage else None,
+            },
+            ensure_ascii=False,
+        )
+        for a in answers
+    ]
+    tmp = path.with_suffix(".tmp")
+    tmp.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    tmp.replace(path)
+
+
+def load_answers(path: Path) -> list[BatchAnswer]:
+    answers = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        a = json.loads(line)
+        usage = Usage.model_validate(a["usage"]) if a["usage"] else None
+        answers.append(BatchAnswer(a["custom_id"], a["text"], a["error"], usage))
+    return answers
 
 
 def custom_id(n: int) -> str:
@@ -93,10 +131,10 @@ def requests_for(
 
 
 def open_batches(folder: Path = BATCHES_DIR) -> list[str]:
-    """IDs of the batches that were sent but not collected yet."""
+    """Names of the batch files that are not collected yet (sent, or a send that broke)."""
     files = sorted(folder.glob("*.json")) if folder.exists() else []
     found = [BatchFile.model_validate_json(f.read_text(encoding="utf-8")) for f in files]
-    return [b.batch_id for b in found if not b.collected]
+    return [b.name for b in found if not b.collected]
 
 
 def send(
@@ -122,16 +160,20 @@ def send(
         return None
 
     requests, by_id = requests_for(reviews, prompt.text)
-    schema = ReviewTranslation.model_json_schema()
-    batch_id = (adapter or AnthropicAdapter()).create_batch(requests, schema, job)
-    batch = BatchFile(
-        batch_id=batch_id,
+    sent_at = datetime.now(UTC)
+    draft = BatchFile(
+        name=f"{JOB}_{sent_at:%Y-%m-%d_%H%M%S}",
+        batch_id=None,
         job=JOB,
         llm_model=job.model_name,
         prompt_version=prompt.version,
-        sent_at=datetime.now(UTC),
+        sent_at=sent_at,
         reviews=by_id,
     )
+    save_batch(draft, folder)  # the map is on disk before anything is paid
+    schema = ReviewTranslation.model_json_schema()
+    batch_id = (adapter or AnthropicAdapter()).create_batch(requests, schema, job)
+    batch = draft.model_copy(update={"batch_id": batch_id})
     path = save_batch(batch, folder)
     print(f"sent batch {batch_id} · saved {path}")
     return batch
@@ -160,8 +202,8 @@ class Collected:
     cost_usd: float
 
 
-def load_batch(batch_id: str, folder: Path = BATCHES_DIR) -> BatchFile:
-    return BatchFile.model_validate_json((folder / f"{batch_id}.json").read_text("utf-8"))
+def load_batch(name: str, folder: Path = BATCHES_DIR) -> BatchFile:
+    return BatchFile.model_validate_json((folder / f"{name}.json").read_text("utf-8"))
 
 
 def check_answer(review: BatchReview, answer: BatchAnswer) -> str:
@@ -181,18 +223,42 @@ def check_answer(review: BatchReview, answer: BatchAnswer) -> str:
     return translation.text_en
 
 
+def download(batch: BatchFile, adapter: AnthropicAdapter, folder: Path) -> list[BatchAnswer] | None:
+    """The batch's answers: from the local file if saved, else from Anthropic (then saved).
+
+    After the first download nothing needs the network: a rerun reads the local file.
+    None while Anthropic is still working on the batch.
+    """
+    path = results_path(batch.name, folder)
+    if path.exists():
+        return load_answers(path)
+    if batch.batch_id is None:
+        raise RuntimeError(
+            f"{batch.name}: the send broke before Anthropic returned a batch ID. Look for a "
+            f"batch sent at {batch.sent_at:%Y-%m-%d %H:%M} UTC in the Anthropic console; if "
+            "there is one, put its ID in the file, else delete the file."
+        )
+    job = get_config().job_settings(batch.job)
+    if (status := adapter.batch_status(batch.batch_id, job)) != "ended":
+        print(f"batch {batch.batch_id} is {status}: try again later")
+        return None
+    answers = adapter.batch_answers(batch.batch_id, job)
+    save_answers(answers, path)
+    print(f"saved {len(answers)} answers to {path}")
+    return answers
+
+
 def collect(
-    batch_id: str, *, adapter: AnthropicAdapter | None = None, folder: Path = BATCHES_DIR
+    name: str, *, adapter: AnthropicAdapter | None = None, folder: Path = BATCHES_DIR
 ) -> Collected | None:
     """Read and check the answers of a batch. None while Anthropic is still working on it."""
-    batch = load_batch(batch_id, folder)
-    job = get_config().job_settings(batch.job)
-    adapter = adapter or AnthropicAdapter()
-    if (status := adapter.batch_status(batch_id, job)) != "ended":
-        print(f"batch {batch_id} is {status}: try again later")
+    batch = load_batch(name, folder)
+    downloaded = download(batch, adapter or AnthropicAdapter(), folder)
+    if downloaded is None:
         return None
+    batch_id = batch.batch_id
 
-    answers = {a.custom_id: a for a in adapter.batch_answers(batch_id, job)}
+    answers = {a.custom_id: a for a in downloaded}
     good, failed = [], []
     for cid, review in batch.reviews.items():
         answer = answers.get(cid) or BatchAnswer(cid, None, "no answer in the results", None)
@@ -260,14 +326,14 @@ def main() -> None:
     send_cmd.add_argument("--limit", type=int, help="send only the first N reviews")
     send_cmd.add_argument("--dry-run", action="store_true", help="count and cost only")
     collect_cmd = commands.add_parser("collect", help="check, embed and write the open batches")
-    collect_cmd.add_argument("batch_id", nargs="?", help="default: every open batch")
+    collect_cmd.add_argument("name", nargs="?", help="a batch file name; default: every open batch")
     args = parser.parse_args()
     with psycopg.connect(get_settings().postgres_conninfo("review_writer")) as conn:
         if args.command == "send":
             send(conn, limit=args.limit, dry_run=args.dry_run)
             return
-        for batch_id in [args.batch_id] if args.batch_id else open_batches():
-            if collected := collect(batch_id):
+        for name in [args.name] if args.name else open_batches():
+            if collected := collect(name):
                 write(conn, collected)
 
 

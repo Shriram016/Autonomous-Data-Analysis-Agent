@@ -49,6 +49,21 @@ later. Interview-style system-design questions live in [v3-cross-examination.md]
     privilege, as with `adaa_query` / `adaa_review_writer`), secrets in a secret manager,
     no public network access, monitoring (slow queries, disk, connections), upgrades,
     pgvector as an extension on a managed host
+- **Batch API calls to an LLM (Claude and others)** — raised 2026-10-29 (M3, before the
+  full run of 42,562 reviews with `review_batch.py`):
+  - Normal call vs batch: a normal call answers in seconds and you wait for it; a batch takes
+    many requests at once, answers in the background (most in < 1 h, at most 24 h) at half
+    the price. When each one fits: a user waiting (normal) vs work nobody waits on (batch)
+  - How it works: create → poll the status → download the results (kept 29 days at
+    Anthropic) → match each answer by its `custom_id`. Limits (100,000 requests or 256 MB per
+    batch), the result types (succeeded / errored / canceled / expired)
+  - The same idea at other providers: OpenAI Batch API (a JSONL file upload), Google Gemini
+    batch mode, AWS Bedrock batch inference. What differs between them
+  - Prompt caching inside a batch (best effort), and why it matters less for a short prompt
+  - In production: idempotent writes (upsert), save the request map before the send and the
+    raw answers at the first download (never pay twice), resend only the failed requests,
+    one batch at a time, a timer job (Celery beat / cron) that polls and collects, alerts
+    when a batch expires or fails, cost tracking per batch, splitting very large jobs
 - **Fingerprints (SHA-256)** — raised 2026-10-22 (M1.3): what a hash is, why any one-character
   edit changes it, why each answer records version + fingerprint (semantic layer, prompts)
 
