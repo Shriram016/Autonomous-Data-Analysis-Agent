@@ -1206,7 +1206,9 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    `check_translation`). Search = vectors + full-text + filters from the tables (score,
 >    dates, status, state, category). Lost: exact counts by topic ("35% of 1-star reviews
 >    are about a defective item"); the agent answers those from N sample reviews and says so,
->    or refuses. The tag gold set, its scorer and gold runs 1–3 moved to `eval/archive/review_tags/`; the translations are checked by
+>    or refuses. Gold runs 1–3 moved to `eval/archive/review_tags/`; the tag gold set and its scorer
+>    are only in git (commit `8d46343`); its texts and checked meanings became
+>    `eval/gold/review_translate.yaml` (100 reviews, no tags); the translations are checked by
 >    `check_translation` on every row + 20 random rows read after the full run. To add tags
 >    later: a new prompt version marks every row old, the upsert updates them (~$2, no
 >    restart).
