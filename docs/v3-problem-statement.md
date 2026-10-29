@@ -1108,7 +1108,12 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    2026-10-27; ~830 input + ~80 output tokens per review): all 40,977 reviews ~$2.50 in
 >    Batch (~$1 if the cached system prompt hits; cache hits in a batch are best-effort),
 >    the ~100-review gold set first ~$0.01. A bigger model only if the gold set shows Haiku
->    is not good enough.
+>    is not good enough. **Estimate corrected 2026-10-29** after a real 5-review smoke test
+>    of `tag_one` (prompt `review_tag` 0.1.0, $0.000629 total, schema accepted, all 5 passed
+>    the checks): the system prompt is ~2,226 tokens, not ~800, so the full run is **~$6 in
+>    Batch without cache hits, ~$1.50 with them** (calls 2–5 read the cache, ~$0.00007 each).
+>    Seen: "not received yet, the deadline was 20/03" tagged `late`, where the meanings say
+>    `not_delivered`; the gold set measures this and may lead to a clearer prompt rule.
 >    🔒 **Embedding model: `bge-small-en-v1.5` (384 dims), run locally with `fastembed`
 >    (2026-10-28).** Considered: Voyage AI (Anthropic's suggestion) and OpenAI
 >    `text-embedding-3-small` (new provider, new key, a network call per question). Chosen:
@@ -1123,6 +1128,11 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    version is old. Primary key (`review_id`, `order_id`); every write is `INSERT … ON
 >    CONFLICT (review_id, order_id) DO UPDATE`, so a rerun never adds a row (1 review =
 >    1 row). ✅ Checked 2026-10-28: 99,224 rows = 99,224 distinct pairs, 0 null keys.
+>    🔒 **Complete rows only (2026-10-29).** Per group: batch results → check → embed
+>    (local) → one upsert of complete rows (text, tags, vector, versions). A row in the table
+>    = a finished review. A crash before the write loses nothing paid: batch results stay
+>    downloadable for 29 days. A later embedding-model change updates only `embedding` +
+>    `embed_model`.
 >    🔒 **Which rows go in (2026-10-28):** every review with a non-blank message **or** a
 >    non-blank title (title-only reviews such as "Não recomendo" still give a tone and
 >    sometimes a topic; an emoji-only text gets `not_mentioned` / `other`). `text_pt` =

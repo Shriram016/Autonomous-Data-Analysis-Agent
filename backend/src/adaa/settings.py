@@ -14,7 +14,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
 # Database roles are named after the job that uses them (§0, Database access).
-DbRole = Literal["owner", "loader", "query", "app"]
+DbRole = Literal["owner", "loader", "query", "app", "review_writer"]
 
 
 class Settings(BaseSettings):
@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     db_loader_password: SecretStr | None = None  # only the load / ingestion job needs it
     db_query_password: SecretStr | None = None  # the agent's read-only queries
     db_app_password: SecretStr | None = None  # the app's own rows: questions (M1.5)
+    db_review_writer_password: SecretStr | None = None  # review ingestion writes (M3)
 
     db_connect_timeout_s: int = 2  # locked in the failure design: fail fast, never hang
 
@@ -50,6 +51,7 @@ class Settings(BaseSettings):
                 "loader": self.db_loader_password,
                 "query": self.db_query_password,
                 "app": self.db_app_password,
+                "review_writer": self.db_review_writer_password,
             }
             found = role_password[role]
             if found is None:

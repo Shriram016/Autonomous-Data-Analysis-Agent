@@ -38,6 +38,17 @@ later. Interview-style system-design questions live in [v3-cross-examination.md]
     never inside the API's start-up (several copies would race)
   - Safe changes with old and new code running side by side (expand → migrate → contract),
     and Kubernetes / ECS one-off jobs for the same step
+- **Databases in production: Docker or managed, set-up and best practice** — raised
+  2026-10-29 (M3, while creating `business.review_vectors`):
+  - Is the database run in Docker in production, or as a managed service (AWS RDS / Aurora,
+    Cloud SQL, Supabase, Neon)? Why most teams run the database outside containers
+  - Where a table is really stored: the data directory on disk, Docker volumes (our
+    `pgdata`), what is lost when a container or a volume is removed
+  - How a new table reaches production: a migration in the deploy pipeline, never by hand
+  - Best practice: backups and point-in-time restore, replicas, one role per job (least
+    privilege, as with `adaa_query` / `adaa_review_writer`), secrets in a secret manager,
+    no public network access, monitoring (slow queries, disk, connections), upgrades,
+    pgvector as an extension on a managed host
 - **Fingerprints (SHA-256)** — raised 2026-10-22 (M1.3): what a hash is, why any one-character
   edit changes it, why each answer records version + fingerprint (semantic layer, prompts)
 
