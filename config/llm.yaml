@@ -99,12 +99,14 @@ jobs:
     max_rows: 20  # at most this many data rows are sent to the LLM ("top 20 of N")
     cache: 5m  # the rows go in the user message, after the cached system prompt
 
-  review_tag:  # Portuguese review → English text + 5 tags (M3 ingestion; one review per call)
+  review_translate:  # Portuguese review → English text (M3 ingestion; one review per call)
     model: claude-haiku-5-5
     thinking: disabled
-    max_tokens: 400  # a short translation + 5 short fields
+    max_tokens: 400  # the longest reviews are ~200 words
     timeout_seconds: 30
-    # One retry with the errors: no valid answer means no row. Used for the gold set and for
+    # One retry with the errors: no valid answer means no row. Used for spot checks and for
     # redoing failed reviews; the full run sends the same request through the Batch API.
     max_attempts: 2
-    cache: 5m  # the same ~1,000-token system prompt for every review
+    # The same system prompt for every review. If it is shorter than the model's cache
+    # minimum, the API does not cache it and charges the normal price (no error).
+    cache: 5m

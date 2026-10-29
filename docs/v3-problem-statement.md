@@ -1142,7 +1142,11 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    sometimes a topic; an emoji-only text gets `not_mentioned` / `other`). `text_pt` =
 >    title + ". " + message, with the blank parts left out. The row count (above 40,977)
 >    and its cost are counted when the table is built. ✅ Counted 2026-10-28: **42,697**
->    reviews with text (1,720 title-only on top of 40,977).
+>    reviews with text (1,720 title-only on top of 40,977). **Corrected 2026-10-29: 42,687**
+>    after trimming tabs and line breaks too (many Olist texts end in `\r\n`; 10 were only
+>    blanks). **Then 42,582:** texts of plain punctuation only (". .", ".") are left out, as
+>    they have nothing to translate or tag (105 rows); an emoji still counts ("👍" has a
+>    tone). The other counts in this block used the old rule and stay as rough numbers.
 >    🔒 **Multi-category orders (2026-10-28).** Count: 464 of 42,697 reviews (1.1%) are on
 >    orders with 2+ categories (1,840 on 2+ products, often one category; 530 on orders with
 >    no items, so no category). Rule: a search filtered by category uses only one-category
@@ -1154,6 +1158,58 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    scores single headings by % same and list headings by precision + recall. Pass mark:
 >    ≥ 90% on every heading; below that, change the prompt and run again. Only then the full
 >    run. Prompt examples never come from these 100.
+>    **Changed 2026-10-29 (builder's choice):** Claude Code tagged the 100 (not the builder
+>    by hand), with a note on each unclear case (28), and the builder checks them. Trade-off:
+>    an LLM then judges an LLM, though a different, stronger one that is not under test.
+>    File: `eval/gold/review_tags_v1.yaml`. The tagging showed 2 gaps in tag list v1: no
+>    `delivery` value for a split delivery (g046) or for "slow but not surely late" (g074),
+>    and no `product` value for an "average / so-so" product (g044). ✅ Builder read the
+>    readable view (`eval/gold/review_tags_v1.md`) and accepted the tags (2026-10-29).
+>    **Gold run 1 (2026-10-29, prompt 0.1.0, tags v1, $0.0074, 142 s): not passed.** delivery
+>    96%, price 99%, tone 96% ✅; product precision 83% / recall 93% ❌; service precision 60%
+>    / recall 82% ❌; all 5 right in 67/100. Causes: `service: other` overused; positive text
+>    read as a problem ("as specified" → `not_as_described`); a missing part also tagged
+>    `not_delivered`; a few unclear gold tags. File: `eval/results/review_gold_2026-10-29_052703`.
+>    🔒 **Tag list v2 (2026-10-29), replaces v1.** Removed `other` (product, service: it told a
+>    manager nothing and was Haiku's main error) and `delivery_failed` (0 uses in gold).
+>    `delivery`: fast, on_time, late, not_delivered, not_mentioned. `product`: good,
+>    damaged_or_defective, wrong_item, missing_items, not_as_described, bad_quality,
+>    not_mentioned. `service`: good_service, seller_no_response, tracking_problem,
+>    refund_or_return, invoice_problem, not_mentioned. `price` and `tone` unchanged. Meanings
+>    widened: `late` also "took too long"; `not_delivered` = nothing reached the address;
+>    `seller_no_response` also "no update"; `refund_or_return` also cancelling. Gold moved to
+>    `eval/gold/review_tags_v2.yaml`: the 7 labels that used `other` were re-tagged (note
+>    "v2: …"); all 100 validate under v2.
+>    **Gold run 2 (2026-10-29, prompt 0.2.0, tags v2, $0.0077): not passed.** All 5 right
+>    74/100; service precision 76% / recall 94% (was 60 / 82); product 82% / 93% (no
+>    change): `wrong_item` and `not_as_described` overlap, and "as specified" still got
+>    `not_as_described`.
+>    🔒 **Tag list v3 (2026-10-29, builder's aim: few values that never overlap), replaces
+>    v2.** `delivery`: on_time (on time or early), late (late or took too long),
+>    not_delivered, not_mentioned. `product`: good, defective (broken, not working or poor
+>    quality), wrong_or_missing (wrong item or a part missing), not_mentioned. `service`:
+>    good_service, seller_no_response, order_info_problem (tracking code, invoice or other
+>    order details missing or wrong), refund_or_return, not_mentioned. `price` and `tone`
+>    unchanged. Prompt `review_tag` 0.3.0 uses the v3 names. Gold moved to
+>    `eval/gold/review_tags_v3.yaml` by a fixed mapping (40 labels; 2 merged lists); all 100
+>    validate under v3.
+>    **Gold run 3 (2026-10-29, prompt 0.3.0, tags v3, $0.0075): not passed.** All 5 right
+>    78/100; product 92% / 96% ✅; service precision 71% / recall 100% ❌. Of the 22
+>    disagreements: Haiku wrong in 13, gold wrong in 5, 5 borderline. Each fix raised new
+>    questions about the values (split delivery, "still waiting").
+>    🔒 **Tags dropped for now: translation only (2026-10-29, builder's choice), replaces the
+>    tag decisions above.** Reason: most tags repeat facts the tables already have —
+>    `delivery` repeats the order dates and status ("late" is a fact from
+>    `order_delivered_customer_date > order_estimated_delivery_date`), `tone` repeats the
+>    star score — and the rest cost repeated gold work for little gain. Haiku returns only
+>    `{text_en}` (structured output kept: the schema check + 1 retry; then
+>    `check_translation`). Search = vectors + full-text + filters from the tables (score,
+>    dates, status, state, category). Lost: exact counts by topic ("35% of 1-star reviews
+>    are about a defective item"); the agent answers those from N sample reviews and says so,
+>    or refuses. The tag gold set, its scorer and gold runs 1–3 moved to `eval/archive/review_tags/`; the translations are checked by
+>    `check_translation` on every row + 20 random rows read after the full run. To add tags
+>    later: a new prompt version marks every row old, the upsert updates them (~$2, no
+>    restart).
 >    🔒 **Search details (2026-10-28).** Full-text on `text_en` with the `english` settings
 >    (stems: delay / delayed / delays match; small words skipped), stored as a generated
 >    `tsvector` column with a GIN index. Vector: exact scan, **no index** for now (42,697 ×

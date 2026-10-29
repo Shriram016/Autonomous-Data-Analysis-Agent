@@ -1,0 +1,3419 @@
+{
+  "started_at": "2026-10-29T06:41:07.384541Z",
+  "prompt": "review_tag 0.2.0 (59006d944bf7)",
+  "tag_list_version": "v2",
+  "total": 100,
+  "all_right": 74,
+  "failed_calls": 0,
+  "scores": {
+    "delivery": {
+      "same": 0.94,
+      "precision": null,
+      "recall": null,
+      "passed": true
+    },
+    "product": {
+      "same": 0.87,
+      "precision": 0.823,
+      "recall": 0.927,
+      "passed": false
+    },
+    "service": {
+      "same": 0.95,
+      "precision": 0.762,
+      "recall": 0.941,
+      "passed": false
+    },
+    "price": {
+      "same": 1.0,
+      "precision": null,
+      "recall": null,
+      "passed": true
+    },
+    "tone": {
+      "same": 0.95,
+      "precision": null,
+      "recall": null,
+      "passed": true
+    }
+  },
+  "passed": false,
+  "cost_usd": 0.007698,
+  "seconds": 155.6,
+  "results": [
+    {
+      "id": "g001",
+      "text_pt": "Chegou antes da data prevista",
+      "meaning": "Arrived before the expected date.",
+      "note": "",
+      "gold": {
+        "delivery": "fast",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "fast",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "text_en": "It arrived before the expected date",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.000351325
+    },
+    {
+      "id": "g002",
+      "text_pt": "Chegou antes do combinado bem embalada em perfeitas condições já conheço a Américas confio de mas . E super recomendo o site da Cuba. Amei",
+      "meaning": "Arrived before the agreed date, well packed, in perfect condition. I already know the store and trust it. I strongly recommend the site. Loved it.",
+      "note": "",
+      "gold": {
+        "delivery": "fast",
+        "product": [
+          "good"
+        ],
+        "service": [
+          "good_service"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "fast",
+        "product": [
+          "good"
+        ],
+        "service": [
+          "good_service"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "text_en": "It arrived before the agreed date, well packaged and in perfect condition. I already know Américas and I trust it. I highly recommend the Cuba site. I loved it",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00008505
+    },
+    {
+      "id": "g003",
+      "text_pt": "Boa noite. venho por deste comunicar que recebi apenas o bebe conforto. No ato da entrega faltou o carrinho. Preciso que resolvam o mais rapido possivel. att Alssandro. No aguardo.",
+      "meaning": "Good evening. I am writing to say that I only received the baby car seat. The stroller was missing from the delivery. I need you to solve this as soon as possible. Regards, [name]. Waiting.",
+      "note": "contains a customer name",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "missing_items"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "missing_items"
+        ],
+        "service": [
+          "seller_no_response"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "Good evening. I am writing to inform you that I only received the baby car seat. At the time of delivery the stroller was missing. I need you to resolve this as quickly as possible. Regards, Alssandro. Awaiting your reply.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [
+        "service"
+      ],
+      "cost_usd": 0.00010345000000000001
+    },
+    {
+      "id": "g004",
+      "text_pt": "Produto excelente. Cadiveu é maravilhoso!!!",
+      "meaning": "Excellent product. Cadiveu [a brand] is wonderful!!!",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "good"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "good"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "text_en": "Excellent product. Cadiveu is wonderful!!!",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006945000000000001
+    },
+    {
+      "id": "g005",
+      "text_pt": "Bom dia\r\nNão recebi o produto e tambem não recebi nenhum aviso dos correios. Estou chateada por isso.",
+      "meaning": "Good morning. I did not receive the product and I also got no notice from the post office. I am upset about it.",
+      "note": "'no notice from the post office': no tag fits well (service other?)",
+      "gold": {
+        "delivery": "not_delivered",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "not_delivered",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "tracking_problem"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "Good morning. I did not receive the product and I also did not receive any notice from the postal service. I am upset about this.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [
+        "service"
+      ],
+      "cost_usd": 0.00008104999999999999
+    },
+    {
+      "id": "g006",
+      "text_pt": "produto otimo preço bom e entrega rapida eu recomendo",
+      "meaning": "Great product, good price and fast delivery, I recommend it.",
+      "note": "",
+      "gold": {
+        "delivery": "fast",
+        "product": [
+          "good"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "good_value",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "fast",
+        "product": [
+          "good"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "good_value",
+        "tone": "positive"
+      },
+      "text_en": "Great product, good price and fast delivery, I recommend it.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006534999999999999
+    },
+    {
+      "id": "g007",
+      "text_pt": "Não é tão confortável. O produto não é tão confortável. Pensei q se ajustasse confortavelmente à cabeça e ao trapézio, mas não se amolda tão bem assim.",
+      "meaning": "Not so comfortable. The product is not very comfortable. I thought it would fit the head and the upper back comfortably, but it does not shape itself that well.",
+      "note": "uncomfortable: bad_quality, not_as_described?",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "bad_quality"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "bad_quality"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "It is not that comfortable. The product is not that comfortable. I thought it would fit comfortably on the head and trapezius, but it does not conform that well.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00008955
+    },
+    {
+      "id": "g008",
+      "text_pt": "Bom",
+      "meaning": "Good.",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "text_en": "Good",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.000060950000000000004
+    },
+    {
+      "id": "g009",
+      "text_pt": "Tapete bom pelo preço.",
+      "meaning": "A good rug for the price.",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "good"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "good_value",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "good"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "good_value",
+        "tone": "positive"
+      },
+      "text_en": "Good rug for the price.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.000060849999999999995
+    },
+    {
+      "id": "g010",
+      "text_pt": "A luva é muto boa, vem uma segunda pele para usar por baixo da luva normal, pena que essa segunda pele veio com uma linha saindo bem no meio, se puxar, ela descostura, mas a luva impermeável é ótima!",
+      "meaning": "The glove is very good; it comes with a second-skin layer to wear under it. Pity that this layer came with a thread coming out right in the middle, and if you pull it, it comes unstitched. But the waterproof glove is great!",
+      "note": "a loose thread = defect",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "good",
+          "damaged_or_defective"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "mixed"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "good",
+          "damaged_or_defective"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "mixed"
+      },
+      "text_en": "The glove is very good, it comes with a second skin to wear under the normal glove, too bad this second skin came with a thread sticking out right in the middle, if you pull it, it comes unstitched, but the waterproof glove is great!",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00010685
+    },
+    {
+      "id": "g011",
+      "text_pt": "Mercadoria",
+      "meaning": "Merchandise.",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "neutral"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "neutral"
+      },
+      "text_en": "Merchandise",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006325
+    },
+    {
+      "id": "g012",
+      "text_pt": "Podem comprar, é de confiança.",
+      "meaning": "You can buy, it is trustworthy.",
+      "note": "'trustworthy' read as the store",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "good_service"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "good_service"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "text_en": "You can buy it, it's trustworthy.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006645
+    },
+    {
+      "id": "g013",
+      "text_pt": "Ótimo. Muito rápido na entrega",
+      "meaning": "Great. Very fast delivery.",
+      "note": "",
+      "gold": {
+        "delivery": "fast",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "fast",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "text_en": "Great. Very fast delivery",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006425
+    },
+    {
+      "id": "g014",
+      "text_pt": "Nao recomendo. produto veio quebrado e mas de uma semana estou tentando resolver e ninguem fala nada . um absurdo pois paguei por ele inteiro e nao pela metade .",
+      "meaning": "I do not recommend it. The product came broken, and for more than a week I have been trying to solve it and nobody says anything. Absurd, because I paid for it whole and not for half.",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "damaged_or_defective"
+        ],
+        "service": [
+          "seller_no_response"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "damaged_or_defective"
+        ],
+        "service": [
+          "seller_no_response"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "I do not recommend it. The product arrived broken and for more than a week I have been trying to resolve this and nobody says anything. Absurd, since I paid for it whole and not half.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00009535
+    },
+    {
+      "id": "g015",
+      "text_pt": "ótimo produto! atendeu minhas expectativas!",
+      "meaning": "Great product! It met my expectations!",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "good"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "good"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "text_en": "Great product! It met my expectations!",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006455
+    },
+    {
+      "id": "g016",
+      "text_pt": "loja muito boa. Gostei da loja e do atendimento",
+      "meaning": "Very good store. I liked the store and the service.",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "good_service"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "good_service"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "text_en": "Very good store. I liked the store and the service.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006715
+    },
+    {
+      "id": "g017",
+      "text_pt": "Bom. Ótimo produto entregue no prazo",
+      "meaning": "Good. Great product, delivered on time.",
+      "note": "",
+      "gold": {
+        "delivery": "on_time",
+        "product": [
+          "good"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "on_time",
+        "product": [
+          "good"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "text_en": "Good. Great product delivered on time",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006295
+    },
+    {
+      "id": "g018",
+      "text_pt": "Demorou muito pra chegar, mas acredito ser por conta dos Correios",
+      "meaning": "It took a long time to arrive, but I think that is because of the post office.",
+      "note": "'took long' read as late",
+      "gold": {
+        "delivery": "late",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "late",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "It took a very long time to arrive, but I believe it is because of the Correios.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00007185
+    },
+    {
+      "id": "g019",
+      "text_pt": "Produto de qualidade e entrega rápida.",
+      "meaning": "Quality product and fast delivery.",
+      "note": "",
+      "gold": {
+        "delivery": "fast",
+        "product": [
+          "good"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "fast",
+        "product": [
+          "good"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "text_en": "Quality product and fast delivery.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006225
+    },
+    {
+      "id": "g020",
+      "text_pt": "Recomendo. A entrega foi muita rápida e o produto é de boa qualidade.",
+      "meaning": "I recommend it. The delivery was very fast and the product is of good quality.",
+      "note": "",
+      "gold": {
+        "delivery": "fast",
+        "product": [
+          "good"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "fast",
+        "product": [
+          "good"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "text_en": "I recommend it. The delivery was very fast and the product is of good quality.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006965
+    },
+    {
+      "id": "g021",
+      "text_pt": "o avião recebi. as prateleiras não recebi",
+      "meaning": "I received the plane. I did not receive the shelves.",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "missing_items"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "on_time",
+        "product": [
+          "missing_items"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "neutral"
+      },
+      "text_en": "I received the airplane. I did not receive the shelves.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [
+        "delivery",
+        "tone"
+      ],
+      "cost_usd": 0.00006785
+    },
+    {
+      "id": "g022",
+      "text_pt": "O case chegou com dois arranhões infelizmente.",
+      "meaning": "Unfortunately the case arrived with two scratches.",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "damaged_or_defective"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "damaged_or_defective"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "The case arrived with two scratches, unfortunately.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00007095
+    },
+    {
+      "id": "g023",
+      "text_pt": "Comprei 6 kits de \"Cloreto de Magnésio PA 240 Capsulas de 500 mg\". Chegaram apenas 2 kits em embalagens distintas. Restam chegar ainda 4 kits. Já reclamei no site, mas ainda não obtive resposta.",
+      "meaning": "I bought 6 kits of 'Magnesium Chloride PA 240 capsules of 500 mg'. Only 2 kits arrived, in separate packages. 4 kits still have to arrive. I already complained on the site, but I have not had an answer yet.",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "missing_items"
+        ],
+        "service": [
+          "seller_no_response"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "not_delivered",
+        "product": [
+          "missing_items"
+        ],
+        "service": [
+          "seller_no_response"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "I bought 6 kits of \"Cloreto de Magnésio PA 240 Capsulas de 500 mg\". Only 2 kits arrived, in separate packages. 4 kits are still to arrive. I already complained on the site, but I have not received a response yet.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [
+        "delivery"
+      ],
+      "cost_usd": 0.00011145
+    },
+    {
+      "id": "g024",
+      "text_pt": "Segundo produto no mesmo mês que nao recebo, com certeza não comprarei mais nas lannister, minha ultima compra foi essa.",
+      "meaning": "Second product in the same month that I did not receive. I will certainly not buy from lannister again; this was my last purchase.",
+      "note": "",
+      "gold": {
+        "delivery": "not_delivered",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "not_delivered",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "Second product this month that I did not receive, I will certainly not buy from lannister anymore, my last purchase was this one.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00008255
+    },
+    {
+      "id": "g025",
+      "text_pt": "Até a presente data, 26/01/2018, não recebi o produto comprado. Solicito providências.",
+      "meaning": "As of today, 26/01/2018, I have not received the product I bought. I ask you to take action.",
+      "note": "",
+      "gold": {
+        "delivery": "not_delivered",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "not_delivered",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "As of today, 26/01/2018, I have not received the product I purchased. I request action.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00007595
+    },
+    {
+      "id": "g026",
+      "text_pt": "Foi tudo certinho, antes do tempo de entrega... Parabéns.",
+      "meaning": "Everything went right, before the delivery time... Congratulations.",
+      "note": "",
+      "gold": {
+        "delivery": "fast",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "fast",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "good_service"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "text_en": "Everything went smoothly, before the delivery time... Congratulations.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [
+        "service"
+      ],
+      "cost_usd": 0.00006984999999999999
+    },
+    {
+      "id": "g027",
+      "text_pt": "RECOMENDO. recomendo",
+      "meaning": "I RECOMMEND IT. I recommend it.",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "text_en": "I RECOMMEND. I recommend",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006735
+    },
+    {
+      "id": "g028",
+      "text_pt": "O som é baixo, mas atende minhas necessidades.",
+      "meaning": "The sound is low, but it meets my needs.",
+      "note": "'sound is low, but meets my needs'",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "good",
+          "bad_quality"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "mixed"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "bad_quality"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "mixed"
+      },
+      "text_en": "The sound is low, but it meets my needs.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [
+        "product"
+      ],
+      "cost_usd": 0.00006855
+    },
+    {
+      "id": "g029",
+      "text_pt": "Avaliação positiva",
+      "meaning": "Positive rating.",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "text_en": "Positive review",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006245
+    },
+    {
+      "id": "g030",
+      "text_pt": "Fiz a compra do produto e foi postado em pouco tempo, fora a entrega que foi muito rápida além de bem embalado. Recomendo",
+      "meaning": "I bought the product and it was posted quickly; also the delivery was very fast, and it was well packed. I recommend it.",
+      "note": "'posted quickly' read as service",
+      "gold": {
+        "delivery": "fast",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "good_service"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "fast",
+        "product": [
+          "good"
+        ],
+        "service": [
+          "good_service"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "text_en": "I bought the product and it was shipped in a short time, and the delivery was very fast, besides being well packaged. I recommend it",
+      "error": null,
+      "check_problems": [],
+      "wrong": [
+        "product"
+      ],
+      "cost_usd": 0.00007815
+    },
+    {
+      "id": "g031",
+      "text_pt": "produto regular\r\nmas as estampas sao lindas",
+      "meaning": "Average product, but the prints are beautiful.",
+      "note": "'average product, nice prints'",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "good",
+          "bad_quality"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "mixed"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "good",
+          "bad_quality"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "mixed"
+      },
+      "text_en": "Regular product, but the prints are beautiful.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00007025
+    },
+    {
+      "id": "g032",
+      "text_pt": "O produto veio embalado apenas por um frágil envelope, o que ocasionou o fato da caixa do cartucho ficar totalmente destruída.",
+      "meaning": "The product came packed only in a fragile envelope, so the cartridge box was completely destroyed.",
+      "note": "weak packing broke the box",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "damaged_or_defective"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "damaged_or_defective"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "The product came packed in only a flimsy envelope, which caused the cartridge box to be completely destroyed.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00008265
+    },
+    {
+      "id": "g033",
+      "text_pt": "Sem opinião.",
+      "meaning": "No opinion.",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "neutral"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "neutral"
+      },
+      "text_en": "No opinion.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006335
+    },
+    {
+      "id": "g034",
+      "text_pt": "aconteceu algo na entrega e eu não recebi ainda o produto. ninguém me explicou ainda o que foi essa ocorrência",
+      "meaning": "Something happened with the delivery and I have not received the product yet. Nobody has explained to me yet what this event was.",
+      "note": "",
+      "gold": {
+        "delivery": "not_delivered",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "seller_no_response"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "not_delivered",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "seller_no_response"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "Something happened with the delivery and I have not received the product yet. Nobody has explained to me yet what the incident was.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00008185
+    },
+    {
+      "id": "g035",
+      "text_pt": "Poderiam ter a opção de frete por sedex ou transportadora, para agilizar a entrega.",
+      "meaning": "You could offer shipping by Sedex [express post] or by a carrier, to make the delivery quicker.",
+      "note": "v2: was service other (a shipping suggestion, no service problem)",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "neutral"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "neutral"
+      },
+      "text_en": "They could offer the option of shipping by Sedex or by carrier, to speed up delivery.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00007805
+    },
+    {
+      "id": "g036",
+      "text_pt": "Faltou 01 produto. Comprei 03 cadeiras, foram entregues duas cadeiras (palito) a cadeira rotatória ainda não foi entregue....",
+      "meaning": "1 product was missing. I bought 3 chairs; two chairs were delivered, and the swivel chair has not been delivered yet...",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "missing_items"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "not_delivered",
+        "product": [
+          "missing_items"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "One product was missing. I bought 03 chairs, two chairs (wooden stick) were delivered, the swivel chair has not been delivered yet....",
+      "error": null,
+      "check_problems": [],
+      "wrong": [
+        "delivery"
+      ],
+      "cost_usd": 0.00008745
+    },
+    {
+      "id": "g037",
+      "text_pt": "A entrega foi bem antes do esperado. O produto é de qualidade venho em uma embalagem perfeita.",
+      "meaning": "The delivery was well before expected. The product is of good quality and came in perfect packaging.",
+      "note": "",
+      "gold": {
+        "delivery": "fast",
+        "product": [
+          "good"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "fast",
+        "product": [
+          "good"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "text_en": "The delivery was well before the expected date. The product is of good quality and came in perfect packaging.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00007345
+    },
+    {
+      "id": "g038",
+      "text_pt": "super recomendo",
+      "meaning": "I strongly recommend it.",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "text_en": "I highly recommend it",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006365
+    },
+    {
+      "id": "g039",
+      "text_pt": "Não recebi o produto. Realizei a compra do kit adipômetro da Sanny e um estadiômetro de bolso da Cescorf, porém recebi apenas o adipômetro com defeito (rachadura na parte da trena) e o meu kit de adipômetro não chegou.",
+      "meaning": "I did not receive the product. I bought a Sanny skinfold caliper kit and a Cescorf pocket height measure, but I only received the caliper, defective (a crack in the tape part), and my caliper kit did not arrive.",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "damaged_or_defective",
+          "missing_items"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "not_delivered",
+        "product": [
+          "damaged_or_defective",
+          "missing_items"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "I did not receive the product. I bought the Sanny skinfold caliper kit and a pocket stadiometer from Cescorf, but I only received the caliper with a defect (crack in the measuring tape part), and my caliper kit did not arrive.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [
+        "delivery"
+      ],
+      "cost_usd": 0.00011214999999999999
+    },
+    {
+      "id": "g040",
+      "text_pt": "Já sou cliente a um bom tempo e entendo o atraso mais esse deveria ser o diferencial os produtos já sabemos da qualidade exelente...",
+      "meaning": "I have been a customer for a long time and I understand the delay, but this should be the difference; we already know the products are of excellent quality...",
+      "note": "",
+      "gold": {
+        "delivery": "late",
+        "product": [
+          "good"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "mixed"
+      },
+      "haiku": {
+        "delivery": "late",
+        "product": [
+          "good"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "mixed"
+      },
+      "text_en": "I have been a customer for a long time and I understand the delay, but this should be the differentiator; we already know the products' quality is excellent...",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00008104999999999999
+    },
+    {
+      "id": "g041",
+      "text_pt": "Primeiro que minha compra estava vinculada a outra, e eu não consegui um dos produtos (celular). Então vou pagar por um produto inútil para mim, uma vez que não consegui cancelar a compra.",
+      "meaning": "First, my purchase was linked to another one, and I could not get one of the products (a phone). So I will pay for a product that is useless to me, because I could not cancel the purchase.",
+      "note": "v2: was product other; 'could not cancel' stays refund_or_return",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "refund_or_return"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "not_delivered",
+        "product": [
+          "missing_items"
+        ],
+        "service": [
+          "refund_or_return"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "First, my purchase was linked to another one, and I could not get one of the products (cell phone). So I am going to pay for a product that is useless to me, since I could not cancel the purchase.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [
+        "delivery",
+        "product"
+      ],
+      "cost_usd": 0.00009384999999999999
+    },
+    {
+      "id": "g042",
+      "text_pt": "O material não é de boa qualidade",
+      "meaning": "The material is not of good quality.",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "bad_quality"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "bad_quality"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "The material is not of good quality",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006425
+    },
+    {
+      "id": "g043",
+      "text_pt": "Simplesmente recebi um produto na cor errada, no modelo errado do comprado, barulho de peças miúdas soltas dentro dele, além de ter a tensão errada, 220V.\r\nPortanto não veio o produto que foi comprado",
+      "meaning": "I simply received a product in the wrong colour and the wrong model, with the noise of small loose parts inside it, and the wrong voltage, 220V. So the product I bought did not come.",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "wrong_item",
+          "damaged_or_defective"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "wrong_item",
+          "damaged_or_defective",
+          "not_as_described"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "I simply received a product in the wrong colour, the wrong model of what was bought, with the noise of small loose parts inside it, and also the wrong voltage, 220V. Therefore the product that was purchased did not come.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [
+        "product"
+      ],
+      "cost_usd": 0.00010965
+    },
+    {
+      "id": "g044",
+      "text_pt": "Produto é razoável",
+      "meaning": "The product is OK / so-so.",
+      "note": "v2: was product other; 'so-so' read as acceptable = good (tone neutral). Check",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "good"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "neutral"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "bad_quality"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "neutral"
+      },
+      "text_en": "The product is reasonable",
+      "error": null,
+      "check_problems": [],
+      "wrong": [
+        "product"
+      ],
+      "cost_usd": 0.00006385
+    },
+    {
+      "id": "g045",
+      "text_pt": "Mercadoria queimada no centro de distribuição em Fortaleza-CE. Cancelei a compra para ressarcimento do valor pago.",
+      "meaning": "The goods were burned in the distribution centre in Fortaleza-CE. I cancelled the purchase to get the amount paid back.",
+      "note": "goods burned in transit",
+      "gold": {
+        "delivery": "not_delivered",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "refund_or_return"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "not_delivered",
+        "product": [
+          "damaged_or_defective"
+        ],
+        "service": [
+          "refund_or_return"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "The merchandise was burned at the distribution center in Fortaleza-CE. I cancelled the purchase to get a refund of the amount paid.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [
+        "product"
+      ],
+      "cost_usd": 0.00008805
+    },
+    {
+      "id": "g046",
+      "text_pt": "Os produtos foram entregues em dias diferentes, o que gerou reclamação na entrega do primeiro pacote.",
+      "meaning": "The products were delivered on different days, which caused a complaint at the delivery of the first parcel.",
+      "note": "v2: was service other; split delivery has no value",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "late",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "The products were delivered on different days, which caused a complaint about the delivery of the first package.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [
+        "delivery"
+      ],
+      "cost_usd": 0.00007465000000000001
+    },
+    {
+      "id": "g047",
+      "text_pt": "Produto",
+      "meaning": "Product.",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "neutral"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "neutral"
+      },
+      "text_en": "Product",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006145
+    },
+    {
+      "id": "g048",
+      "text_pt": "boa",
+      "meaning": "Good.",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "text_en": "Good",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.000060849999999999995
+    },
+    {
+      "id": "g049",
+      "text_pt": "Horrível",
+      "meaning": "Horrible.",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "Horrible",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006205
+    },
+    {
+      "id": "g050",
+      "text_pt": "Recebi o whey de morango com a embalagem toda amassada . Como devo proceder ?",
+      "meaning": "I received the strawberry whey with the package all crushed. What should I do?",
+      "note": "crushed package",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "damaged_or_defective"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "damaged_or_defective"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "I received the strawberry whey with the packaging all crushed. How should I proceed?",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00007675
+    },
+    {
+      "id": "g051",
+      "text_pt": "recomendo. produto como especificado, chegou dentro do prazo. recomendo.",
+      "meaning": "I recommend it. Product as specified, arrived on time. I recommend it.",
+      "note": "",
+      "gold": {
+        "delivery": "on_time",
+        "product": [
+          "good"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "on_time",
+        "product": [
+          "good",
+          "not_as_described"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "text_en": "I recommend it. Product as described, arrived within the deadline. I recommend it.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [
+        "product"
+      ],
+      "cost_usd": 0.00007495
+    },
+    {
+      "id": "g052",
+      "text_pt": "Obrigado",
+      "meaning": "Thank you.",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "text_en": "Thank you",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006215
+    },
+    {
+      "id": "g053",
+      "text_pt": "Valeu a compra",
+      "meaning": "The purchase was worth it.",
+      "note": "'worth it' read as value",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "good_value",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "good_value",
+        "tone": "positive"
+      },
+      "text_en": "Worth the purchase",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006235
+    },
+    {
+      "id": "g054",
+      "text_pt": "Com certeza voltarei a comprar nesta loja",
+      "meaning": "I will certainly buy from this store again.",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "good_service"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "text_en": "I will definitely buy from this store again.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [
+        "service"
+      ],
+      "cost_usd": 0.00006745
+    },
+    {
+      "id": "g055",
+      "text_pt": "Achei muito frágio..",
+      "meaning": "I found it very fragile..",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "bad_quality"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "bad_quality"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "I found it very fragile..",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006405
+    },
+    {
+      "id": "g056",
+      "text_pt": "Comprei outros produtos e não tive problemas acredito que foi a falta do produto no estoque",
+      "meaning": "I bought other products and had no problems; I think the product was out of stock.",
+      "note": "v2: was service other; unclear out-of-stock hint",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "neutral"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "mixed"
+      },
+      "text_en": "I bought other products and had no problems, I believe it was the product being out of stock.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [
+        "tone"
+      ],
+      "cost_usd": 0.00007534999999999999
+    },
+    {
+      "id": "g057",
+      "text_pt": "Espero solução porque não recebi os 2 lençóis de Percal200 fios",
+      "meaning": "I hope for a solution, because I did not receive the 2 Percal 200-thread sheets.",
+      "note": "",
+      "gold": {
+        "delivery": "not_delivered",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "not_delivered",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "I hope for a solution because I did not receive the 2 percale 200-thread sheets.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00007585
+    },
+    {
+      "id": "g058",
+      "text_pt": "Produto faltante. Só me enviou um produto de dois comprados no mesmo pedido ...",
+      "meaning": "Missing product. Only one of the two products bought in the same order was sent...",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "missing_items"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "missing_items"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "Missing product. Only one product was sent out of two bought in the same order...",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00007285
+    },
+    {
+      "id": "g059",
+      "text_pt": "Mochila linda",
+      "meaning": "Beautiful backpack.",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "good"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "good"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "text_en": "Beautiful backpack",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006175
+    },
+    {
+      "id": "g060",
+      "text_pt": "Compra fácil e entrega no prazo",
+      "meaning": "Easy purchase and delivery on time.",
+      "note": "'easy purchase' read as service",
+      "gold": {
+        "delivery": "on_time",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "good_service"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "on_time",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "good_service"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "text_en": "Easy purchase and delivery on time",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006405
+    },
+    {
+      "id": "g061",
+      "text_pt": "Ainda não recebi o produt",
+      "meaning": "I have not received the product yet.",
+      "note": "",
+      "gold": {
+        "delivery": "not_delivered",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "not_delivered",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "I have not received the product yet.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006475
+    },
+    {
+      "id": "g062",
+      "text_pt": "Estou esperando o pedido",
+      "meaning": "I am waiting for the order.",
+      "note": "",
+      "gold": {
+        "delivery": "not_delivered",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "neutral"
+      },
+      "haiku": {
+        "delivery": "not_delivered",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "neutral"
+      },
+      "text_en": "I am waiting for the order",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006465
+    },
+    {
+      "id": "g063",
+      "text_pt": "Eu achei a entrega um pouco demorada,e as especificações que estava escrito no site não são iguais a do produto",
+      "meaning": "I found the delivery a bit slow, and the specifications written on the site are not the same as the product's.",
+      "note": "'a bit slow' read as late",
+      "gold": {
+        "delivery": "late",
+        "product": [
+          "not_as_described"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "late",
+        "product": [
+          "not_as_described"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "I found the delivery a bit slow, and the specifications written on the site are not the same as the product.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00007505
+    },
+    {
+      "id": "g064",
+      "text_pt": "Produto não chegou no prazo e não tive retorno do vendedor",
+      "meaning": "The product did not arrive on time and I got no answer from the seller.",
+      "note": "",
+      "gold": {
+        "delivery": "late",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "seller_no_response"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "late",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "seller_no_response"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "The product did not arrive on time and I did not get a reply from the seller.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00007045
+    },
+    {
+      "id": "g065",
+      "text_pt": "Muita demora na entrega pelos Correios.",
+      "meaning": "A long delay in delivery by the post office.",
+      "note": "",
+      "gold": {
+        "delivery": "late",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "late",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "Very long delay in delivery by the Correios.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006625
+    },
+    {
+      "id": "g066",
+      "text_pt": "Comprei 2 unidades com 10 panos de pratos cada,a nota fiscal veio com a quantidade certa só recebi 10 panos de pratos,espero receber uma resposta para minha dúvida,através do email não da p/ responder",
+      "meaning": "I bought 2 units of 10 dish towels each; the invoice came with the right quantity, but I only received 10 dish towels. I hope to get an answer to my question; it is not possible to reply through the e-mail.",
+      "note": "v2: was service other; asks for an answer, no 'no reply' yet",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "missing_items"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "missing_items"
+        ],
+        "service": [
+          "invoice_problem",
+          "seller_no_response"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "I bought 2 units with 10 dish cloths each, the invoice came with the correct quantity, but I only received 10 dish cloths. I hope to receive an answer to my question, but I cannot reply through the email.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [
+        "service"
+      ],
+      "cost_usd": 0.00010475
+    },
+    {
+      "id": "g067",
+      "text_pt": "Entrega no prazo. Muito boa essa loja, não atrasa o pedido os produtos vem certinho...",
+      "meaning": "Delivered on time. This store is very good, it does not delay the order and the products come just right...",
+      "note": "",
+      "gold": {
+        "delivery": "on_time",
+        "product": [
+          "good"
+        ],
+        "service": [
+          "good_service"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "on_time",
+        "product": [
+          "good"
+        ],
+        "service": [
+          "good_service"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "text_en": "Delivery on time. Very good store, it does not delay the order, the products come right.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00007045
+    },
+    {
+      "id": "g068",
+      "text_pt": "Não é o mesmo produto que fiz o pedido, mas chegou perfeito.",
+      "meaning": "It is not the same product that I ordered, but it arrived perfect.",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "wrong_item"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "mixed"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "wrong_item",
+          "good"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "mixed"
+      },
+      "text_en": "It is not the same product I ordered, but it arrived perfect.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [
+        "product"
+      ],
+      "cost_usd": 0.00007405
+    },
+    {
+      "id": "g069",
+      "text_pt": "Só esqueceram de colocar se recebeu o produto em bom estado, pois comprei 5 pendentes e veio num caixa de papelão fraca sem quase nada de proteção com isso dois vieram amassados....ai vc vai reclamar",
+      "meaning": "They only forgot to ask whether the product was received in good condition: I bought 5 pendant lamps and they came in a weak cardboard box with almost no protection, so two came dented.... and then you go and complain",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "damaged_or_defective"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "damaged_or_defective"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "They just forgot to say whether the product arrived in good condition, because I bought 5 pendants and they came in a weak cardboard box with almost no protection, so two of them arrived dented.... and then you'll complain.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00010245
+    },
+    {
+      "id": "g070",
+      "text_pt": "O produto ainda não chegou",
+      "meaning": "The product has not arrived yet.",
+      "note": "",
+      "gold": {
+        "delivery": "not_delivered",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "not_delivered",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "The product has not arrived yet.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006515000000000001
+    },
+    {
+      "id": "g071",
+      "text_pt": "recomendo. Sempre fui bem atendida, entregaram no prazo.\r\nAcredito que por causa das greves dos caminhoneiros e dos petroleiros, isso afetou o atendimento aos clientes.",
+      "meaning": "I recommend it. I was always well served; they delivered on time. I think the truck drivers' and oil workers' strikes affected the customer service.",
+      "note": "",
+      "gold": {
+        "delivery": "on_time",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "good_service"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "on_time",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "good_service"
+        ],
+        "price": "not_mentioned",
+        "tone": "mixed"
+      },
+      "text_en": "I recommend it. I have always been well served, they delivered on time. I believe that because of the truck drivers' and oil workers' strikes, this affected customer service.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [
+        "tone"
+      ],
+      "cost_usd": 0.00008934999999999999
+    },
+    {
+      "id": "g072",
+      "text_pt": "vcs podiam abaixar o valor do frete e colocar de vez enquando frete gratis,seu frete e muito caro!!!!",
+      "meaning": "You could lower the shipping cost and sometimes offer free shipping; your shipping is very expensive!!!!",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "freight_too_high",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "freight_too_high",
+        "tone": "negative"
+      },
+      "text_en": "You could lower the shipping cost and occasionally offer free shipping, your shipping is very expensive!!!!",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00008165
+    },
+    {
+      "id": "g073",
+      "text_pt": "chegou no prazo",
+      "meaning": "Arrived on time.",
+      "note": "",
+      "gold": {
+        "delivery": "on_time",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "on_time",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "text_en": "It arrived on time.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006235
+    },
+    {
+      "id": "g074",
+      "text_pt": "Poderia ter agilizado com a entrega! Porém recebi o produto em ótimas condições!",
+      "meaning": "The delivery could have been quicker! But I received the product in great condition!",
+      "note": "'could have been quicker': slow, not surely late",
+      "gold": {
+        "delivery": "late",
+        "product": [
+          "good"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "mixed"
+      },
+      "haiku": {
+        "delivery": "late",
+        "product": [
+          "good"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "mixed"
+      },
+      "text_en": "It could have sped up the delivery! However, I received the product in great condition!",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006945000000000001
+    },
+    {
+      "id": "g075",
+      "text_pt": "Recebi dentro do prazo",
+      "meaning": "Received within the deadline.",
+      "note": "",
+      "gold": {
+        "delivery": "on_time",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "on_time",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "neutral"
+      },
+      "text_en": "I received it within the deadline.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [
+        "tone"
+      ],
+      "cost_usd": 0.00006425
+    },
+    {
+      "id": "g076",
+      "text_pt": "ruim",
+      "meaning": "Bad.",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "Bad",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006145
+    },
+    {
+      "id": "g077",
+      "text_pt": "O RELOGIO É LINDO SURPREENDEU MINHAS EXPECTATIVA A ENTREGA NEM SE FALA FOI PRATICAMENTE DUAS SEMANAS ANTES DA DATA PREVISTA RECOMENDO A TODOS QUE TENHAM ALGUMA DUVIDA QUE COMPREM PRODUTO EXCELENTE.",
+      "meaning": "THE WATCH IS BEAUTIFUL, IT BEAT MY EXPECTATIONS. THE DELIVERY, NEED I SAY, WAS ALMOST TWO WEEKS BEFORE THE EXPECTED DATE. I RECOMMEND TO EVERYONE WHO HAS ANY DOUBT TO BUY IT. EXCELLENT PRODUCT.",
+      "note": "",
+      "gold": {
+        "delivery": "fast",
+        "product": [
+          "good"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "fast",
+        "product": [
+          "good"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "text_en": "The watch is beautiful, it exceeded my expectations. The delivery, not to mention, came practically two weeks before the expected date. I recommend to everyone who has any doubts to buy, excellent product.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00010164999999999999
+    },
+    {
+      "id": "g078",
+      "text_pt": "Ilumina bastante e a buzina é bem alta. Gostei",
+      "meaning": "It lights up a lot and the horn is very loud. I liked it.",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "good"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "good"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "text_en": "It lights up a lot and the horn is very loud. I liked it",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006945000000000001
+    },
+    {
+      "id": "g079",
+      "text_pt": "Foi ótimo o preco mas o prazo de entrega demorou quase 18 dias",
+      "meaning": "The price was great, but the delivery took almost 18 days.",
+      "note": "18 days read as late",
+      "gold": {
+        "delivery": "late",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "good_value",
+        "tone": "mixed"
+      },
+      "haiku": {
+        "delivery": "late",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "good_value",
+        "tone": "mixed"
+      },
+      "text_en": "The price was great, but the delivery time took almost 18 days.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006865
+    },
+    {
+      "id": "g080",
+      "text_pt": "O produto não chegou perfeito , tive que pedir para meu pai abrir e arrumar o botão de ajuste que estava solto .",
+      "meaning": "The product did not arrive perfect; I had to ask my father to open it and fix the adjustment button, which was loose.",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "damaged_or_defective"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "damaged_or_defective"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "The product did not arrive perfect, I had to ask my father to open it and fix the adjustment button that was loose.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00008265
+    },
+    {
+      "id": "g081",
+      "text_pt": "Péssima loja",
+      "meaning": "Terrible store.",
+      "note": "v2: was service other; 'terrible store' carries only the tone",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "Terrible store",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006275
+    },
+    {
+      "id": "g082",
+      "text_pt": "Produto veio sem cabo USB e fonte,a caixa de dentro veio danificada e principalmente parece não ser original. Aguardando por uma solução.",
+      "meaning": "The product came without the USB cable and the power adapter, the inner box came damaged and, above all, it does not seem to be original. Waiting for a solution.",
+      "note": "'not original' read as not_as_described",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "missing_items",
+          "damaged_or_defective",
+          "not_as_described"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "missing_items",
+          "damaged_or_defective",
+          "not_as_described"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "The product came without the USB cable and power adapter, the inner box arrived damaged, and above all it does not seem to be original. Waiting for a solution.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00009595
+    },
+    {
+      "id": "g083",
+      "text_pt": "Excelente produto indico a qualquer pessoa.",
+      "meaning": "Excellent product, I recommend it to anyone.",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "good"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "good"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "text_en": "Excellent product, I recommend it to anyone.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006695
+    },
+    {
+      "id": "g084",
+      "text_pt": "Super recomendo s",
+      "meaning": "I strongly recommend it.",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "text_en": "I highly recommend it",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006385
+    },
+    {
+      "id": "g085",
+      "text_pt": "Recebi apenas 1 unidade, quando a compra foi de 3 unidades;",
+      "meaning": "I received only 1 unit, when the purchase was 3 units.",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "missing_items"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "missing_items"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "I received only 1 unit, when the purchase was for 3 units;",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00007205
+    },
+    {
+      "id": "g086",
+      "text_pt": "Cumpre o que promete",
+      "meaning": "It does what it promises.",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "good"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "good"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "text_en": "It delivers what it promises.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006255
+    },
+    {
+      "id": "g087",
+      "text_pt": "A película veio muito menor do tamanho do aparelho,5mm lateral e 5mm vestical , é MTA coisa...",
+      "meaning": "The screen protector came much smaller than the device, 5 mm at the side and 5 mm at the top/bottom; that is A LOT...",
+      "note": "wrong size; or not_as_described?",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "wrong_item"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_as_described"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "The film came much smaller than the size of the device, 5mm on the side and 5mm vertically, it's a waste of time.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [
+        "product"
+      ],
+      "cost_usd": 0.00008235
+    },
+    {
+      "id": "g088",
+      "text_pt": "da pra melhorar um pouco",
+      "meaning": "It could be a little better.",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "neutral"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "neutral"
+      },
+      "text_en": "It can be improved a little.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006525
+    },
+    {
+      "id": "g089",
+      "text_pt": "Só não gostei, pois recebi um email dizendo que a compra tinha tido um problema, tem tentei solucionar por email e ninguém respondeu.\r\nMas a compra chegou dias depois.",
+      "meaning": "I only did not like it because I got an e-mail saying the purchase had a problem; I tried to solve it by e-mail and nobody answered. But the order arrived days later.",
+      "note": "'arrived days later'",
+      "gold": {
+        "delivery": "late",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "seller_no_response"
+        ],
+        "price": "not_mentioned",
+        "tone": "mixed"
+      },
+      "haiku": {
+        "delivery": "late",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "seller_no_response"
+        ],
+        "price": "not_mentioned",
+        "tone": "mixed"
+      },
+      "text_en": "I just didn't like it, because I received an email saying the purchase had a problem, and I tried to resolve it by email and nobody answered. But the purchase arrived days later.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00009085
+    },
+    {
+      "id": "g090",
+      "text_pt": "Não entraram em contato p dar uma posição e a mercadoria faz um mês q comprei e não chegou",
+      "meaning": "They did not contact me to give an update, and it is a month since I bought the goods and they have not arrived.",
+      "note": "",
+      "gold": {
+        "delivery": "not_delivered",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "seller_no_response"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "not_delivered",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "seller_no_response"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "They did not contact me to give an update, and the merchandise I bought a month ago has not arrived.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00007775
+    },
+    {
+      "id": "g091",
+      "text_pt": "Bom",
+      "meaning": "Good.",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "text_en": "Good",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.000060950000000000004
+    },
+    {
+      "id": "g092",
+      "text_pt": "10. A entrega foi antes do prazo previsto, observação : comprei 4 foram entregue dois , os outros dois estão a caminho!",
+      "meaning": "10 [out of 10]. The delivery was before the expected date. Note: I bought 4, two were delivered, the other two are on the way!",
+      "note": "2 of 4 delivered, 2 on the way: not missing",
+      "gold": {
+        "delivery": "fast",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "fast",
+        "product": [
+          "missing_items"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "mixed"
+      },
+      "text_en": "The delivery was before the expected deadline, note: I bought 4, two were delivered, the other two are on the way!",
+      "error": null,
+      "check_problems": [],
+      "wrong": [
+        "product",
+        "tone"
+      ],
+      "cost_usd": 0.00007934999999999999
+    },
+    {
+      "id": "g093",
+      "text_pt": "Satisfeito",
+      "meaning": "Satisfied.",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "text_en": "Satisfied",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006275
+    },
+    {
+      "id": "g094",
+      "text_pt": "nao chegou os livros, chegou suplementos e continua chegando suplementos.",
+      "meaning": "The books did not arrive; supplements arrived, and supplements keep arriving.",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "wrong_item",
+          "missing_items"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "wrong_item"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "The books did not arrive, supplements arrived and supplements keep arriving.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [
+        "product"
+      ],
+      "cost_usd": 0.00007384999999999999
+    },
+    {
+      "id": "g095",
+      "text_pt": "Dez. Ótimo, foram muito prestativos !!.",
+      "meaning": "Ten [out of 10]. Great, they were very helpful!!.",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "good_service"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "good_service"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "text_en": "Dec. Great, they were very helpful!!",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006775
+    },
+    {
+      "id": "g096",
+      "text_pt": "OK. Recomendo. Ainda não testei, mas veio bem acondicionado.",
+      "meaning": "OK. I recommend it. I have not tested it yet, but it came well packed.",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "text_en": "I recommend it. I haven't tested it yet, but it came well packaged.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00007455
+    },
+    {
+      "id": "g097",
+      "text_pt": "Na imagem e na descrição o produto possui espetos com cabo em inox e o produto recebido tem espetos com Cabo de madeira.",
+      "meaning": "In the picture and the description, the product has skewers with stainless steel handles, and the product received has skewers with wooden handles.",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_as_described"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "wrong_item",
+          "not_as_described"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "In the image and the description the product has skewers with stainless steel handles, and the product received has skewers with wooden handles.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [
+        "product"
+      ],
+      "cost_usd": 0.00008535
+    },
+    {
+      "id": "g098",
+      "text_pt": "Recebi antes do prazo. Maravilhoso",
+      "meaning": "Received before the deadline. Wonderful.",
+      "note": "",
+      "gold": {
+        "delivery": "fast",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "fast",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "text_en": "Received before the deadline. Wonderful",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006595
+    },
+    {
+      "id": "g099",
+      "text_pt": "so o ouro. tudo certo",
+      "meaning": "Just gold [slang: excellent]. All fine.",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "not_mentioned"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "good"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "positive"
+      },
+      "text_en": "The gold. Everything is fine.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [
+        "product"
+      ],
+      "cost_usd": 0.00006375
+    },
+    {
+      "id": "g100",
+      "text_pt": "Produto chegou com um pequeno defeito.",
+      "meaning": "The product arrived with a small defect.",
+      "note": "",
+      "gold": {
+        "delivery": "not_mentioned",
+        "product": [
+          "damaged_or_defective"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "haiku": {
+        "delivery": "not_mentioned",
+        "product": [
+          "damaged_or_defective"
+        ],
+        "service": [
+          "not_mentioned"
+        ],
+        "price": "not_mentioned",
+        "tone": "negative"
+      },
+      "text_en": "The product arrived with a small defect.",
+      "error": null,
+      "check_problems": [],
+      "wrong": [],
+      "cost_usd": 0.00006775
+    }
+  ]
+}

@@ -4,7 +4,7 @@ The translation, the tags and the vector are filled by later ingestion steps, so
 empty. The key is (review_id, order_id): review_id alone repeats (F5). No foreign key to
 business.reviews: that table has no key of its own and the Olist reload drops and rebuilds
 it (the reload drops only its own tables, so this one stays). Tag values are checked in
-Python (the structured-output schema), not here.
+Python (the structured-output schema), not here. 0003 drops the tag columns.
 """
 
 from alembic import op

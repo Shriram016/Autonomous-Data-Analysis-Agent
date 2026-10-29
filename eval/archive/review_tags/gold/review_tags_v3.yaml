@@ -1,0 +1,1123 @@
+# Gold set for the review tags, tag list v3 (§0 M3).
+# Picked 100 reviews: 20 per star score (18 with a message + 2 title-only),
+# random.Random(20261029), shuffled. g009 + g078 (punctuation only, now left out) were
+# replaced by same-star picks with random.Random(20261030).
+# The score is not shown, so tags come from the text.
+# Tags filled by Claude Code on 2026-10-29 at the builder's request (not by hand):
+# the builder checks them, starting with the ones that have a note.
+# These reviews must never be used as prompt examples.
+#
+# Fill each heading. Say not_mentioned when the text says nothing about it.
+# One value: delivery, price, tone. A list: product, service (not_mentioned alone).
+#   delivery: on_time, late, not_delivered, not_mentioned
+#   product: good, defective, wrong_or_missing, not_mentioned
+#   service: good_service, seller_no_response, order_info_problem, refund_or_return, not_mentioned
+#   price: good_value, too_expensive, freight_too_high, not_mentioned
+#   tone: positive, neutral, negative, mixed
+
+# v2 (2026-10-29): `other` and `delivery_failed` removed; the 7 labels that used `other`
+# were re-tagged (their note starts with 'v2:').
+# v3 (2026-10-29): merged to fewer values that never overlap: fast → on_time;
+# damaged_or_defective, bad_quality → defective; wrong_item, missing_items, not_as_described
+# → wrong_or_missing; tracking_problem, invoice_problem → order_info_problem.
+reviews:
+  - id: g001
+    review_id: ce0b98ca8db1cf49330000064593e1ab
+    order_id: 17a57b9f3ed8c82e3714464f9fdab931
+    text_pt: "Chegou antes da data prevista"
+    meaning: "Arrived before the expected date."
+    delivery: on_time
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: positive
+    note: ""
+  - id: g002
+    review_id: c5aec615d3afa3a52fe4567015b12151
+    order_id: 3317db84e285d6115f358daa9351a4ba
+    text_pt: "Chegou antes do combinado bem embalada em perfeitas condições já conheço a Américas confio de mas . E super recomendo o site da Cuba. Amei"
+    meaning: "Arrived before the agreed date, well packed, in perfect condition. I already know the store and trust it. I strongly recommend the site. Loved it."
+    delivery: on_time
+    product: [good]
+    service: [good_service]
+    price: not_mentioned
+    tone: positive
+    note: ""
+  - id: g003
+    review_id: 467e668b373b6d2b4db646614ec66039
+    order_id: 7a8adf1b52b8d3c0735699f5708bf513
+    text_pt: "Boa noite. venho por deste comunicar que recebi apenas o bebe conforto. No ato da entrega faltou o carrinho. Preciso que resolvam o mais rapido possivel. att Alssandro. No aguardo."
+    meaning: "Good evening. I am writing to say that I only received the baby car seat. The stroller was missing from the delivery. I need you to solve this as soon as possible. Regards, [name]. Waiting."
+    delivery: not_mentioned
+    product: [wrong_or_missing]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: negative
+    note: "contains a customer name"
+  - id: g004
+    review_id: 6b8d2bfa8f21267c24ff16a0e782e14c
+    order_id: 8e3aafa608957bdc2ddb74b7d9a7a559
+    text_pt: "Produto excelente. Cadiveu é maravilhoso!!!"
+    meaning: "Excellent product. Cadiveu [a brand] is wonderful!!!"
+    delivery: not_mentioned
+    product: [good]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: positive
+    note: ""
+  - id: g005
+    review_id: 5e94cdd99c764328967c2c658108e89c
+    order_id: 7a43bbe9766ce937332b6f9dcba36715
+    text_pt: "Bom dia\r\nNão recebi o produto e tambem não recebi nenhum aviso dos correios. Estou chateada por isso."
+    meaning: "Good morning. I did not receive the product and I also got no notice from the post office. I am upset about it."
+    delivery: not_delivered
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: negative
+    note: "'no notice from the post office': no tag fits well (service other?)"
+  - id: g006
+    review_id: 3d0eaebdafb0fe5ab9c03c628cdfcafa
+    order_id: 9afd8793167c97876e93424de3f01498
+    text_pt: "produto otimo preço bom e entrega rapida eu recomendo"
+    meaning: "Great product, good price and fast delivery, I recommend it."
+    delivery: on_time
+    product: [good]
+    service: [not_mentioned]
+    price: good_value
+    tone: positive
+    note: ""
+  - id: g007
+    review_id: 9803eeae3aacc4266e27a933b3310ab1
+    order_id: ac07d522efe22ee864da5a49b3e87f06
+    text_pt: "Não é tão confortável. O produto não é tão confortável. Pensei q se ajustasse confortavelmente à cabeça e ao trapézio, mas não se amolda tão bem assim."
+    meaning: "Not so comfortable. The product is not very comfortable. I thought it would fit the head and the upper back comfortably, but it does not shape itself that well."
+    delivery: not_mentioned
+    product: [defective]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: negative
+    note: "uncomfortable: bad_quality, not_as_described?"
+  - id: g008
+    review_id: bba9dfe6bbd4c46270fa9bcf2f4f6b1d
+    order_id: ad0db85b651140eb463660b4ddf767e1
+    text_pt: "Bom"
+    meaning: "Good."
+    delivery: not_mentioned
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: positive
+    note: ""
+  - id: g009
+    review_id: c2286c998dd1d934fd847c68bff2444b
+    order_id: bb58d2adc1241af1c36272f66ab7a771
+    text_pt: "Tapete bom pelo preço."
+    meaning: "A good rug for the price."
+    delivery: not_mentioned
+    product: [good]
+    service: [not_mentioned]
+    price: good_value
+    tone: positive
+    note: ""
+  - id: g010
+    review_id: dfc8763dabe8f9f279821484593d60d4
+    order_id: fa643944a0153ff767c0df7baeedb902
+    text_pt: "A luva é muto boa, vem uma segunda pele para usar por baixo da luva normal, pena que essa segunda pele veio com uma linha saindo bem no meio, se puxar, ela descostura, mas a luva impermeável é ótima!"
+    meaning: "The glove is very good; it comes with a second-skin layer to wear under it. Pity that this layer came with a thread coming out right in the middle, and if you pull it, it comes unstitched. But the waterproof glove is great!"
+    delivery: not_mentioned
+    product: [good, defective]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: mixed
+    note: "a loose thread = defect"
+  - id: g011
+    review_id: 29f4977670ebc945a61684ec7cc46278
+    order_id: 477c5227ffdd6b36ff00bbc57f290874
+    text_pt: "Mercadoria"
+    meaning: "Merchandise."
+    delivery: not_mentioned
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: neutral
+    note: ""
+  - id: g012
+    review_id: 2de6359b7a8ec05178671c5e15fc16ce
+    order_id: 516085f268c8d34500c845dda4d7e64a
+    text_pt: "Podem comprar, é de confiança."
+    meaning: "You can buy, it is trustworthy."
+    delivery: not_mentioned
+    product: [not_mentioned]
+    service: [good_service]
+    price: not_mentioned
+    tone: positive
+    note: "'trustworthy' read as the store"
+  - id: g013
+    review_id: de3bb1c614f65eae8451f2986c498aba
+    order_id: e2d66db1ac680c44e6419a6a7a5095a4
+    text_pt: "Ótimo. Muito rápido na entrega"
+    meaning: "Great. Very fast delivery."
+    delivery: on_time
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: positive
+    note: ""
+  - id: g014
+    review_id: 2b1548b7746b6470035ec1202aa5e914
+    order_id: 2a4a59ba2f6ffd2ab64d38122a957cba
+    text_pt: "Nao recomendo. produto veio quebrado e mas de uma semana estou tentando resolver e ninguem fala nada . um absurdo pois paguei por ele inteiro e nao pela metade ."
+    meaning: "I do not recommend it. The product came broken, and for more than a week I have been trying to solve it and nobody says anything. Absurd, because I paid for it whole and not for half."
+    delivery: not_mentioned
+    product: [defective]
+    service: [seller_no_response]
+    price: not_mentioned
+    tone: negative
+    note: ""
+  - id: g015
+    review_id: 0445b83ba370fd87f976465b0a15c4f8
+    order_id: 19b8a677a41f55d06c3beda4849717b5
+    text_pt: "ótimo produto! atendeu minhas expectativas!"
+    meaning: "Great product! It met my expectations!"
+    delivery: not_mentioned
+    product: [good]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: positive
+    note: ""
+  - id: g016
+    review_id: a4b25b318d5119f25ac0cf5d6c829fd6
+    order_id: 830b3a492a919de3f1a931b439f507d1
+    text_pt: "loja muito boa. Gostei da loja e do atendimento"
+    meaning: "Very good store. I liked the store and the service."
+    delivery: not_mentioned
+    product: [not_mentioned]
+    service: [good_service]
+    price: not_mentioned
+    tone: positive
+    note: ""
+  - id: g017
+    review_id: b0d9f9fc750e2415e787cf439eaa4a4d
+    order_id: c8213e60d923c834447d410caab1898d
+    text_pt: "Bom. Ótimo produto entregue no prazo"
+    meaning: "Good. Great product, delivered on time."
+    delivery: on_time
+    product: [good]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: positive
+    note: ""
+  - id: g018
+    review_id: 7d0614c1367887109e032a5b7a5d91b5
+    order_id: 20873a0e73e84e84c27c058b60a2e9f2
+    text_pt: "Demorou muito pra chegar, mas acredito ser por conta dos Correios"
+    meaning: "It took a long time to arrive, but I think that is because of the post office."
+    delivery: late
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: negative
+    note: "'took long' read as late"
+  - id: g019
+    review_id: 6bac381e52c2cb10fe3f7180fb28eebb
+    order_id: 29b56ecd8b55b6089065dad2fe85a0b8
+    text_pt: "Produto de qualidade e entrega rápida."
+    meaning: "Quality product and fast delivery."
+    delivery: on_time
+    product: [good]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: positive
+    note: ""
+  - id: g020
+    review_id: 44add0f6a36107008cb90f32597674d4
+    order_id: 3d4c0e002a7776c781b81c8a08193522
+    text_pt: "Recomendo. A entrega foi muita rápida e o produto é de boa qualidade."
+    meaning: "I recommend it. The delivery was very fast and the product is of good quality."
+    delivery: on_time
+    product: [good]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: positive
+    note: ""
+  - id: g021
+    review_id: c32ee371c3d835db805856587a580b5a
+    order_id: c03748652e7cdfeb73bf4aa3b41da0dc
+    text_pt: "o avião recebi. as prateleiras não recebi"
+    meaning: "I received the plane. I did not receive the shelves."
+    delivery: not_mentioned
+    product: [wrong_or_missing]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: negative
+    note: ""
+  - id: g022
+    review_id: 867b2f6de4b4671915f90bff2796a58d
+    order_id: cfdb617e22dcebc94710036f7692969b
+    text_pt: "O case chegou com dois arranhões infelizmente."
+    meaning: "Unfortunately the case arrived with two scratches."
+    delivery: not_mentioned
+    product: [defective]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: negative
+    note: ""
+  - id: g023
+    review_id: a680d5f552f5a6ba0004ad0366fa5278
+    order_id: b4a38163bca1ff981f0ccbfdbaca0a20
+    text_pt: "Comprei 6 kits de \"Cloreto de Magnésio PA 240 Capsulas de 500 mg\". Chegaram apenas 2 kits em embalagens distintas. Restam chegar ainda 4 kits. Já reclamei no site, mas ainda não obtive resposta."
+    meaning: "I bought 6 kits of 'Magnesium Chloride PA 240 capsules of 500 mg'. Only 2 kits arrived, in separate packages. 4 kits still have to arrive. I already complained on the site, but I have not had an answer yet."
+    delivery: not_mentioned
+    product: [wrong_or_missing]
+    service: [seller_no_response]
+    price: not_mentioned
+    tone: negative
+    note: ""
+  - id: g024
+    review_id: 57089e92ac5f4a206e9275b4426f0cb5
+    order_id: ad81d0d06a681bb6285a1aa66634f762
+    text_pt: "Segundo produto no mesmo mês que nao recebo, com certeza não comprarei mais nas lannister, minha ultima compra foi essa."
+    meaning: "Second product in the same month that I did not receive. I will certainly not buy from lannister again; this was my last purchase."
+    delivery: not_delivered
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: negative
+    note: ""
+  - id: g025
+    review_id: 33dc82b84f6ceddc425101a9ef995141
+    order_id: d84ff9150e7677a1de43990fff1868ef
+    text_pt: "Até a presente data, 26/01/2018, não recebi o produto comprado. Solicito providências."
+    meaning: "As of today, 26/01/2018, I have not received the product I bought. I ask you to take action."
+    delivery: not_delivered
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: negative
+    note: ""
+  - id: g026
+    review_id: 9c801e156b09dd26801bf9ecf9edd1d8
+    order_id: c2cbad19d26c3e399c065fb573a6611c
+    text_pt: "Foi tudo certinho, antes do tempo de entrega... Parabéns."
+    meaning: "Everything went right, before the delivery time... Congratulations."
+    delivery: on_time
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: positive
+    note: ""
+  - id: g027
+    review_id: 78101af789083d1661c354155fec3c33
+    order_id: 36b29d751a3c14a1b9be3bf8321412ff
+    text_pt: "RECOMENDO. recomendo"
+    meaning: "I RECOMMEND IT. I recommend it."
+    delivery: not_mentioned
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: positive
+    note: ""
+  - id: g028
+    review_id: 866372f8627d3359eebb3856c30646c2
+    order_id: e7336e1648bf13ca6664c8568363dbb3
+    text_pt: "O som é baixo, mas atende minhas necessidades."
+    meaning: "The sound is low, but it meets my needs."
+    delivery: not_mentioned
+    product: [good, defective]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: mixed
+    note: "'sound is low, but meets my needs'"
+  - id: g029
+    review_id: 9da6f73dde10ac7108db7686a03174c5
+    order_id: 8b388d845a3e8700444b971fa2bef902
+    text_pt: "Avaliação positiva"
+    meaning: "Positive rating."
+    delivery: not_mentioned
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: positive
+    note: ""
+  - id: g030
+    review_id: b0484816017c18ad2d4b69701b04818a
+    order_id: b329c0dc7e78a0caaa2b8d67c8a8c8ce
+    text_pt: "Fiz a compra do produto e foi postado em pouco tempo, fora a entrega que foi muito rápida além de bem embalado. Recomendo"
+    meaning: "I bought the product and it was posted quickly; also the delivery was very fast, and it was well packed. I recommend it."
+    delivery: on_time
+    product: [good]
+    service: [good_service]
+    price: not_mentioned
+    tone: positive
+    note: "after gold run 2: well packed = good (was not_mentioned); posted quickly = good_service"
+  - id: g031
+    review_id: 64b798072e372c1c60cc8044df9eb036
+    order_id: bd859dd7a6a1b8c1df9fcb75c3604eaf
+    text_pt: "produto regular\r\nmas as estampas sao lindas"
+    meaning: "Average product, but the prints are beautiful."
+    delivery: not_mentioned
+    product: [good, defective]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: mixed
+    note: "'average product, nice prints'"
+  - id: g032
+    review_id: dbdf1ea31790c8ecfcc6750525661a9b
+    order_id: 9406240a4e41945ba492020a2702f757
+    text_pt: "O produto veio embalado apenas por um frágil envelope, o que ocasionou o fato da caixa do cartucho ficar totalmente destruída."
+    meaning: "The product came packed only in a fragile envelope, so the cartridge box was completely destroyed."
+    delivery: not_mentioned
+    product: [defective]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: negative
+    note: "weak packing broke the box"
+  - id: g033
+    review_id: 784e66510bd38a478de7987e765ccd76
+    order_id: 5775b40b5767cf4043ffa1322c7d646c
+    text_pt: "Sem opinião."
+    meaning: "No opinion."
+    delivery: not_mentioned
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: neutral
+    note: ""
+  - id: g034
+    review_id: 80eb21e2b268c4a97571439673929ad2
+    order_id: 9eecf4b8716283fcb0f026e1308cc805
+    text_pt: "aconteceu algo na entrega e eu não recebi ainda o produto. ninguém me explicou ainda o que foi essa ocorrência"
+    meaning: "Something happened with the delivery and I have not received the product yet. Nobody has explained to me yet what this event was."
+    delivery: not_delivered
+    product: [not_mentioned]
+    service: [seller_no_response]
+    price: not_mentioned
+    tone: negative
+    note: ""
+  - id: g035
+    review_id: 7e554d44ca556d61ba86d9deab6482c2
+    order_id: 2cfc5ee5cb1e43d70d3dd6f28b2b50d9
+    text_pt: "Poderiam ter a opção de frete por sedex ou transportadora, para agilizar a entrega."
+    meaning: "You could offer shipping by Sedex [express post] or by a carrier, to make the delivery quicker."
+    delivery: not_mentioned
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: neutral
+    note: "v2: was service other (a shipping suggestion, no service problem)"
+  - id: g036
+    review_id: 63b200e3fd827f335c9fa50aef26bf1a
+    order_id: 2b2e646f2556658e3d06c53ee0465153
+    text_pt: "Faltou 01 produto. Comprei 03 cadeiras, foram entregues duas cadeiras (palito) a cadeira rotatória ainda não foi entregue...."
+    meaning: "1 product was missing. I bought 3 chairs; two chairs were delivered, and the swivel chair has not been delivered yet..."
+    delivery: not_mentioned
+    product: [wrong_or_missing]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: negative
+    note: ""
+  - id: g037
+    review_id: 6d9efcb5372f7949301a96533ab105ee
+    order_id: 173f3e01cc3fc12d3831a3d80a024a90
+    text_pt: "A entrega foi bem antes do esperado. O produto é de qualidade venho em uma embalagem perfeita."
+    meaning: "The delivery was well before expected. The product is of good quality and came in perfect packaging."
+    delivery: on_time
+    product: [good]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: positive
+    note: ""
+  - id: g038
+    review_id: f8773f92d36ed70f8c19b45ec3f6f7d6
+    order_id: b2bbb2cca536bb4984557119c0eb3d8a
+    text_pt: "super recomendo"
+    meaning: "I strongly recommend it."
+    delivery: not_mentioned
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: positive
+    note: ""
+  - id: g039
+    review_id: b73c8138f998a2caee0d972cee815401
+    order_id: 1a5d21f44c73693b9930d0ca33a9d0b1
+    text_pt: "Não recebi o produto. Realizei a compra do kit adipômetro da Sanny e um estadiômetro de bolso da Cescorf, porém recebi apenas o adipômetro com defeito (rachadura na parte da trena) e o meu kit de adipômetro não chegou."
+    meaning: "I did not receive the product. I bought a Sanny skinfold caliper kit and a Cescorf pocket height measure, but I only received the caliper, defective (a crack in the tape part), and my caliper kit did not arrive."
+    delivery: not_mentioned
+    product: [defective, wrong_or_missing]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: negative
+    note: ""
+  - id: g040
+    review_id: ff77e689593e261a118f2227b72976f3
+    order_id: 8d1bc6d158769393c1ec54c05b734652
+    text_pt: "Já sou cliente a um bom tempo e entendo o atraso mais esse deveria ser o diferencial os produtos já sabemos da qualidade exelente..."
+    meaning: "I have been a customer for a long time and I understand the delay, but this should be the difference; we already know the products are of excellent quality..."
+    delivery: late
+    product: [good]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: mixed
+    note: ""
+  - id: g041
+    review_id: 79789912b048662bfc97db16131a94f3
+    order_id: d63fe1f1621db3763f40ec20a4a8b338
+    text_pt: "Primeiro que minha compra estava vinculada a outra, e eu não consegui um dos produtos (celular). Então vou pagar por um produto inútil para mim, uma vez que não consegui cancelar a compra."
+    meaning: "First, my purchase was linked to another one, and I could not get one of the products (a phone). So I will pay for a product that is useless to me, because I could not cancel the purchase."
+    delivery: not_mentioned
+    product: [not_mentioned]
+    service: [refund_or_return]
+    price: not_mentioned
+    tone: negative
+    note: "v2: was product other; 'could not cancel' stays refund_or_return"
+  - id: g042
+    review_id: ce25f9bf9d5e96843c65a2a6a9259a84
+    order_id: 51b3d3b824ebde9c8e8d84d17e98d88b
+    text_pt: "O material não é de boa qualidade"
+    meaning: "The material is not of good quality."
+    delivery: not_mentioned
+    product: [defective]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: negative
+    note: ""
+  - id: g043
+    review_id: 86adf80f185cb0b6c9e61e2b9e9bb0c4
+    order_id: e3daea0200104991cb979c2fcc509ae7
+    text_pt: "Simplesmente recebi um produto na cor errada, no modelo errado do comprado, barulho de peças miúdas soltas dentro dele, além de ter a tensão errada, 220V.\r\nPortanto não veio o produto que foi comprado"
+    meaning: "I simply received a product in the wrong colour and the wrong model, with the noise of small loose parts inside it, and the wrong voltage, 220V. So the product I bought did not come."
+    delivery: not_mentioned
+    product: [wrong_or_missing, defective]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: negative
+    note: ""
+  - id: g044
+    review_id: 041896a9fd42687876a8b9d430c57b1b
+    order_id: ca586f4a85ee254cc0b4e01e30809cb1
+    text_pt: "Produto é razoável"
+    meaning: "The product is OK / so-so."
+    delivery: not_mentioned
+    product: [good]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: neutral
+    note: "v2: was product other; 'so-so' read as acceptable = good (tone neutral). Check"
+  - id: g045
+    review_id: 32857bad6da193e931f34a96b4501a8f
+    order_id: ca3b58af42b9daa0734a85b70fefb260
+    text_pt: "Mercadoria queimada no centro de distribuição em Fortaleza-CE. Cancelei a compra para ressarcimento do valor pago."
+    meaning: "The goods were burned in the distribution centre in Fortaleza-CE. I cancelled the purchase to get the amount paid back."
+    delivery: not_delivered
+    product: [defective]
+    service: [refund_or_return]
+    price: not_mentioned
+    tone: negative
+    note: "after gold run 2: burned goods = defective (was not_mentioned)"
+  - id: g046
+    review_id: b24256a5bc7d16294b6b9f1965702418
+    order_id: 61f989e43fcc207e2e77b9378c3f0f2a
+    text_pt: "Os produtos foram entregues em dias diferentes, o que gerou reclamação na entrega do primeiro pacote."
+    meaning: "The products were delivered on different days, which caused a complaint at the delivery of the first parcel."
+    delivery: not_mentioned
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: negative
+    note: "v2: was service other; split delivery has no value"
+  - id: g047
+    review_id: 60bffb7590c0e1f8d215e6dee78226ee
+    order_id: 95293775dce224126685f5a197af2a2e
+    text_pt: "Produto"
+    meaning: "Product."
+    delivery: not_mentioned
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: neutral
+    note: ""
+  - id: g048
+    review_id: aeb8fa5db12a4a10c9995e03eaf97705
+    order_id: c44b12ec22f1d6794e86f30078e7f65e
+    text_pt: "boa"
+    meaning: "Good."
+    delivery: not_mentioned
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: positive
+    note: ""
+  - id: g049
+    review_id: 6bc92786a5bd0870cd21303014d4c0c8
+    order_id: 8c3078b30ae073033c2ea0964a5ada96
+    text_pt: "Horrível"
+    meaning: "Horrible."
+    delivery: not_mentioned
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: negative
+    note: ""
+  - id: g050
+    review_id: 344e5f7dc759c00419fbc9db7bdf2a58
+    order_id: 69eab1df0881c314c60f8a3a1935cfcd
+    text_pt: "Recebi o whey de morango com a embalagem toda amassada . Como devo proceder ?"
+    meaning: "I received the strawberry whey with the package all crushed. What should I do?"
+    delivery: not_mentioned
+    product: [defective]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: negative
+    note: "crushed package"
+  - id: g051
+    review_id: 3dacf46f5e33b5a04d5f78c1079b6e1c
+    order_id: 71ff7ff9c86023f13d546d2e953d531b
+    text_pt: "recomendo. produto como especificado, chegou dentro do prazo. recomendo."
+    meaning: "I recommend it. Product as specified, arrived on time. I recommend it."
+    delivery: on_time
+    product: [good]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: positive
+    note: ""
+  - id: g052
+    review_id: 90cbdb2070d4c56fcef74121c3a99f73
+    order_id: 715d8ed9c706aef12151e802c2bc8962
+    text_pt: "Obrigado"
+    meaning: "Thank you."
+    delivery: not_mentioned
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: positive
+    note: ""
+  - id: g053
+    review_id: 59c3780996eab08deaa60cfa6695638f
+    order_id: cb655436a926b3051ca8d308eee56323
+    text_pt: "Valeu a compra"
+    meaning: "The purchase was worth it."
+    delivery: not_mentioned
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: good_value
+    tone: positive
+    note: "'worth it' read as value"
+  - id: g054
+    review_id: f7c3e27d202d579c7e295d5f85cd08cd
+    order_id: ed6b29fe01737a1e042a05988daf31db
+    text_pt: "Com certeza voltarei a comprar nesta loja"
+    meaning: "I will certainly buy from this store again."
+    delivery: not_mentioned
+    product: [not_mentioned]
+    service: [good_service]
+    price: not_mentioned
+    tone: positive
+    note: ""
+  - id: g055
+    review_id: 25cf23110cd00aa5d30744f2b0b84b03
+    order_id: 06f38dfd220e723c33a775d36f5d2756
+    text_pt: "Achei muito frágio.."
+    meaning: "I found it very fragile.."
+    delivery: not_mentioned
+    product: [defective]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: negative
+    note: ""
+  - id: g056
+    review_id: 987541461a7d0f6ea7850357149b24db
+    order_id: 8b24b76cb8cadb97c498a77b53fa3bb6
+    text_pt: "Comprei outros produtos e não tive problemas acredito que foi a falta do produto no estoque"
+    meaning: "I bought other products and had no problems; I think the product was out of stock."
+    delivery: not_mentioned
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: neutral
+    note: "v2: was service other; unclear out-of-stock hint"
+  - id: g057
+    review_id: 6e6145b73a1e01b3affa3f058018a267
+    order_id: 4338e6bc70fcf731f6d799f56c66b6cb
+    text_pt: "Espero solução porque não recebi os 2 lençóis de Percal200 fios"
+    meaning: "I hope for a solution, because I did not receive the 2 Percal 200-thread sheets."
+    delivery: not_delivered
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: negative
+    note: ""
+  - id: g058
+    review_id: 3e1d5d2bc8bf5a5276b3be0104abd413
+    order_id: 4bd13580e951063d19e99e60bc4d1492
+    text_pt: "Produto faltante. Só me enviou um produto de dois comprados no mesmo pedido ..."
+    meaning: "Missing product. Only one of the two products bought in the same order was sent..."
+    delivery: not_mentioned
+    product: [wrong_or_missing]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: negative
+    note: ""
+  - id: g059
+    review_id: 839d24430635efff05f612e41b5d57ae
+    order_id: de829fd7475239b4c3110ca7660f971e
+    text_pt: "Mochila linda"
+    meaning: "Beautiful backpack."
+    delivery: not_mentioned
+    product: [good]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: positive
+    note: ""
+  - id: g060
+    review_id: 20bf684a8b21046f0c3190776ef0bbcb
+    order_id: 4dee9311551fdbf93257d21271e0f1eb
+    text_pt: "Compra fácil e entrega no prazo"
+    meaning: "Easy purchase and delivery on time."
+    delivery: on_time
+    product: [not_mentioned]
+    service: [good_service]
+    price: not_mentioned
+    tone: positive
+    note: "'easy purchase' read as service"
+  - id: g061
+    review_id: db6deb448b47d701bda111387ac062e1
+    order_id: c33917dff50a1d91d9d26ea3c5e3a65a
+    text_pt: "Ainda não recebi o produt"
+    meaning: "I have not received the product yet."
+    delivery: not_delivered
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: negative
+    note: ""
+  - id: g062
+    review_id: 9b967813ba8d5232a8fc3775b5568eb8
+    order_id: e40d016b1ae85a70208463f0969fcfce
+    text_pt: "Estou esperando o pedido"
+    meaning: "I am waiting for the order."
+    delivery: not_delivered
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: neutral
+    note: ""
+  - id: g063
+    review_id: 90f4f4b58ec2f4b75ae779f21ef7b5b0
+    order_id: 0e33201d95dd99ef2fc82d81732957b2
+    text_pt: "Eu achei a entrega um pouco demorada,e as especificações que estava escrito no site não são iguais a do produto"
+    meaning: "I found the delivery a bit slow, and the specifications written on the site are not the same as the product's."
+    delivery: late
+    product: [wrong_or_missing]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: negative
+    note: "'a bit slow' read as late"
+  - id: g064
+    review_id: f0a8f4048f34ef9ef40cc48cc2cc1287
+    order_id: 6bc3c767bc73e1e4e1ba0670c3d90397
+    text_pt: "Produto não chegou no prazo e não tive retorno do vendedor"
+    meaning: "The product did not arrive on time and I got no answer from the seller."
+    delivery: late
+    product: [not_mentioned]
+    service: [seller_no_response]
+    price: not_mentioned
+    tone: negative
+    note: ""
+  - id: g065
+    review_id: 9b3f705ddf6c0459031d21b5bb522b1c
+    order_id: 23cc7aa90e16bd6d589dcc92c67c914e
+    text_pt: "Muita demora na entrega pelos Correios."
+    meaning: "A long delay in delivery by the post office."
+    delivery: late
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: negative
+    note: ""
+  - id: g066
+    review_id: 69b9b270f4993cbb4669ddad07ade107
+    order_id: 52ea9e95e801ad09b7489b89c3b49dea
+    text_pt: "Comprei 2 unidades com 10 panos de pratos cada,a nota fiscal veio com a quantidade certa só recebi 10 panos de pratos,espero receber uma resposta para minha dúvida,através do email não da p/ responder"
+    meaning: "I bought 2 units of 10 dish towels each; the invoice came with the right quantity, but I only received 10 dish towels. I hope to get an answer to my question; it is not possible to reply through the e-mail."
+    delivery: not_mentioned
+    product: [wrong_or_missing]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: negative
+    note: "v2: was service other; asks for an answer, no 'no reply' yet"
+  - id: g067
+    review_id: ddf396c64530f633e96ba1546d16d604
+    order_id: 066bcda20b88b5f4d4870b32a387f822
+    text_pt: "Entrega no prazo. Muito boa essa loja, não atrasa o pedido os produtos vem certinho..."
+    meaning: "Delivered on time. This store is very good, it does not delay the order and the products come just right..."
+    delivery: on_time
+    product: [good]
+    service: [good_service]
+    price: not_mentioned
+    tone: positive
+    note: ""
+  - id: g068
+    review_id: ac8fd25aecc8f208e978468177f3fe55
+    order_id: b2c3a55ae550dfe8fea2cdca7df095cf
+    text_pt: "Não é o mesmo produto que fiz o pedido, mas chegou perfeito."
+    meaning: "It is not the same product that I ordered, but it arrived perfect."
+    delivery: not_mentioned
+    product: [wrong_or_missing]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: mixed
+    note: ""
+  - id: g069
+    review_id: 627d76afb4f75ce157438ac643cb5049
+    order_id: dd7cf61b3197740df7b6bf61bbfa6994
+    text_pt: "Só esqueceram de colocar se recebeu o produto em bom estado, pois comprei 5 pendentes e veio num caixa de papelão fraca sem quase nada de proteção com isso dois vieram amassados....ai vc vai reclamar"
+    meaning: "They only forgot to ask whether the product was received in good condition: I bought 5 pendant lamps and they came in a weak cardboard box with almost no protection, so two came dented.... and then you go and complain"
+    delivery: not_mentioned
+    product: [defective]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: negative
+    note: ""
+  - id: g070
+    review_id: ee9b99e11ec627e17202dd2d98ce28f7
+    order_id: c2b32a9eef15f09698bb2ec1a17a6a70
+    text_pt: "O produto ainda não chegou"
+    meaning: "The product has not arrived yet."
+    delivery: not_delivered
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: negative
+    note: ""
+  - id: g071
+    review_id: 5dddfbd7c02c4b525c553c66687a7e85
+    order_id: 5ae6d4878571e9513c93413ee5ea1fe2
+    text_pt: "recomendo. Sempre fui bem atendida, entregaram no prazo.\r\nAcredito que por causa das greves dos caminhoneiros e dos petroleiros, isso afetou o atendimento aos clientes."
+    meaning: "I recommend it. I was always well served; they delivered on time. I think the truck drivers' and oil workers' strikes affected the customer service."
+    delivery: on_time
+    product: [not_mentioned]
+    service: [good_service]
+    price: not_mentioned
+    tone: positive
+    note: ""
+  - id: g072
+    review_id: 0c7571f1c198dee0435fe204ea197a84
+    order_id: 3863a19752e7afd5305895ae86ee0fe0
+    text_pt: "vcs podiam abaixar o valor do frete e colocar de vez enquando frete gratis,seu frete e muito caro!!!!"
+    meaning: "You could lower the shipping cost and sometimes offer free shipping; your shipping is very expensive!!!!"
+    delivery: not_mentioned
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: freight_too_high
+    tone: negative
+    note: ""
+  - id: g073
+    review_id: f50b31351047a867ae0cbefee93808d5
+    order_id: 809c67f3dcf8bfdb6d72596c122f791b
+    text_pt: "chegou no prazo"
+    meaning: "Arrived on time."
+    delivery: on_time
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: positive
+    note: ""
+  - id: g074
+    review_id: 6f019513437635e75c3d17f091af2de5
+    order_id: b287d35d6e864f28c166376e6c02c9a1
+    text_pt: "Poderia ter agilizado com a entrega! Porém recebi o produto em ótimas condições!"
+    meaning: "The delivery could have been quicker! But I received the product in great condition!"
+    delivery: late
+    product: [good]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: mixed
+    note: "'could have been quicker': slow, not surely late"
+  - id: g075
+    review_id: a0b5db2e43e6503bb4c8af3414e3b615
+    order_id: 9f76d1a5ba48abf682161efaadca30a4
+    text_pt: "Recebi dentro do prazo"
+    meaning: "Received within the deadline."
+    delivery: on_time
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: positive
+    note: ""
+  - id: g076
+    review_id: 7ccb3dd6daf368b64c5309c40a8712e4
+    order_id: 47f94daa7c25c51ecaab4744c6025f2d
+    text_pt: "ruim"
+    meaning: "Bad."
+    delivery: not_mentioned
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: negative
+    note: ""
+  - id: g077
+    review_id: b429db239dfbc81ee7aba4fce96fb4f9
+    order_id: 354310406adf3de2d6793865cca4eb97
+    text_pt: "O RELOGIO É LINDO SURPREENDEU MINHAS EXPECTATIVA A ENTREGA NEM SE FALA FOI PRATICAMENTE DUAS SEMANAS ANTES DA DATA PREVISTA RECOMENDO A TODOS QUE TENHAM ALGUMA DUVIDA QUE COMPREM PRODUTO EXCELENTE."
+    meaning: "THE WATCH IS BEAUTIFUL, IT BEAT MY EXPECTATIONS. THE DELIVERY, NEED I SAY, WAS ALMOST TWO WEEKS BEFORE THE EXPECTED DATE. I RECOMMEND TO EVERYONE WHO HAS ANY DOUBT TO BUY IT. EXCELLENT PRODUCT."
+    delivery: on_time
+    product: [good]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: positive
+    note: ""
+  - id: g078
+    review_id: 4fb1aef3d4bd6462d6197d0da18b5543
+    order_id: da532fc1a4b9307f2d351689f9e39a4d
+    text_pt: "Ilumina bastante e a buzina é bem alta. Gostei"
+    meaning: "It lights up a lot and the horn is very loud. I liked it."
+    delivery: not_mentioned
+    product: [good]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: positive
+    note: ""
+  - id: g079
+    review_id: a66bb39865e54e200b9645be9c3aebf2
+    order_id: f37110e24979533292f678ff6decd468
+    text_pt: "Foi ótimo o preco mas o prazo de entrega demorou quase 18 dias"
+    meaning: "The price was great, but the delivery took almost 18 days."
+    delivery: late
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: good_value
+    tone: mixed
+    note: "18 days read as late"
+  - id: g080
+    review_id: d8b043fd3150eface7cc45ceb3959cd0
+    order_id: d3a49d9f4c7efe1107f8a4a8c140af05
+    text_pt: "O produto não chegou perfeito , tive que pedir para meu pai abrir e arrumar o botão de ajuste que estava solto ."
+    meaning: "The product did not arrive perfect; I had to ask my father to open it and fix the adjustment button, which was loose."
+    delivery: not_mentioned
+    product: [defective]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: negative
+    note: ""
+  - id: g081
+    review_id: b473f96f70a5f226d4b53a66034938ab
+    order_id: f4ab7da19e58e253e0946d32501b279c
+    text_pt: "Péssima loja"
+    meaning: "Terrible store."
+    delivery: not_mentioned
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: negative
+    note: "v2: was service other; 'terrible store' carries only the tone"
+  - id: g082
+    review_id: ca393bd93f46fd410986bf891263a1f1
+    order_id: 35f34f644e23f2201ccc411a2cbbebce
+    text_pt: "Produto veio sem cabo USB e fonte,a caixa de dentro veio danificada e principalmente parece não ser original. Aguardando por uma solução."
+    meaning: "The product came without the USB cable and the power adapter, the inner box came damaged and, above all, it does not seem to be original. Waiting for a solution."
+    delivery: not_mentioned
+    product: [wrong_or_missing, defective]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: negative
+    note: "'not original' read as not_as_described"
+  - id: g083
+    review_id: 8bc4d875dbab927e9190060688edc80f
+    order_id: b6e5ddeaf2e5b56015e295beb333f305
+    text_pt: "Excelente produto indico a qualquer pessoa."
+    meaning: "Excellent product, I recommend it to anyone."
+    delivery: not_mentioned
+    product: [good]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: positive
+    note: ""
+  - id: g084
+    review_id: b97955946003a3e76e5a6bb4a34b63dc
+    order_id: 756d62fd1519d390705464ab14c102a8
+    text_pt: "Super recomendo s"
+    meaning: "I strongly recommend it."
+    delivery: not_mentioned
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: positive
+    note: ""
+  - id: g085
+    review_id: ca6ac9d7ef080414f8d5040b366fa3c3
+    order_id: 9ac24a8afcd635709e2443e878ccfbe7
+    text_pt: "Recebi apenas 1 unidade, quando a compra foi de 3 unidades;"
+    meaning: "I received only 1 unit, when the purchase was 3 units."
+    delivery: not_mentioned
+    product: [wrong_or_missing]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: negative
+    note: ""
+  - id: g086
+    review_id: ce5e12e3c69075f765a4e5526d4750a8
+    order_id: c2111fc685de07490729134e8d37188c
+    text_pt: "Cumpre o que promete"
+    meaning: "It does what it promises."
+    delivery: not_mentioned
+    product: [good]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: positive
+    note: ""
+  - id: g087
+    review_id: fd869afd1c1565c26ffe3d5e7a3af52e
+    order_id: c9bd5b826046d7a922af1b95bdd4d39f
+    text_pt: "A película veio muito menor do tamanho do aparelho,5mm lateral e 5mm vestical , é MTA coisa..."
+    meaning: "The screen protector came much smaller than the device, 5 mm at the side and 5 mm at the top/bottom; that is A LOT..."
+    delivery: not_mentioned
+    product: [wrong_or_missing]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: negative
+    note: "wrong size; or not_as_described?"
+  - id: g088
+    review_id: 8cf79a962c2e818284ed93da518bb3f0
+    order_id: d0d6f28c88378bb68aaed959896a43f5
+    text_pt: "da pra melhorar um pouco"
+    meaning: "It could be a little better."
+    delivery: not_mentioned
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: neutral
+    note: ""
+  - id: g089
+    review_id: f728c2517b00ca171dac670e094d262d
+    order_id: e95917c63189f55897224422b107b459
+    text_pt: "Só não gostei, pois recebi um email dizendo que a compra tinha tido um problema, tem tentei solucionar por email e ninguém respondeu.\r\nMas a compra chegou dias depois."
+    meaning: "I only did not like it because I got an e-mail saying the purchase had a problem; I tried to solve it by e-mail and nobody answered. But the order arrived days later."
+    delivery: late
+    product: [not_mentioned]
+    service: [seller_no_response]
+    price: not_mentioned
+    tone: mixed
+    note: "'arrived days later'"
+  - id: g090
+    review_id: dcbba0f3f7456d9e67171682fb298074
+    order_id: 52267d8c7f4a0227294efd0ef23fcefb
+    text_pt: "Não entraram em contato p dar uma posição e a mercadoria faz um mês q comprei e não chegou"
+    meaning: "They did not contact me to give an update, and it is a month since I bought the goods and they have not arrived."
+    delivery: not_delivered
+    product: [not_mentioned]
+    service: [seller_no_response]
+    price: not_mentioned
+    tone: negative
+    note: ""
+  - id: g091
+    review_id: 289cfcf755d3bde9f5546f7a578debaf
+    order_id: 1091b52a01d06a2bf1e97ca70cb2d75a
+    text_pt: "Bom"
+    meaning: "Good."
+    delivery: not_mentioned
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: positive
+    note: ""
+  - id: g092
+    review_id: 75bbab3ac7d40ef520f841df005c0fbd
+    order_id: ad2cb7174d08a12cbc905429e2027c96
+    text_pt: "10. A entrega foi antes do prazo previsto, observação : comprei 4 foram entregue dois , os outros dois estão a caminho!"
+    meaning: "10 [out of 10]. The delivery was before the expected date. Note: I bought 4, two were delivered, the other two are on the way!"
+    delivery: on_time
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: positive
+    note: "2 of 4 delivered, 2 on the way: not missing"
+  - id: g093
+    review_id: c2fc21bafc2cfbcbd14ef06a1719ae75
+    order_id: 9c0b834fc89f4dd70679baffe8bed38e
+    text_pt: "Satisfeito"
+    meaning: "Satisfied."
+    delivery: not_mentioned
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: positive
+    note: ""
+  - id: g094
+    review_id: 405eedb5fb8340267a8c4936e6367c60
+    order_id: d54aa60d2771d02a8d907974ed595fe9
+    text_pt: "nao chegou os livros, chegou suplementos e continua chegando suplementos."
+    meaning: "The books did not arrive; supplements arrived, and supplements keep arriving."
+    delivery: not_mentioned
+    product: [wrong_or_missing]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: negative
+    note: ""
+  - id: g095
+    review_id: 8a8e9da4135e52d45dda6a4ab3fe38be
+    order_id: d949d4dcea6ae27ff040b9f9f40fac7a
+    text_pt: "Dez. Ótimo, foram muito prestativos !!."
+    meaning: "Ten [out of 10]. Great, they were very helpful!!."
+    delivery: not_mentioned
+    product: [not_mentioned]
+    service: [good_service]
+    price: not_mentioned
+    tone: positive
+    note: ""
+  - id: g096
+    review_id: 83e0574ee2190d7b440d10adedc7e399
+    order_id: 94b85615d0bf9757c6a3b1a20be1a9cf
+    text_pt: "OK. Recomendo. Ainda não testei, mas veio bem acondicionado."
+    meaning: "OK. I recommend it. I have not tested it yet, but it came well packed."
+    delivery: not_mentioned
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: positive
+    note: ""
+  - id: g097
+    review_id: e48cdc2946c6b4ee90a149f3a38ea3dc
+    order_id: d74fca7ee2ce7587c45eefb0fea95ed8
+    text_pt: "Na imagem e na descrição o produto possui espetos com cabo em inox e o produto recebido tem espetos com Cabo de madeira."
+    meaning: "In the picture and the description, the product has skewers with stainless steel handles, and the product received has skewers with wooden handles."
+    delivery: not_mentioned
+    product: [wrong_or_missing]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: negative
+    note: ""
+  - id: g098
+    review_id: 892bb6424b00d2524c902005daa3f4ef
+    order_id: f39c23bb826de695dcc005dbb467f7e2
+    text_pt: "Recebi antes do prazo. Maravilhoso"
+    meaning: "Received before the deadline. Wonderful."
+    delivery: on_time
+    product: [not_mentioned]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: positive
+    note: ""
+  - id: g099
+    review_id: e1f0e243cfdad825acb4f20563f6bf18
+    order_id: 5919e9d15d8693529eecf3b5fcdc7327
+    text_pt: "so o ouro. tudo certo"
+    meaning: "Just gold [slang: excellent]. All fine."
+    delivery: not_mentioned
+    product: [good]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: positive
+    note: "after gold run 2: just gold (slang: excellent) = good (was not_mentioned)"
+  - id: g100
+    review_id: f6bc2b7fb670edc173862b9d84fd12c5
+    order_id: d34d57040fbd8cc561fddf442352f8eb
+    text_pt: "Produto chegou com um pequeno defeito."
+    meaning: "The product arrived with a small defect."
+    delivery: not_mentioned
+    product: [defective]
+    service: [not_mentioned]
+    price: not_mentioned
+    tone: negative
+    note: ""
