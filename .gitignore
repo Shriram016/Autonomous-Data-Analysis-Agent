@@ -30,3 +30,6 @@ Thumbs.db
 .vscode/
 CLAUDE.md
 PROJECT_GUIDE.md
+
+# Local embedding model (fastembed downloads it once)
+data/models/

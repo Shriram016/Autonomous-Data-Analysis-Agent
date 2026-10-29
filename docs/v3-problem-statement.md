@@ -1120,6 +1120,10 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    free, no key, data stays local, ~130 MB, no PyTorch, quick on CPU for 41k short English
 >    texts. The same model embeds the question at search time, so the worker loads it. The
 >    model name is on every row; switch to Voyage only if the eval shows weak search.
+>    🔒 **Question instruction added by our code (2026-10-29).** fastembed does not add BGE's
+>    "Represent this sentence for searching relevant passages: " for this model (checked in
+>    its source), so `embed_question` adds it; reviews are embedded with no instruction.
+>    fastembed 0.9.1, model 67 MB, MIT licence, cached in `data/models/` (git-ignored).
 >    🔒 **Load method: incremental + upsert, idempotent (2026-10-28).** Closes the open M3
 >    item above. Rejected: full reload + swap (a review never changes once written, and a
 >    reload pays ~$2.50 per run to translate the same text again). Each run takes every
