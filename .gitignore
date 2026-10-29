@@ -33,3 +33,6 @@ PROJECT_GUIDE.md
 
 # Local embedding model (fastembed downloads it once)
 data/models/
+
+# Review batches: batch IDs + review text (M3 ingestion)
+data/batches/
