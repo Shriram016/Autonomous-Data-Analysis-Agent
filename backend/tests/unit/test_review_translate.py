@@ -59,6 +59,8 @@ def test_translate_one_sends_the_prompt_and_the_review_and_retries_a_bad_answer(
         ("Produto não chegou ainda", "Produto não chegou ainda", "still Portuguese"),
         ("O produto chegou quebrado e atrasou dez dias", "Broken", "odd length"),
         ("Produto chegou quebrado", "The product arrived broken. " * 6, "odd length"),
+        ("Ótimo.", "Great", None),  # too short to compare the ends
+        ('Recebi só o kit, que por "sorte" é o mais barato.', "I only got the kit, by", "cut off"),
     ],
 )
 def test_check_translation(text_pt: str, text_en: str, problem: str | None) -> None:

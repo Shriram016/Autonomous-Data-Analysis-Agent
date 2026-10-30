@@ -1217,11 +1217,23 @@ Progress reaches the UI as a stream of events (submit → job ID → event strea
 >    `tsvector` column with a GIN index. Vector: exact scan, **no index** for now (42,697 ×
 >    384 dims ≈ 10–50 ms, always exact, filters never drop rows). Add HNSW only if a check
 >    shows the search is slow.
->    🔒 **How it runs (2026-10-28).** A command run by hand: `uv run python -m
->    adaa.ingestion.reviews`. It sends the batch and saves its ID; a second run collects
->    the results (a batch can take up to 24 h, usually < 1 h); a rerun is safe (upsert).
->    No daily data arrives now, so no timer. ⏳ Later, to learn it: a daily Celery job that
->    calls the same code (incremental, so only new reviews).
+>    🔒 **How it runs (2026-10-28, command updated 2026-10-29).** Commands run by hand:
+>    `uv run python -m adaa.ingestion.review_batch send [--dry-run] [--limit N]`, then
+>    `... review_batch collect`. `send` saves the ID map before the send and the batch ID
+>    after it; `collect` saves the raw answers to `data/batches/<name>.results.jsonl` at the
+>    first download (never paid twice), then checks, embeds and upserts in groups of 1,000. A
+>    batch can take up to 24 h, usually < 1 h; a rerun is safe (upsert). A failed review gets
+>    no row, so the next `send` picks it up. No daily data arrives now, so no timer. ⏳ Later,
+>    to learn it: a daily Celery job that calls the same code (only new reviews).
+>    ✅ **Full run (2026-10-29).** 42,542 reviews sent in one batch: 42,532 written, 10
+>    failed, **$0.61** (estimate $0.69), ~40 min at Anthropic + ~12 min to embed. Redo of
+>    the 10 + 1: 8 written, 3 flagged by mistake and written by hand from the saved answers.
+>    Found: Haiku sometimes stops at an inner `"` (the JSON string closes there), so the
+>    English loses its end — 9 of ~170 reviews with quotes. Fixes: `max_tokens` 400 → 1,000
+>    (1 review was too long); a new `check_translation` rule ("cut off": the Portuguese ends a
+>    sentence, the English ends mid-word; texts over 20 characters); 2 reviews translated by
+>    hand (Haiku cut them again). Result: **42,582 rows, each with a translation and a
+>    vector**, 0 pending. Open: a prompt rule for inner quotes, at the next prompt version.
 >
 >
 > ⚠️ **MANDATORY — DO NOT SKIP: post-build architecture cross-examination.** Once development is

@@ -81,6 +81,8 @@ PORTUGUESE_WORDS = frozenset(
 )
 MIN_CHARS_FOR_LENGTH = 20  # "bom" → "good" or "👍" → "thumbs up": too short to compare
 LENGTH_RATIO = (0.4, 2.5)  # English length / Portuguese length outside this: a part is lost
+SENTENCE_END = re.compile(r"[.!?]$")
+WORD_END = re.compile(r"\w$")  # Haiku can stop at an inner quote: "...which by" (§0)
 
 
 def check_translation(text_pt: str, answer: ReviewTranslation) -> list[str]:
@@ -100,4 +102,6 @@ def check_translation(text_pt: str, answer: ReviewTranslation) -> list[str]:
         low, high = LENGTH_RATIO
         if not low <= ratio <= high:
             problems.append(f"odd length: {ratio:.2f}× the original")
+        if SENTENCE_END.search(text_pt.strip()) and WORD_END.search(text_en):
+            problems.append("cut off: the original ends a sentence, the translation does not")
     return problems

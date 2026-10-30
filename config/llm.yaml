@@ -102,7 +102,7 @@ jobs:
   review_translate:  # Portuguese review → English text (M3 ingestion; one review per call)
     model: claude-haiku-5-5
     thinking: disabled
-    max_tokens: 400  # the longest reviews are ~200 words
+    max_tokens: 1000  # the longest reviews are ~200 words; 400 cut one off (2026-10-29)
     timeout_seconds: 30
     # One retry with the errors: no valid answer means no row. Used for spot checks and for
     # redoing failed reviews; the full run sends the same request through the Batch API.
